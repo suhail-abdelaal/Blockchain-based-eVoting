@@ -50,7 +50,7 @@ contract Ballot {
         uint256 _startDate,
         uint256 _endDate
     ) external onlyVerifiedVoter {
-        if (_startDate <= block.timestamp) {
+        if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
             revert PrposalEndDateLessThanStartDate(_startDate, _endDate);
