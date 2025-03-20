@@ -46,7 +46,7 @@ contract Ballot {
         string[] memory _candidates,
         uint256 _startDate,
         uint256 _endDate
-    ) public onlyVerifiedVoter {
+    ) external onlyVerifiedVoter {
         if (_startDate <= block.timestamp) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
