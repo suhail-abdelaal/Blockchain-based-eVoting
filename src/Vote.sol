@@ -35,14 +35,14 @@ contract Vote {
     }
 
 
-    function castVote(uint256 proposalId, string calldata option) external {
+    function castVote(address voter, uint256 proposalId, string calldata option) external {
         if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.COMPLETED) {
             revert ProposalCompleted(proposalId);
         } else if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.PENDING) {
             revert ProposalNotStartedYet(proposalId);
         }
         // Cast vote
-        ballot.increaseOptionVoteCount(proposalId, option);
+        ballot.increaseOptionVoteCount(voter, proposalId, option);
 
         // Add proposal to the voter's history
         voterRegistry.addUserParticipatedProposal(msg.sender, proposalId, option);

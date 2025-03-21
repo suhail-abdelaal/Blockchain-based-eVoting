@@ -32,7 +32,7 @@ contract VoterRegistry is RoleBasedAccessControl {
         address _voter,
         string calldata _voterName,
         uint256[] calldata _featureVector
-        ) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        ) public onlyAdmin {
 
         if (voters[_voter].isVerified) {
             revert VoterAlreadyVerified(_voter);
@@ -46,18 +46,13 @@ contract VoterRegistry is RoleBasedAccessControl {
         }
 
         // verify voter
-        _grantRole(VERIFIED_VOTER, _voter);
+        grantRole(VERIFIED_VOTER, _voter);
 
         emit VoterVerified(_voter);
     }
 
-<<<<<<< HEAD
-    function getVoterVerification(address _voter) public view returns (bool) {
-        return hasRole(VERIFIED_VOTER, _voter);
-=======
     function getVoterVerification(address _voter) external view returns (bool) {
-        return voters[_voter].isVerified;
->>>>>>> feature/vote-contract
+        return hasRole(VERIFIED_VOTER, _voter);
     }
 
     function getVoterParticipatedProposals(
@@ -95,7 +90,7 @@ contract VoterRegistry is RoleBasedAccessControl {
         address _voter,
         uint256 _proposalId
         ) external {
-        
+
         voters[_voter].createdProposalsId.push(_proposalId);
     }
 
