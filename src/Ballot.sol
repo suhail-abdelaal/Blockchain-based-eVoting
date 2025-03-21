@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {RoleBasedAccessControl} from "./AccessControl.sol";
+import {RoleBasedAccessControl} from "./RoleBasedAccessControl.sol";
 
 contract Ballot is RoleBasedAccessControl{
 
