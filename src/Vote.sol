@@ -41,9 +41,9 @@ contract Vote is RBAC {
         uint256 proposalId,
         string calldata option) external onlyVerifiedVoter {
 
-        if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.COMPLETED) {
+        if (ballot.getProposalStatus(proposalId) == Ballot.ProposalStatus.COMPLETED) {
             revert ProposalCompleted(proposalId);
-        } else if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.PENDING) {
+        } else if (ballot.getProposalStatus(proposalId) == Ballot.ProposalStatus.PENDING) {
             revert ProposalNotStartedYet(proposalId);
         }
 

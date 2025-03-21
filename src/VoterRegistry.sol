@@ -5,6 +5,7 @@ import {RBAC} from "./RBAC.sol";
 
 contract VoterRegistry is RBAC {
     /* Erros and Events */
+    
     error VoterAlreadyVerified(address voter);
 
     event VoterVerified(address indexed voter);

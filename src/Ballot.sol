@@ -25,7 +25,7 @@ contract Ballot is RBAC{
 
 
     /* User Defined Datatypes */
-    enum VoteStatus {
+    enum ProposalStatus {
         PENDING,
         ACITVE,
         COMPLETED
@@ -36,7 +36,7 @@ contract Ballot is RBAC{
         string title;
         string[] options;
         mapping(string candidateName => uint256 voteCount) optionVoteCounts;
-        VoteStatus proposalStatus;
+        ProposalStatus proposalStatus;
         uint256 startDate;
         uint256 endDate;
     }
@@ -74,8 +74,8 @@ contract Ballot is RBAC{
         }
 
         proposal.proposalStatus = (_startDate >= block.timestamp)
-        ? VoteStatus.ACITVE
-        : VoteStatus.PENDING;
+        ? ProposalStatus.ACITVE
+        : ProposalStatus.PENDING;
 
         emit ProposalCreated(proposalCount, _owner, _title, _startDate, _endDate);
 
@@ -94,7 +94,7 @@ contract Ballot is RBAC{
         emit VoteCast(_proposalId, _voter, _option);
     }
 
-    function getProposalStatus(uint256 _proposalId) external view returns (VoteStatus) {
+    function getProposalStatus(uint256 _proposalId) external view returns (ProposalStatus) {
         return proposals[_proposalId].proposalStatus;
     }
 
