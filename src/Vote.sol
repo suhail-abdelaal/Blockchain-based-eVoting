@@ -22,15 +22,15 @@ contract Vote is RoleBasedAccessControl {
 
     function createProposal(
         string calldata _title,
-        string[] calldata _candidates,
+        string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
     ) external onlyVerifiedVoter returns(uint256) {
 
         // Create proposal
-        uint256 proposalId = ballot.addProposal(msg.sender, _title, _candidates, _startDate, _endDate);
+        uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, _startDate, _endDate);
         // Add proposal to the voter's history
-        voterRegistry.addUserCreatedProposal(msg.sender, proposalId);
+        voterRegistry.recordUserCreatedProposal(msg.sender, proposalId);
 
         return proposalId;
     }
@@ -51,7 +51,7 @@ contract Vote is RoleBasedAccessControl {
         ballot.increaseOptionVoteCount(voter, proposalId, option);
 
         // Add proposal to the voter's history
-        voterRegistry.addUserParticipatedProposal(msg.sender, proposalId, option);
+        voterRegistry.recordUserParticipation(msg.sender, proposalId, option);
     }
 
 }
