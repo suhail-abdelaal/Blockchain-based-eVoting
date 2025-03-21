@@ -10,7 +10,7 @@ contract Ballot is RBAC{
     error PrposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
     error ProposalCompleted(uint256 proposalId);
     error ProposalNotStartedYet(uint256 proposalId);
-
+    error VoteAlreadyCast(uint256 proposalId, address voter);
 
     event ProposalCreated(
         uint256 indexed proposalId,
@@ -21,6 +21,12 @@ contract Ballot is RBAC{
     );
 
     event VoteCast(
+        uint256 indexed proposalId,
+        address indexed voter,
+        string option
+    );
+
+    event VoteRetracted(
         uint256 indexed proposalId,
         address indexed voter,
         string option
@@ -44,6 +50,7 @@ contract Ballot is RBAC{
         string title;
         string[] options;
         mapping(string candidateName => uint256 voteCount) optionVoteCounts;
+        mapping(address voter => bool hasVoted) participants;
         ProposalStatus proposalStatus;
         VoteMutability voteMutability;
         uint256 startDate;
@@ -53,6 +60,14 @@ contract Ballot is RBAC{
     /* State Variables */
     mapping(uint256 => Proposal) public proposals;
     uint256 public proposalCount;
+
+    // ---------------------------------Modifiers---------------------------------
+    // modifier onlyOnce(uint256 _proposalId, address _voter) {
+    //     if (proposals[_proposalId].participants[_voter]) {
+    //         revert VoteAlreadyCast(_proposalId, _voter);
+    //     }
+    //     _;
+    // }
 
 
     /* Public Methods */
@@ -92,7 +107,7 @@ contract Ballot is RBAC{
     }
 
 
-    function increaseOptionVoteCount(
+    function castVote(
         address _voter,
         uint256 _proposalId,
         string calldata _option
@@ -105,10 +120,29 @@ contract Ballot is RBAC{
             revert ProposalNotStartedYet(_proposalId);
         }
 
+        if (proposals[_proposalId].voteMutability == VoteMutability.IMMUTABLE
+            && proposals[_proposalId].participants[_voter]
+        ) {
+            revert VoteAlreadyCast(_proposalId, _voter);
+        }
+
         proposals[_proposalId].optionVoteCounts[_option] += 1;
+        proposals[_proposalId].participants[_voter] = true;
+
         emit VoteCast(_proposalId, _voter, _option);
     }
 
+    function retractVote(address _voter,
+        uint256 _proposalId,
+        string calldata _option
+        ) external {
+
+        proposals[_proposalId].optionVoteCounts[_option] -= 1;
+        proposals[_proposalId].participants[_voter] = false;
+
+        emit VoteRetracted(_proposalId, _voter, _option);
+
+    }
 
     function getProposalStatus(uint256 _proposalId) public view returns (ProposalStatus) {
         return proposals[_proposalId].proposalStatus;

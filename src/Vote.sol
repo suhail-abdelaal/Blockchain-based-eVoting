@@ -26,7 +26,7 @@ contract Vote is RBAC {
 
         // Create proposal
         uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, _startDate, _endDate);
-        
+
         // Add proposal to the voter's history
         voterRegistry.recordUserCreatedProposal(msg.sender, proposalId);
 
@@ -39,11 +39,11 @@ contract Vote is RBAC {
         uint256 proposalId,
         string calldata option) external onlyVerifiedVoter {
 
+        // Cast vote
+        ballot.castVote(voter, proposalId, option);
+
         // Add proposal to the voter's history
         voterRegistry.recordUserParticipation(msg.sender, proposalId, option);
-
-        // Cast vote
-        ballot.increaseOptionVoteCount(voter, proposalId, option);
     }
 
 }
