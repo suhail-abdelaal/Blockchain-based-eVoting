@@ -19,15 +19,20 @@ contract Vote {
     }
 
 
-    // function createProposal(
-    //     string calldata _title,
-    //     string[] calldata _candidates,
-    //     uint256 _startDate,
-    //     uint256 _endDate
-    // ) external returns(string calldata id) {
-    //     string calldata id = ballot.addProposal(_title, _candidates, _startDate, _endDate);
-    //     return id;
-    // }
+    function createProposal(
+        string calldata _title,
+        string[] calldata _candidates,
+        uint256 _startDate,
+        uint256 _endDate
+    ) external returns(uint256) {
+
+        // Create proposal
+        uint256 proposalId = ballot.addProposal(msg.sender, _title, _candidates, _startDate, _endDate);
+        // Add proposal to the voter's history
+        voterRegistry.addUserCreatedProposal(msg.sender, proposalId);
+
+        return proposalId;
+    }
 
 
     function castVote(uint256 proposalId, string calldata option) external {
@@ -36,10 +41,10 @@ contract Vote {
         } else if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.PENDING) {
             revert ProposalNotStartedYet(proposalId);
         }
-        // cast vote
+        // Cast vote
         ballot.increaseOptionVoteCount(proposalId, option);
 
-        // add logs to the voter's history
+        // Add proposal to the voter's history
         voterRegistry.addUserParticipatedProposal(msg.sender, proposalId, option);
     }
 
