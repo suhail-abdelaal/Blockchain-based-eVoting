@@ -77,7 +77,7 @@ contract VoterRegistry is RoleBasedAccessControl {
         return voters[_voter].createdProposalsId;
     }
 
-    function addUserParticipatedProposal(
+    function recordUserParticipation(
         address _voter,
         uint256 _proposalId,
         string calldata _selectedOption) external {
@@ -86,7 +86,7 @@ contract VoterRegistry is RoleBasedAccessControl {
         voters[_voter].selectedOption[_proposalId] = _selectedOption;
     }
 
-    function addUserCreatedProposal(
+    function recordUserCreatedProposal(
         address _voter,
         uint256 _proposalId
         ) external {
