@@ -69,8 +69,8 @@ contract Ballot {
         : VoteStatus.PENDING;
     }
 
-    function increaseCanditateVoteCount(uint256 _proposalId, string calldata _candidateName) external onlyVerifiedVoter {
-        proposals[_proposalId].candidateVoteCounts[_candidateName] += 1;
+    function increaseOptionVoteCount(uint256 _proposalId, string calldata _option) external onlyVerifiedVoter {
+        proposals[_proposalId].optionVoteCounts[_option] += 1;
     }
 
     function getProposalStatus(uint256 _proposalId) external view returns (VoteStatus) {

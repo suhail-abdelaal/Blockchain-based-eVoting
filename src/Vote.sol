@@ -30,13 +30,13 @@ contract Vote {
     // }
 
 
-    function castVote(uint256 proposalId, string calldata candidateName) external {
+    function castVote(uint256 proposalId, string calldata option) external {
         if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.COMPLETED) {
             revert ProposalCompleted(proposalId);
         } else if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.PENDING) {
             revert ProposalNotStartedYet(proposalId);
         }
-        ballot.increaseCanditateVoteCount(proposalId, candidateName);
+        ballot.increaseOptionVoteCount(proposalId, option);
     }
 
 }
