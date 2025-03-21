@@ -39,7 +39,9 @@ contract VoterRegistry is Ownable {
         // verify voter
         voters[_voter].name = _voterName;
         voters[_voter].isVerified = true;
-        voters[_voter].featureVector = _featureVector;
+        for (uint256 i = 0; i < _featureVector.length; ++i) {
+            voters[_voter].featureVector.push(_featureVector[i]);
+        }
 
         emit VoterVerified(_voter);
     }
