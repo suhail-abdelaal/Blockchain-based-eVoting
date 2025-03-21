@@ -5,6 +5,7 @@ import {RBAC} from "./RBAC.sol";
 
 contract VoterRegistry is RBAC {
     /* Erros and Events */
+    
     error VoterAlreadyVerified(address voter);
 
     event VoterVerified(address indexed voter);
@@ -22,7 +23,6 @@ contract VoterRegistry is RBAC {
 
     /* State Variables */
     mapping(address => Voter) public voters;
-    RBAC public rbac;
 
     /* Constructor */
     constructor() {

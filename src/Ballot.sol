@@ -8,6 +8,9 @@ contract Ballot is RBAC{
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
     error PrposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
+    error ProposalCompleted(uint256 proposalId);
+    error ProposalNotStartedYet(uint256 proposalId);
+
 
     event ProposalCreated(
         uint256 indexed proposalId,
@@ -25,10 +28,15 @@ contract Ballot is RBAC{
 
 
     /* User Defined Datatypes */
-    enum VoteStatus {
+    enum ProposalStatus {
         PENDING,
         ACITVE,
         COMPLETED
+    }
+
+    enum VoteMutability {
+        IMMUTABLE,
+        MUTABLE
     }
 
     struct Proposal {
@@ -36,7 +44,8 @@ contract Ballot is RBAC{
         string title;
         string[] options;
         mapping(string candidateName => uint256 voteCount) optionVoteCounts;
-        VoteStatus proposalStatus;
+        ProposalStatus proposalStatus;
+        VoteMutability voteMutability;
         uint256 startDate;
         uint256 endDate;
     }
@@ -53,7 +62,7 @@ contract Ballot is RBAC{
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoterAddr(_owner) returns(uint256) {
+    ) external onlyVerifiedVoterAddr(_owner) returns (uint256) {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
@@ -74,8 +83,8 @@ contract Ballot is RBAC{
         }
 
         proposal.proposalStatus = (_startDate >= block.timestamp)
-        ? VoteStatus.ACITVE
-        : VoteStatus.PENDING;
+        ? ProposalStatus.ACITVE
+        : ProposalStatus.PENDING;
 
         emit ProposalCreated(proposalCount, _owner, _title, _startDate, _endDate);
 
@@ -89,16 +98,27 @@ contract Ballot is RBAC{
         string calldata _option
         ) external onlyVerifiedVoterAddr(_voter) {
 
-        proposals[_proposalId].optionVoteCounts[_option] += 1;
+        ProposalStatus proposalStatus = getProposalStatus(_proposalId);
+        if (proposalStatus == ProposalStatus.COMPLETED) {
+            revert ProposalCompleted(_proposalId);
+        } else if (proposalStatus == ProposalStatus.PENDING) {
+            revert ProposalNotStartedYet(_proposalId);
+        }
 
+        proposals[_proposalId].optionVoteCounts[_option] += 1;
         emit VoteCast(_proposalId, _voter, _option);
     }
 
-    function getProposalStatus(uint256 _proposalId) external view returns (VoteStatus) {
+
+    function getProposalStatus(uint256 _proposalId) public view returns (ProposalStatus) {
         return proposals[_proposalId].proposalStatus;
     }
 
-    function getProposalOwner(uint256 _proposalId) external view returns (address) {
+    function getProposalVoteMutability(uint256 _proposalId) public view returns (VoteMutability) {
+        return proposals[_proposalId].voteMutability;
+    }
+
+    function getProposalOwner(uint256 _proposalId) public view returns (address) {
         return proposals[_proposalId].owner;
     }
 }
