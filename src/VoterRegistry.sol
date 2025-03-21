@@ -5,8 +5,9 @@ import {RBAC} from "./RBAC.sol";
 
 contract VoterRegistry is RBAC {
     /* Erros and Events */
-    
     error VoterAlreadyVerified(address voter);
+    error ProposalNotFound(uint256 proposalId);
+    error RecordAlreadyExists(address voter, uint256 proposalId);
 
     event VoterVerified(address indexed voter);
 
@@ -15,14 +16,16 @@ contract VoterRegistry is RBAC {
         string name;
         bool isVerified;
         uint256[] featureVector;
-        mapping(uint256 => string) selectedOption;
         uint256[] participatedProposalsId;
+        mapping(uint256 proposalId => uint256 proposalIdx) participatedProposalIndex;
+        mapping(uint256 => string) selectedOption;
+        mapping(uint256 proposalId => uint256 proposalIdx) createdProposalIndex;
         uint256[] createdProposalsId;
-
     }
 
     /* State Variables */
     mapping(address => Voter) public voters;
+    mapping(address voter => mapping(uint256 proposalId => string option)) public systemLog;
 
     /* Constructor */
     constructor() {
@@ -85,7 +88,12 @@ contract VoterRegistry is RBAC {
         uint256 _proposalId,
         string calldata _selectedOption) external {
 
+        if (voters[_voter].participatedProposalIndex[_proposalId] != 0) {
+            revert RecordAlreadyExists(_voter, _proposalId);
+        }
+
         voters[_voter].participatedProposalsId.push(_proposalId);
+        voters[_voter].participatedProposalIndex[_proposalId] = voters[_voter].participatedProposalsId.length - 1;
         voters[_voter].selectedOption[_proposalId] = _selectedOption;
     }
 
@@ -93,8 +101,48 @@ contract VoterRegistry is RBAC {
         address _voter,
         uint256 _proposalId
         ) external {
+            
+        if (voters[_voter].createdProposalIndex[_proposalId] != 0) {
+            revert RecordAlreadyExists(_voter, _proposalId);
+        }
 
         voters[_voter].createdProposalsId.push(_proposalId);
+        voters[_voter].createdProposalIndex[_proposalId] = voters[_voter].createdProposalsId.length;
+    }
+
+    function removeUserParticipation(address _voter, uint256 _proposalId) external {
+        Voter storage voter = voters[_voter];
+
+        uint256 index = voter.participatedProposalIndex[_proposalId];
+        if (index == 0) revert ProposalNotFound(_proposalId);
+
+        uint256 lastIndex = voter.participatedProposalsId.length - 1;
+        uint256 lastProposalId = voter.participatedProposalsId[lastIndex];
+
+        // Swap and pop
+        voter.participatedProposalsId[index - 1] = lastProposalId;
+        voter.participatedProposalIndex[lastProposalId] = index;
+
+        voter.participatedProposalsId.pop();
+        delete voter.participatedProposalIndex[_proposalId];
+        delete voter.selectedOption[_proposalId];
+    }
+
+    function removeUserProposal(address _voter, uint256 _proposalId) external {
+        Voter storage voter = voters[_voter];
+
+        uint256 index = voter.createdProposalIndex[_proposalId];
+        if (index == 0) revert ProposalNotFound(_proposalId);
+
+        uint256 lastIndex = voter.createdProposalsId.length - 1;
+        uint256 lastProposalId = voter.createdProposalsId[lastIndex];
+
+        // Swap and pop
+        voter.createdProposalsId[index - 1] = lastProposalId;
+        voter.createdProposalIndex[lastProposalId] = index;
+
+        voter.createdProposalsId.pop();
+        delete voter.createdProposalIndex[_proposalId];
     }
 
 }
