@@ -22,7 +22,6 @@ contract VoterRegistry is RBAC {
 
     /* State Variables */
     mapping(address => Voter) public voters;
-    RBAC public rbac;
 
     /* Constructor */
     constructor() {
