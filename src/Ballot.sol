@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {RoleBasedAccessControl} from "./RoleBasedAccessControl.sol";
+import {RBAC} from "./RBAC.sol";
 
-contract Ballot is RoleBasedAccessControl{
+contract Ballot is RBAC{
 
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);

@@ -3,9 +3,9 @@ pragma solidity ^0.8.13;
 
 import {Ballot} from "./Ballot.sol";
 import {VoterRegistry} from "./VoterRegistry.sol";
-import {RoleBasedAccessControl} from "./RoleBasedAccessControl.sol";
+import {RBAC} from "./RBAC.sol";
 
-contract Vote is RoleBasedAccessControl {
+contract Vote is RBAC {
     error ProposalCompleted(uint256 proposalId);
     error ProposalNotStartedYet(uint256 proposalId);
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import {RoleBasedAccessControl} from "./RoleBasedAccessControl.sol";
+import {RBAC} from "./RBAC.sol";
 
-contract VoterRegistry is RoleBasedAccessControl {
+contract VoterRegistry is RBAC {
     /* Erros and Events */
     error VoterAlreadyVerified(address voter);
 
