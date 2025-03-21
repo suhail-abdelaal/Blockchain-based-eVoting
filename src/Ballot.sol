@@ -17,6 +17,7 @@ contract Ballot is RoleBasedAccessControl{
     }
 
     struct Proposal {
+        address owner;
         string title;
         string[] options;
         mapping(string candidateName => uint256 voteCount) optionVoteCounts;
@@ -43,11 +44,12 @@ contract Ballot is RoleBasedAccessControl{
 
     /* Public Methods */
     function addProposal(
+        address _owner,
         string calldata _title,
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoter() {
+    ) external onlyVerifiedVoter() returns(uint256) {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
@@ -57,6 +59,7 @@ contract Ballot is RoleBasedAccessControl{
         ++proposalCount;
         Proposal storage proposal = proposals[proposalCount];
 
+        proposal.owner = _owner;
         proposal.title = _title;
         proposal.startDate = _startDate;
         proposal.endDate = _endDate;
@@ -69,5 +72,24 @@ contract Ballot is RoleBasedAccessControl{
         proposal.proposalStatus = (_startDate >= block.timestamp)
         ? VoteStatus.ACITVE
         : VoteStatus.PENDING;
+
+        return proposalCount;
+    }
+
+
+    function increaseOptionVoteCount(
+        uint256 _proposalId,
+        string calldata _option
+        ) external onlyVerifiedVoter {
+
+        proposals[_proposalId].optionVoteCounts[_option] += 1;
+    }
+
+    function getProposalStatus(uint256 _proposalId) external view returns (VoteStatus) {
+        return proposals[_proposalId].proposalStatus;
+    }
+
+    function getProposalOwner(uint256 _proposalId) external view returns (address) {
+        return proposals[_proposalId].owner;
     }
 }
