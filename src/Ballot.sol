@@ -31,12 +31,18 @@ contract Ballot is RBAC{
         COMPLETED
     }
 
+    enum VoteMutability {
+        IMMUTABLE,
+        MUTABLE
+    }
+
     struct Proposal {
         address owner;
         string title;
         string[] options;
         mapping(string candidateName => uint256 voteCount) optionVoteCounts;
         ProposalStatus proposalStatus;
+        VoteMutability voteMutability;
         uint256 startDate;
         uint256 endDate;
     }
@@ -53,7 +59,7 @@ contract Ballot is RBAC{
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoterAddr(_owner) returns(uint256) {
+    ) external onlyVerifiedVoterAddr(_owner) returns (uint256) {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
@@ -96,6 +102,10 @@ contract Ballot is RBAC{
 
     function getProposalStatus(uint256 _proposalId) external view returns (ProposalStatus) {
         return proposals[_proposalId].proposalStatus;
+    }
+
+    function getProposalVoteMutability(uint256 _proposalId) external view returns (VoteMutability) {
+        return proposals[_proposalId].voteMutability;
     }
 
     function getProposalOwner(uint256 _proposalId) external view returns (address) {
