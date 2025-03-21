@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-contract Ballot {
+import {RoleBasedAccessControl} from "./AccessControl.sol";
+
+contract Ballot is RoleBasedAccessControl{
 
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -45,7 +47,7 @@ contract Ballot {
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoter {
+    ) external onlyVerifiedVoter() {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
