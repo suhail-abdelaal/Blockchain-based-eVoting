@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {RoleBasedAccessControl} from "./AccessControl.sol";
 
-contract VoterRegistry is Ownable {
+contract VoterRegistry is RoleBasedAccessControl {
     /* Erros and Events */
     error VoterAlreadyVerified(address voter);
 
@@ -20,7 +20,7 @@ contract VoterRegistry is Ownable {
     mapping(address => Voter) public voters;
 
     /* Constructor */
-    constructor() Ownable(msg.sender) {}
+    constructor() {}
 
 
     /* Public Methods */
@@ -28,21 +28,24 @@ contract VoterRegistry is Ownable {
         address _voter,
         string calldata _voterName,
         uint256[] calldata _featureVector
-        ) public onlyOwner {
+        ) public onlyRole(DEFAULT_ADMIN_ROLE) {
 
         if (voters[_voter].isVerified) {
             revert VoterAlreadyVerified(_voter);
         }
 
-        // verify voter
+        // register voter
         voters[_voter].name = _voterName;
         voters[_voter].isVerified = true;
         voters[_voter].featureVector = _featureVector;
+
+        // verify voter
+        _grantRole(VERIFIED_VOTER, _voter);
 
         emit VoterVerified(_voter);
     }
 
     function getVoterVerification(address _voter) public view returns (bool) {
-        return voters[_voter].isVerified;
+        return hasRole(VERIFIED_VOTER, _voter);
     }
 }
