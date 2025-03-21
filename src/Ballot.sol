@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-contract Ballot {
+import {RoleBasedAccessControl} from "./RoleBasedAccessControl.sol";
+
+contract Ballot is RoleBasedAccessControl{
 
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -15,6 +17,7 @@ contract Ballot {
     }
 
     struct Proposal {
+        address owner;
         string title;
         string[] options;
         mapping(string candidateName => uint256 voteCount) optionVoteCounts;
@@ -28,24 +31,14 @@ contract Ballot {
     uint256 public proposalCount;
 
 
-    /* Modifiers */
-    modifier onlyVerifiedVoter() {
-        // if (!voterRegistry.getVoterRegistration(msg.sender)) {
-        //     revert NotRegisteredVoter(msg.sender);
-        // }
-        // if (!voterRegistry.getVoterVerification(msg.sender)) {
-        //     revert NotVerifiedVoter(msg.sender);
-        // }
-        _;
-    }
-
     /* Public Methods */
     function addProposal(
+        address _owner,
         string calldata _title,
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoter returns(uint256) {
+    ) external onlyVerifiedVoterAddr(_owner) returns(uint256) {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
@@ -55,6 +48,7 @@ contract Ballot {
         ++proposalCount;
         Proposal storage proposal = proposals[proposalCount];
 
+        proposal.owner = _owner;
         proposal.title = _title;
         proposal.startDate = _startDate;
         proposal.endDate = _endDate;
@@ -72,11 +66,20 @@ contract Ballot {
     }
 
 
-    function increaseOptionVoteCount(uint256 _proposalId, string calldata _option) external onlyVerifiedVoter {
+    function increaseOptionVoteCount(
+        address _voter,
+        uint256 _proposalId,
+        string calldata _option
+        ) external onlyVerifiedVoterAddr(_voter) {
+
         proposals[_proposalId].optionVoteCounts[_option] += 1;
     }
 
     function getProposalStatus(uint256 _proposalId) external view returns (VoteStatus) {
         return proposals[_proposalId].proposalStatus;
+    }
+
+    function getProposalOwner(uint256 _proposalId) external view returns (address) {
+        return proposals[_proposalId].owner;
     }
 }
