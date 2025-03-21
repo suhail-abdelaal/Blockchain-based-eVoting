@@ -9,6 +9,21 @@ contract Ballot is RoleBasedAccessControl{
     error ProposalStartDateTooEarly(uint256 startDate);
     error PrposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
 
+    event ProposalCreated(
+        uint256 indexed proposalId,
+        address indexed owner,
+        string title,
+        uint256 startDate,
+        uint256 endDate
+    );
+
+    event VoteCast(
+        uint256 indexed proposalId,
+        address indexed voter,
+        string option
+    );
+
+
     /* User Defined Datatypes */
     enum VoteStatus {
         PENDING,
@@ -62,6 +77,8 @@ contract Ballot is RoleBasedAccessControl{
         ? VoteStatus.ACITVE
         : VoteStatus.PENDING;
 
+        emit ProposalCreated(proposalCount, _owner, _title, _startDate, _endDate);
+
         return proposalCount;
     }
 
@@ -73,6 +90,8 @@ contract Ballot is RoleBasedAccessControl{
         ) external onlyVerifiedVoterAddr(_voter) {
 
         proposals[_proposalId].optionVoteCounts[_option] += 1;
+
+        emit VoteCast(_proposalId, _voter, _option);
     }
 
     function getProposalStatus(uint256 _proposalId) external view returns (VoteStatus) {
