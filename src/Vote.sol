@@ -22,13 +22,13 @@ contract Vote is RoleBasedAccessControl {
 
     function createProposal(
         string calldata _title,
-        string[] calldata _candidates,
+        string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
     ) external onlyVerifiedVoter returns(uint256) {
 
         // Create proposal
-        uint256 proposalId = ballot.addProposal(msg.sender, _title, _candidates, _startDate, _endDate);
+        uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, _startDate, _endDate);
         // Add proposal to the voter's history
         voterRegistry.addUserCreatedProposal(msg.sender, proposalId);
 
