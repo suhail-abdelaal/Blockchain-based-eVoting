@@ -45,7 +45,7 @@ contract Ballot {
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoter {
+    ) external onlyVerifiedVoter returns(uint256) {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
@@ -67,7 +67,10 @@ contract Ballot {
         proposal.proposalStatus = (_startDate >= block.timestamp)
         ? VoteStatus.ACITVE
         : VoteStatus.PENDING;
+
+        return proposalCount;
     }
+
 
     function increaseOptionVoteCount(uint256 _proposalId, string calldata _option) external onlyVerifiedVoter {
         proposals[_proposalId].optionVoteCounts[_option] += 1;
