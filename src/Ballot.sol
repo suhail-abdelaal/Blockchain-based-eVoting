@@ -8,6 +8,9 @@ contract Ballot is RBAC{
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
     error PrposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
+    error ProposalCompleted(uint256 proposalId);
+    error ProposalNotStartedYet(uint256 proposalId);
+
 
     event ProposalCreated(
         uint256 indexed proposalId,
@@ -95,20 +98,27 @@ contract Ballot is RBAC{
         string calldata _option
         ) external onlyVerifiedVoterAddr(_voter) {
 
-        proposals[_proposalId].optionVoteCounts[_option] += 1;
+        ProposalStatus proposalStatus = getProposalStatus(_proposalId);
+        if (proposalStatus == ProposalStatus.COMPLETED) {
+            revert ProposalCompleted(_proposalId);
+        } else if (proposalStatus == ProposalStatus.PENDING) {
+            revert ProposalNotStartedYet(_proposalId);
+        }
 
+        proposals[_proposalId].optionVoteCounts[_option] += 1;
         emit VoteCast(_proposalId, _voter, _option);
     }
 
-    function getProposalStatus(uint256 _proposalId) external view returns (ProposalStatus) {
+
+    function getProposalStatus(uint256 _proposalId) public view returns (ProposalStatus) {
         return proposals[_proposalId].proposalStatus;
     }
 
-    function getProposalVoteMutability(uint256 _proposalId) external view returns (VoteMutability) {
+    function getProposalVoteMutability(uint256 _proposalId) public view returns (VoteMutability) {
         return proposals[_proposalId].voteMutability;
     }
 
-    function getProposalOwner(uint256 _proposalId) external view returns (address) {
+    function getProposalOwner(uint256 _proposalId) public view returns (address) {
         return proposals[_proposalId].owner;
     }
 }
