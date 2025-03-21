@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-
 contract Ballot {
-    using Strings for uint256;
 
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -18,7 +15,6 @@ contract Ballot {
     }
 
     struct Proposal {
-        string id;
         string title;
         string[] candidates;
         mapping(string candidateName => uint256 voteCount) candidateVoteCounts;
@@ -59,7 +55,6 @@ contract Ballot {
         ++proposalCount;
         Proposal storage proposal = proposals[proposalCount];
 
-        proposal.id = string(abi.encodePacked("p_", proposalCount.toString()));
         proposal.title = _title;
         proposal.startDate = _startDate;
         proposal.endDate = _endDate;
