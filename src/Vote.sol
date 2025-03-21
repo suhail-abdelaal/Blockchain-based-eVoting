@@ -3,8 +3,9 @@ pragma solidity ^0.8.13;
 
 import {Ballot} from "./Ballot.sol";
 import {VoterRegistry} from "./VoterRegistry.sol";
+import {RoleBasedAccessControl} from "./RoleBasedAccessControl.sol";
 
-contract Vote {
+contract Vote is RoleBasedAccessControl {
     error ProposalCompleted(uint256 proposalId);
     error ProposalNotStartedYet(uint256 proposalId);
 
@@ -24,7 +25,7 @@ contract Vote {
         string[] calldata _candidates,
         uint256 _startDate,
         uint256 _endDate
-    ) external returns(uint256) {
+    ) external onlyVerifiedVoter returns(uint256) {
 
         // Create proposal
         uint256 proposalId = ballot.addProposal(msg.sender, _title, _candidates, _startDate, _endDate);
@@ -35,12 +36,17 @@ contract Vote {
     }
 
 
-    function castVote(address voter, uint256 proposalId, string calldata option) external {
+    function castVote(
+        address voter,
+        uint256 proposalId,
+        string calldata option) external onlyVerifiedVoter {
+
         if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.COMPLETED) {
             revert ProposalCompleted(proposalId);
         } else if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.PENDING) {
             revert ProposalNotStartedYet(proposalId);
         }
+
         // Cast vote
         ballot.increaseOptionVoteCount(voter, proposalId, option);
 
