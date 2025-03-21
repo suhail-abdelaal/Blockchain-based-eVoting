@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-contract Ballot {
+import {RoleBasedAccessControl} from "./RoleBasedAccessControl.sol";
+
+contract Ballot is RoleBasedAccessControl{
 
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -29,17 +31,6 @@ contract Ballot {
     uint256 public proposalCount;
 
 
-    /* Modifiers */
-    modifier onlyVerifiedVoter() {
-        // if (!voterRegistry.getVoterRegistration(msg.sender)) {
-        //     revert NotRegisteredVoter(msg.sender);
-        // }
-        // if (!voterRegistry.getVoterVerification(msg.sender)) {
-        //     revert NotVerifiedVoter(msg.sender);
-        // }
-        _;
-    }
-
     /* Public Methods */
     function addProposal(
         address _owner,
@@ -47,7 +38,7 @@ contract Ballot {
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoter returns(uint256) {
+    ) external onlyVerifiedVoterAddr(_owner) returns(uint256) {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
@@ -76,9 +67,10 @@ contract Ballot {
 
 
     function increaseOptionVoteCount(
+        address _voter,
         uint256 _proposalId,
         string calldata _option
-        ) external onlyVerifiedVoter {
+        ) external onlyVerifiedVoterAddr(_voter) {
 
         proposals[_proposalId].optionVoteCounts[_option] += 1;
     }
