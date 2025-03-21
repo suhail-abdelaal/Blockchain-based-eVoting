@@ -36,7 +36,11 @@ contract Vote {
         } else if (ballot.getProposalStatus(proposalId) == Ballot.VoteStatus.PENDING) {
             revert ProposalNotStartedYet(proposalId);
         }
+        // cast vote
         ballot.increaseOptionVoteCount(proposalId, option);
+
+        // add logs to the voter's history
+        voterRegistry.addUserParticipatedProposal(msg.sender, proposalId, option);
     }
 
 }
