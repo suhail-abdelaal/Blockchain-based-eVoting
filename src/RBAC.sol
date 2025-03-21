@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract RoleBasedAccessControl is AccessControl {
+contract RBAC is AccessControl {
     bytes32 public constant VERIFIED_VOTER = keccak256("VERIFIED_VOTER_ROLE");
 
     constructor() {
