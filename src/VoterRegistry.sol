@@ -22,9 +22,11 @@ contract VoterRegistry is RBAC {
 
     /* State Variables */
     mapping(address => Voter) public voters;
+    RBAC public rbac;
 
     /* Constructor */
-    constructor() {}
+    constructor() {
+    }
 
 
     /* Public Methods */
@@ -33,6 +35,7 @@ contract VoterRegistry is RBAC {
         string calldata _voterName,
         uint256[] calldata _featureVector
         ) external onlyAdmin {
+
 
         if (voters[_voter].isVerified) {
             revert VoterAlreadyVerified(_voter);
@@ -46,13 +49,13 @@ contract VoterRegistry is RBAC {
         }
 
         // verify voter
-        grantRole(VERIFIED_VOTER, _voter);
+        _verifyVoter(_voter);
 
         emit VoterVerified(_voter);
     }
 
     function getVoterVerification(address _voter) external view returns (bool) {
-        return hasRole(VERIFIED_VOTER, _voter);
+        return isVoterVerified(_voter);
     }
 
     function getVoterParticipatedProposals(

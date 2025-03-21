@@ -30,5 +30,17 @@ contract RBAC is AccessControl {
         _grantRole(role, account);
     }
 
+    function revokeRole(bytes32 role, address account) public override onlyAdmin {
+        _revokeRole(role, account);
+    }
+
+    function _verifyVoter(address _voter) internal {
+        grantRole(VERIFIED_VOTER, _voter);
+    }
+
+    function isVoterVerified(address _voter) public view returns(bool) {
+        return hasRole(VERIFIED_VOTER, _voter);
+    }
+
 
 }
