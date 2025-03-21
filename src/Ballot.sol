@@ -75,7 +75,11 @@ contract Ballot {
     }
 
 
-    function increaseOptionVoteCount(uint256 _proposalId, string calldata _option) external onlyVerifiedVoter {
+    function increaseOptionVoteCount(
+        uint256 _proposalId,
+        string calldata _option
+        ) external onlyVerifiedVoter {
+
         proposals[_proposalId].optionVoteCounts[_option] += 1;
     }
 
