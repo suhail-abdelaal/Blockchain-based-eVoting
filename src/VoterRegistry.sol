@@ -32,7 +32,7 @@ contract VoterRegistry is RoleBasedAccessControl {
         address _voter,
         string calldata _voterName,
         uint256[] calldata _featureVector
-        ) public onlyAdmin {
+        ) external onlyAdmin {
 
         if (voters[_voter].isVerified) {
             revert VoterAlreadyVerified(_voter);
