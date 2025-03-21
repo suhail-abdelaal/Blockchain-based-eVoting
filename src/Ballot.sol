@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
-
 contract Ballot {
-    using Strings for uint256;
 
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -18,10 +15,9 @@ contract Ballot {
     }
 
     struct Proposal {
-        string id;
         string title;
-        string[] candidates;
-        mapping(string candidateName => uint256 voteCount) candidateVoteCounts;
+        string[] options;
+        mapping(string candidateName => uint256 voteCount) optionVoteCounts;
         VoteStatus proposalStatus;
         uint256 startDate;
         uint256 endDate;
@@ -45,8 +41,8 @@ contract Ballot {
 
     /* Public Methods */
     function addProposal(
-        string memory _title,
-        string[] memory _candidates,
+        string calldata _title,
+        string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
     ) external onlyVerifiedVoter {
@@ -59,14 +55,13 @@ contract Ballot {
         ++proposalCount;
         Proposal storage proposal = proposals[proposalCount];
 
-        proposal.id = string(abi.encodePacked("p_", proposalCount.toString()));
         proposal.title = _title;
         proposal.startDate = _startDate;
         proposal.endDate = _endDate;
 
-        for (uint256 i = 0; i < _candidates.length; ++i) {
-            proposal.candidates.push(_candidates[i]);
-            proposal.candidateVoteCounts[_candidates[i]] = 0;
+        for (uint256 i = 0; i < _options.length; ++i) {
+            proposal.options.push(_options[i]);
+            proposal.optionVoteCounts[_options[i]] = 0;
         }
 
         proposal.proposalStatus = (_startDate >= block.timestamp)
