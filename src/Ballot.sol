@@ -6,9 +6,9 @@ import {VoterRegistry} from "./VoterRegistry.sol";
 
 contract Ballot is RBAC {
 
-    /* Erros and Events */
+    /* Errors and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
-    error PrposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
+    error ProposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
     error ProposalCompleted(uint256 proposalId);
     error ProposalNotStartedYet(uint256 proposalId);
     error VoteAlreadyCast(uint256 proposalId, address voter);
@@ -37,7 +37,7 @@ contract Ballot is RBAC {
     /* User Defined Datatypes */
     enum ProposalStatus {
         PENDING,
-        ACITVE,
+        ACTIVE,
         COMPLETED
     }
 
@@ -87,7 +87,7 @@ contract Ballot is RBAC {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
-            revert PrposalEndDateLessThanStartDate(_startDate, _endDate);
+            revert ProposalEndDateLessThanStartDate(_startDate, _endDate);
         }
 
         Proposal storage proposal = proposals[proposalCount];
@@ -104,7 +104,7 @@ contract Ballot is RBAC {
         }
 
         proposal.proposalStatus = (_startDate >= block.timestamp)
-        ? ProposalStatus.ACITVE
+        ? ProposalStatus.ACTIVE
         : ProposalStatus.PENDING;
 
         emit ProposalCreated(proposalCount, _owner, _title, _startDate, _endDate);

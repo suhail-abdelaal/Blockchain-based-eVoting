@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import {RBAC} from "./RBAC.sol";
 
 contract VoterRegistry is RBAC {
-    /* Erros and Events */
+    /* Errors and Events */
     error VoterAlreadyVerified(address voter);
     error ProposalNotFound(uint256 proposalId);
     error RecordAlreadyExists(address voter, uint256 proposalId);
