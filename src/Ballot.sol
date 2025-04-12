@@ -7,12 +7,14 @@ import {VoterRegistry} from "./VoterRegistry.sol";
 contract Ballot is RBAC {
 
     /* Errors and Events */
+    error ProposalNotFound(uint256 proposalId);
     error ProposalStartDateTooEarly(uint256 startDate);
     error ProposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
     error ProposalCompleted(uint256 proposalId);
     error ProposalNotStartedYet(uint256 proposalId);
     error VoteAlreadyCast(uint256 proposalId, address voter);
     error ImmutableVote(uint256 proposalId, address voter);
+    error VoterNotParticipated(address voter, uint256 proposalId);
 
     event ProposalCreated(uint256 indexed proposalId, address indexed owner, string title, uint256 startDate, uint256 endDate);
     event VoteCast(uint256 indexed proposalId, address indexed voter, string option);
@@ -42,10 +44,17 @@ contract Ballot is RBAC {
         proposalCount = 1;
     }
 
-    modifier onActiveProposals(uint256 _proposalId) {
-        ProposalStatus status = proposals[_proposalId].proposalStatus;
-        if (status == ProposalStatus.COMPLETED) revert ProposalCompleted(_proposalId);
-        if (status == ProposalStatus.PENDING) revert ProposalNotStartedYet(_proposalId);
+    modifier onActiveProposals(uint256 proposalId) {
+        if (proposalId > proposalCount) revert ProposalNotFound(proposalId);
+        ProposalStatus status = proposals[proposalId].proposalStatus;
+        if (status == ProposalStatus.COMPLETED) revert ProposalCompleted(proposalId);
+        if (status == ProposalStatus.PENDING) revert ProposalNotStartedYet(proposalId);
+        _;
+    }
+
+    modifier onlyParticipants(uint256 proposalId)  {
+        if (!voterRegistry.checkVoterParticipation(msg.sender, proposalId))
+            revert VoterNotParticipated(msg.sender, proposalId);
         _;
     }
 
@@ -76,21 +85,27 @@ contract Ballot is RBAC {
         string calldata _option
     ) external onlyVerifiedVoter onActiveProposals(_proposalId) {
         address voter = msg.sender;
+        if (voterRegistry.checkVoterParticipation(voter, _proposalId))
+            revert VoteAlreadyCast(_proposalId, voter);
+
         _castVote(_proposalId, voter, _option);
     }
 
     function retractVote(
         uint256 _proposalId,
         string calldata _option
-    ) external onlyVerifiedVoter onActiveProposals(_proposalId) {
+    ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_proposalId) {
         address voter = msg.sender;
+        if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
+            revert ImmutableVote(_proposalId, voter);
+            
         _retractVote(_proposalId, voter, _option);
     }
 
     function changeVote(
         uint256 _proposalId,
         string calldata _newOption
-    ) external onlyVerifiedVoter onActiveProposals(_proposalId) {
+    ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_proposalId) {
         address voter = msg.sender;
         if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
             revert ImmutableVote(_proposalId, voter);
@@ -117,9 +132,6 @@ contract Ballot is RBAC {
     // ------------------- Internal Helpers -------------------
 
     function _castVote(uint256 _proposalId, address voter, string calldata _option) internal {
-        if (voterRegistry.checkVoterParticipation(voter, _proposalId))
-            revert VoteAlreadyCast(_proposalId, voter);
-
         proposals[_proposalId].optionVoteCounts[_option] += 1;
         voterRegistry.recordUserParticipation(voter, _proposalId, _option);
 
@@ -127,9 +139,6 @@ contract Ballot is RBAC {
     }
 
     function _retractVote(uint256 _proposalId, address voter, string calldata _option) internal {
-        if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
-            revert ImmutableVote(_proposalId, voter);
-
         proposals[_proposalId].optionVoteCounts[_option] -= 1;
         voterRegistry.removeUserParticipation(voter, _proposalId);
 
