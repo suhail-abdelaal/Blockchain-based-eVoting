@@ -122,7 +122,7 @@ contract Ballot is RBAC {
         ) external onlyVerifiedVoter {
 
         ProposalStatus proposalStatus = getProposalStatus(_proposalId);
-        voter = msg.sender;
+        address voter = msg.sender;
 
         if (proposalStatus == ProposalStatus.COMPLETED) {
             revert ProposalCompleted(_proposalId);
@@ -150,7 +150,7 @@ contract Ballot is RBAC {
         ) external {
 
         ProposalStatus proposalStatus = getProposalStatus(_proposalId);
-        voter = msg.sender;
+        address voter = msg.sender;
         
         if (proposalStatus == ProposalStatus.COMPLETED) {
             revert ProposalCompleted(_proposalId);
