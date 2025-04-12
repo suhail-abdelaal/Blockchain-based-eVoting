@@ -91,7 +91,6 @@ contract Ballot is RBAC {
         }
 
         Proposal storage proposal = proposals[proposalCount];
-        ++proposalCount;
 
         proposal.owner = _owner;
         proposal.title = _title;
@@ -107,7 +106,12 @@ contract Ballot is RBAC {
         ? ProposalStatus.ACTIVE
         : ProposalStatus.PENDING;
 
+        // Add proposal to the voter's history
+        voterRegistry.recordUserCreatedProposal(msg.sender, proposalCount);
+
         emit ProposalCreated(proposalCount, _owner, _title, _startDate, _endDate);
+
+        ++proposalCount;
 
         return proposalCount;
     }
@@ -133,6 +137,8 @@ contract Ballot is RBAC {
         }
 
         proposals[_proposalId].optionVoteCounts[_option] += 1;
+        
+        // Add proposal to the voter's history
         voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
 
         emit VoteCast(_proposalId, _voter, _option);
