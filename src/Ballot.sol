@@ -78,12 +78,11 @@ contract Ballot is RBAC {
 
     /* Public Methods */
     function addProposal(
-        address _owner,
         string calldata _title,
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoterAddr(_owner) returns (uint256) {
+    ) external onlyVerifiedVoter returns (uint256) {
         if (_startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(_startDate);
         } else if (_endDate <= _startDate) {
@@ -92,7 +91,7 @@ contract Ballot is RBAC {
 
         Proposal storage proposal = proposals[proposalCount];
 
-        proposal.owner = _owner;
+        proposal.owner = msg.sender;
         proposal.title = _title;
         proposal.startDate = _startDate;
         proposal.endDate = _endDate;
@@ -107,9 +106,9 @@ contract Ballot is RBAC {
         : ProposalStatus.PENDING;
 
         // Add proposal to the voter's history
-        voterRegistry.recordUserCreatedProposal(msg.sender, proposalCount);
+        voterRegistry.recordUserCreatedProposal(proposal.owner, proposalCount);
 
-        emit ProposalCreated(proposalCount, _owner, _title, _startDate, _endDate);
+        emit ProposalCreated(proposalCount, proposal.owner, _title, _startDate, _endDate);
 
         ++proposalCount;
 
@@ -118,12 +117,13 @@ contract Ballot is RBAC {
 
 
     function castVote(
-        address _voter,
         uint256 _proposalId,
         string calldata _option
-        ) external onlyVerifiedVoterAddr(_voter) {
+        ) external onlyVerifiedVoter {
 
         ProposalStatus proposalStatus = getProposalStatus(_proposalId);
+        voter = msg.sender;
+
         if (proposalStatus == ProposalStatus.COMPLETED) {
             revert ProposalCompleted(_proposalId);
         } else if (proposalStatus == ProposalStatus.PENDING) {
@@ -131,25 +131,27 @@ contract Ballot is RBAC {
         }
 
         if (proposals[_proposalId].voteMutability == VoteMutability.IMMUTABLE
-            && voterRegistry.checkVoterParticipation(_voter, _proposalId)
+            && voterRegistry.checkVoterParticipation(voter, _proposalId)
         ) {
-            revert VoteAlreadyCast(_proposalId, _voter);
+            revert VoteAlreadyCast(_proposalId, voter);
         }
 
         proposals[_proposalId].optionVoteCounts[_option] += 1;
-        
-        // Add proposal to the voter's history
-        voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
 
-        emit VoteCast(_proposalId, _voter, _option);
+        // Add proposal to the voter's history
+        voterRegistry.recordUserParticipation(voter, _proposalId, _option);
+
+        emit VoteCast(_proposalId, voter, _option);
     }
 
-    function retractVote(address _voter,
+    function retractVote(
         uint256 _proposalId,
         string calldata _option
         ) external {
 
         ProposalStatus proposalStatus = getProposalStatus(_proposalId);
+        voter = msg.sender;
+        
         if (proposalStatus == ProposalStatus.COMPLETED) {
             revert ProposalCompleted(_proposalId);
         } else if (proposalStatus == ProposalStatus.PENDING) {
@@ -157,9 +159,9 @@ contract Ballot is RBAC {
         }
 
         proposals[_proposalId].optionVoteCounts[_option] -= 1;
-        voterRegistry.removeUserParticipation(_voter, _proposalId);
+        voterRegistry.removeUserParticipation(voter, _proposalId);
 
-        emit VoteRetracted(_proposalId, _voter, _option);
+        emit VoteRetracted(_proposalId, voter, _option);
 
     }
 

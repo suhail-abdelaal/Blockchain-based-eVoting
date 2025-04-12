@@ -25,19 +25,27 @@ contract Vote is RBAC {
     ) external onlyVerifiedVoter returns(uint256) {
 
         // Create proposal
-        uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, _startDate, _endDate);
+        uint256 proposalId = ballot.addProposal(_title, _options, _startDate, _endDate);
 
         return proposalId;
     }
 
 
     function castVote(
-        address voter,
         uint256 proposalId,
         string calldata option) external onlyVerifiedVoter {
 
         // Cast vote
-        ballot.castVote(voter, proposalId, option);
+        ballot.castVote(msg.sender, proposalId, option);
+    }
+
+
+    function retractVote(
+        uint256 proposalId,
+        string calldata option) external onlyVerifiedVoter {
+
+        // Cast vote
+        ballot.retractVote(msg.sender, proposalId, option);
     }
 
 }
