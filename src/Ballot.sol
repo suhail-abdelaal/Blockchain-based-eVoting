@@ -14,12 +14,35 @@ contract Ballot is RBAC {
     error ProposalNotStartedYet(uint256 proposalId);
     error VoteAlreadyCast(uint256 proposalId, address voter);
     error ImmutableVote(uint256 proposalId, address voter);
-    error VoterNotParticipated(address voter, uint256 proposalId);
+    error VoterNotParticipated(uint256 proposalId, address voter);
+    error VoteOptionIdentical(uint256 proposalId, string oldOption, string newOption);
 
-    event ProposalCreated(uint256 indexed proposalId, address indexed owner, string title, uint256 startDate, uint256 endDate);
-    event VoteCast(uint256 indexed proposalId, address indexed voter, string option);
-    event VoteRetracted(uint256 indexed proposalId, address indexed voter, string option);
-    event VoteChanged(uint256 indexed proposalId, address indexed voter, string oldOption, string newOption);
+    event ProposalCreated(
+        uint256 indexed proposalId, 
+        address indexed owner, 
+        string title, 
+        uint256 startDate, 
+        uint256 endDate
+        );
+
+    event VoteCast(
+        uint256 indexed proposalId, 
+        address indexed voter, 
+        string option
+        );
+
+    event VoteRetracted(
+        uint256 indexed proposalId, 
+        address indexed voter, 
+        string option
+        );
+
+    event VoteChanged(
+        uint256 indexed proposalId, 
+        address indexed voter, 
+        string oldOption, 
+        string newOption
+        );
 
     enum ProposalStatus { PENDING, ACTIVE, COMPLETED }
     enum VoteMutability { IMMUTABLE, MUTABLE }
@@ -41,7 +64,7 @@ contract Ballot is RBAC {
 
     constructor(address _voterRegistry) {
         voterRegistry = VoterRegistry(_voterRegistry);
-        proposalCount = 1;
+        proposalCount = 0;
     }
 
     modifier onActiveProposals(uint256 proposalId) {
@@ -54,7 +77,7 @@ contract Ballot is RBAC {
 
     modifier onlyParticipants(uint256 proposalId)  {
         if (!voterRegistry.checkVoterParticipation(msg.sender, proposalId))
-            revert VoterNotParticipated(msg.sender, proposalId);
+            revert VoterNotParticipated(proposalId, msg.sender);
         _;
     }
 
@@ -69,6 +92,7 @@ contract Ballot is RBAC {
         if (_endDate <= _startDate)
             revert ProposalEndDateLessThanStartDate(_startDate, _endDate);
 
+        ++proposalCount;
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
         _initializeProposal(proposal, _title, _options, _startDate, _endDate, msg.sender);
@@ -76,7 +100,6 @@ contract Ballot is RBAC {
         voterRegistry.recordUserCreatedProposal(msg.sender, id);
         emit ProposalCreated(id, msg.sender, _title, _startDate, _endDate);
 
-        ++proposalCount;
         return id;
     }
 
@@ -111,6 +134,9 @@ contract Ballot is RBAC {
             revert ImmutableVote(_proposalId, voter);
 
         string memory previousOption = voterRegistry.getVoterSelectedOption(voter, _proposalId);
+        if (cmpStrings(previousOption, _newOption)) 
+            revert VoteOptionIdentical(_proposalId, previousOption, _newOption);
+
         _retractVote(_proposalId, voter, previousOption);
         _castVote(_proposalId, voter, _newOption);
 
@@ -165,5 +191,10 @@ contract Ballot is RBAC {
             proposal.options.push(_options[i]);
             proposal.optionVoteCounts[_options[i]] = 0;
         }
+    }
+
+    function cmpStrings(string memory a, string memory b) internal pure returns (bool) {
+        // Convert the strings to bytes and check if they are of the same length
+        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 }
