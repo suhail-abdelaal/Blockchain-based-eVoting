@@ -164,7 +164,7 @@ contract Ballot is RBAC {
         emit VoteCast(_proposalId, voter, _option);
     }
 
-    function _retractVote(uint256 _proposalId, address voter, string calldata _option) internal {
+    function _retractVote(uint256 _proposalId, address voter, string memory _option) internal {
         proposals[_proposalId].optionVoteCounts[_option] -= 1;
         voterRegistry.removeUserParticipation(voter, _proposalId);
 
