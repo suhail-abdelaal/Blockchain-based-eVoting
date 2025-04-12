@@ -83,6 +83,11 @@ contract VoterRegistry is RBAC {
         return voters[_voter].createdProposalsId;
     }
 
+    function checkVoterParticipation(address _voter, uint256 _proposalId) public view returns (bool) {
+        uint256 index = voters[_voter].participatedProposalIndex[_proposalId];
+        return (index == 0) ? false : true;
+    }
+
     function recordUserParticipation(
         address _voter,
         uint256 _proposalId,
@@ -101,7 +106,7 @@ contract VoterRegistry is RBAC {
         address _voter,
         uint256 _proposalId
         ) external {
-            
+
         if (voters[_voter].createdProposalIndex[_proposalId] != 0) {
             revert RecordAlreadyExists(_voter, _proposalId);
         }

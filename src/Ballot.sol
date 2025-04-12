@@ -2,8 +2,9 @@
 pragma solidity ^0.8.13;
 
 import {RBAC} from "./RBAC.sol";
+import {VoterRegistry} from "./VoterRegistry.sol";
 
-contract Ballot is RBAC{
+contract Ballot is RBAC {
 
     /* Erros and Events */
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -50,7 +51,6 @@ contract Ballot is RBAC{
         string title;
         string[] options;
         mapping(string candidateName => uint256 voteCount) optionVoteCounts;
-        mapping(address voter => bool hasVoted) participants;
         ProposalStatus proposalStatus;
         VoteMutability voteMutability;
         uint256 startDate;
@@ -60,6 +60,12 @@ contract Ballot is RBAC{
     /* State Variables */
     mapping(uint256 => Proposal) public proposals;
     uint256 public proposalCount;
+    VoterRegistry public voterRegistry;
+
+    constructor (address _voterRegistry) {
+        voterRegistry = VoterRegistry(_voterRegistry);
+        proposalCount = 1;
+    }
 
     // ---------------------------------Modifiers---------------------------------
     // modifier onlyOnce(uint256 _proposalId, address _voter) {
@@ -84,8 +90,8 @@ contract Ballot is RBAC{
             revert PrposalEndDateLessThanStartDate(_startDate, _endDate);
         }
 
-        ++proposalCount;
         Proposal storage proposal = proposals[proposalCount];
+        ++proposalCount;
 
         proposal.owner = _owner;
         proposal.title = _title;
@@ -121,13 +127,13 @@ contract Ballot is RBAC{
         }
 
         if (proposals[_proposalId].voteMutability == VoteMutability.IMMUTABLE
-            && proposals[_proposalId].participants[_voter]
+            && voterRegistry.checkVoterParticipation(_voter, _proposalId)
         ) {
             revert VoteAlreadyCast(_proposalId, _voter);
         }
 
         proposals[_proposalId].optionVoteCounts[_option] += 1;
-        proposals[_proposalId].participants[_voter] = true;
+        voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
 
         emit VoteCast(_proposalId, _voter, _option);
     }
@@ -138,7 +144,7 @@ contract Ballot is RBAC{
         ) external {
 
         proposals[_proposalId].optionVoteCounts[_option] -= 1;
-        proposals[_proposalId].participants[_voter] = false;
+        voterRegistry.removeUserParticipation(_voter, _proposalId);
 
         emit VoteRetracted(_proposalId, _voter, _option);
 
