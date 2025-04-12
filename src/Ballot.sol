@@ -143,6 +143,13 @@ contract Ballot is RBAC {
         string calldata _option
         ) external {
 
+        ProposalStatus proposalStatus = getProposalStatus(_proposalId);
+        if (proposalStatus == ProposalStatus.COMPLETED) {
+            revert ProposalCompleted(_proposalId);
+        } else if (proposalStatus == ProposalStatus.PENDING) {
+            revert ProposalNotStartedYet(_proposalId);
+        }
+
         proposals[_proposalId].optionVoteCounts[_option] -= 1;
         voterRegistry.removeUserParticipation(_voter, _proposalId);
 
