@@ -48,4 +48,13 @@ contract Vote is RBAC {
         ballot.retractVote(proposalId, option);
     }
 
+
+    function changeVote(
+        uint256 proposalId,
+        string calldata option) external onlyVerifiedVoter {
+
+        // Change vote
+        ballot.changeVote(proposalId, option);
+    }
+
 }
