@@ -12,8 +12,8 @@ contract Vote is RBAC {
 
 
     constructor() {
-        ballot = new Ballot();
         voterRegistry = new VoterRegistry();
+        ballot = new Ballot(address(voterRegistry));
     }
 
 
