@@ -76,8 +76,8 @@ contract Ballot is RBAC {
     }
 
     modifier onlyParticipants(uint256 proposalId)  {
-        if (!voterRegistry.checkVoterParticipation(msg.sender, proposalId))
-            revert VoterNotParticipated(proposalId, msg.sender);
+        if (!voterRegistry.checkVoterParticipation(tx.origin, proposalId))
+            revert VoterNotParticipated(proposalId, tx.origin);
         _;
     }
 
@@ -92,13 +92,15 @@ contract Ballot is RBAC {
         if (_endDate <= _startDate)
             revert ProposalEndDateLessThanStartDate(_startDate, _endDate);
 
+        address voter = tx.origin;
+
         ++proposalCount;
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
-        _initializeProposal(proposal, _title, _options, _startDate, _endDate, msg.sender);
+        _initializeProposal(proposal, voter, _title, _options, _startDate, _endDate);
 
-        voterRegistry.recordUserCreatedProposal(msg.sender, id);
-        emit ProposalCreated(id, msg.sender, _title, _startDate, _endDate);
+        voterRegistry.recordUserCreatedProposal(voter, id);
+        emit ProposalCreated(id, voter, _title, _startDate, _endDate);
 
         return id;
     }
@@ -107,7 +109,7 @@ contract Ballot is RBAC {
         uint256 _proposalId,
         string calldata _option
     ) external onlyVerifiedVoter onActiveProposals(_proposalId) {
-        address voter = msg.sender;
+        address voter = tx.origin;
         if (voterRegistry.checkVoterParticipation(voter, _proposalId))
             revert VoteAlreadyCast(_proposalId, voter);
 
@@ -118,7 +120,7 @@ contract Ballot is RBAC {
         uint256 _proposalId,
         string calldata _option
     ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_proposalId) {
-        address voter = msg.sender;
+        address voter = tx.origin;
         if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
             revert ImmutableVote(_proposalId, voter);
             
@@ -129,7 +131,7 @@ contract Ballot is RBAC {
         uint256 _proposalId,
         string calldata _newOption
     ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_proposalId) {
-        address voter = msg.sender;
+        address voter = tx.origin;
         if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
             revert ImmutableVote(_proposalId, voter);
 
@@ -173,11 +175,11 @@ contract Ballot is RBAC {
 
     function _initializeProposal(
         Proposal storage proposal,
+        address _owner,
         string calldata _title,
         string[] calldata _options,
         uint256 _startDate,
-        uint256 _endDate,
-        address _owner
+        uint256 _endDate
     ) internal {
         proposal.owner = _owner;
         proposal.title = _title;
