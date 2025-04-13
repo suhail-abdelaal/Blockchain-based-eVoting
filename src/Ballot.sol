@@ -183,13 +183,14 @@ contract Ballot is RBAC {
         proposal.title = _title;
         proposal.startDate = _startDate;
         proposal.endDate = _endDate;
-        proposal.proposalStatus = (_startDate >= block.timestamp)
-            ? ProposalStatus.ACTIVE
-            : ProposalStatus.PENDING;
+        // proposal.proposalStatus = (_startDate >= block.timestamp)
+            // ? ProposalStatus.ACTIVE
+            // : ProposalStatus.PENDING;
+        proposal.proposalStatus = ProposalStatus.PENDING;
 
         for (uint256 i = 0; i < _options.length; ++i) {
             proposal.options.push(_options[i]);
-            proposal.optionVoteCounts[_options[i]] = 0;
+            // proposal.optionVoteCounts[_options[i]] = 0;
         }
     }
 
