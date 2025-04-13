@@ -13,7 +13,7 @@ contract Vote is RBAC {
 
     constructor() {
         voterRegistry = new VoterRegistry();
-        ballot = new Ballot(address(voterRegistry));
+        ballot = new Ballot(address(this), address(voterRegistry));
     }
 
 
@@ -25,7 +25,7 @@ contract Vote is RBAC {
     ) external onlyVerifiedVoter returns(uint256) {
 
         // Create proposal
-        uint256 proposalId = ballot.addProposal(_title, _options, _startDate, _endDate);
+        uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, _startDate, _endDate);
 
         return proposalId;
     }
@@ -36,7 +36,7 @@ contract Vote is RBAC {
         string calldata option) external onlyVerifiedVoter {
 
         // Cast vote
-        ballot.castVote(proposalId, option);
+        ballot.castVote(msg.sender, proposalId, option);
     }
 
 
@@ -45,7 +45,7 @@ contract Vote is RBAC {
         string calldata option) external onlyVerifiedVoter {
 
         // Cast vote
-        ballot.retractVote(proposalId, option);
+        ballot.retractVote(msg.sender, proposalId, option);
     }
 
 
@@ -54,7 +54,7 @@ contract Vote is RBAC {
         string calldata option) external onlyVerifiedVoter {
 
         // Change vote
-        ballot.changeVote(proposalId, option);
+        ballot.changeVote(msg.sender, proposalId, option);
     }
 
 }
