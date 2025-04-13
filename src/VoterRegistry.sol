@@ -14,7 +14,6 @@ contract VoterRegistry is RBAC {
     /* User Defined Datatypes */
     struct Voter {
         string name;
-        bool isVerified;
         uint256[] featureVector;
         uint256[] participatedProposalsId;
         mapping(uint256 proposalId => uint256 proposalIdx) participatedProposalIndex;
@@ -40,13 +39,12 @@ contract VoterRegistry is RBAC {
         ) external onlyAdmin {
 
 
-        if (voters[_voter].isVerified) {
+        if (isVoterVerified(_voter)) {
             revert VoterAlreadyVerified(_voter);
         }
 
         // register voter
         voters[_voter].name = _voterName;
-        voters[_voter].isVerified = true;
         for (uint256 i = 0; i < _featureVector.length; ++i) {
             voters[_voter].featureVector.push(_featureVector[i]);
         }
