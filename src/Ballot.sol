@@ -134,7 +134,7 @@ contract Ballot is RBAC {
             revert ImmutableVote(_proposalId, voter);
 
         string memory previousOption = voterRegistry.getVoterSelectedOption(voter, _proposalId);
-        if (cmpStrings(previousOption, _newOption)) 
+        if (_cmpStrings(previousOption, _newOption)) 
             revert VoteOptionIdentical(_proposalId, previousOption, _newOption);
 
         _retractVote(_proposalId, voter, previousOption);
@@ -194,7 +194,7 @@ contract Ballot is RBAC {
         }
     }
 
-    function cmpStrings(string memory a, string memory b) internal pure returns (bool) {
+    function _cmpStrings(string memory a, string memory b) internal pure returns (bool) {
         // Convert the strings to bytes and check if they are of the same length
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
