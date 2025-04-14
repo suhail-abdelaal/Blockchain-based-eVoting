@@ -172,7 +172,7 @@ contract Ballot is RBAC {
     ) external onlyVerifiedVoterAddr(_voter) 
         onActiveProposals(_proposalId) 
         onlyParticipants(_voter, _proposalId) 
-        onlyValidOptions(_proposalId, _option) {
+        onlyValidOptions(_proposalId, _newOption) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -192,6 +192,15 @@ contract Ballot is RBAC {
 
     // ------------------- Public Methods -------------------
 
+
+    function getVoteCount(
+        uint256 _proposalId, 
+        string calldata _option
+        ) external view returns (uint256) {
+        return proposals[_proposalId].optionVoteCounts[_option];
+    }
+    
+    
     function getProposalStatus(uint256 _proposalId) public view returns (ProposalStatus) {
         return proposals[_proposalId].proposalStatus;
     }

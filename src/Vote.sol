@@ -25,7 +25,7 @@ contract Vote is RBAC {
     ) external onlyVerifiedVoter returns(uint256) {
 
         // Create proposal
-        uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, ballot.VoteMutability.MUTABLE, _startDate, _endDate);
+        uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, Ballot.VoteMutability.MUTABLE, _startDate, _endDate);
 
         return proposalId;
     }
@@ -62,7 +62,7 @@ contract Vote is RBAC {
         uint256 proposalId, 
         string calldata option
         ) external onlyVerifiedVoter view returns (uint256) {
-        return ballot.proposals[proposalId].optionVoteCounts[option];
+        return ballot.getVoteCount(proposalId, option);
     }
 
 }
