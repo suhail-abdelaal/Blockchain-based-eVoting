@@ -53,7 +53,7 @@ contract Ballot is RBAC {
         address owner;
         string title;
         string[] options;
-        mapping(string candidateName => uint256 voteCount) optionVoteCounts;
+        mapping(string => uint256) optionVoteCounts;
         ProposalStatus proposalStatus;
         VoteMutability voteMutability;
         uint256 startDate;
@@ -99,7 +99,9 @@ contract Ballot is RBAC {
         uint256 _startDate,
         uint256 _endDate
     ) external onlyVerifiedVoter returns (uint256) {
-        require(msg.sender == authorizedCaller, NotAuthorized(msg.sender));
+        if (msg.sender != authorizedCaller) {
+            revert NotAuthorized(msg.sender);
+        }
 
         if (_startDate <= block.timestamp + 10 minutes)
             revert ProposalStartDateTooEarly(_startDate);
@@ -123,8 +125,9 @@ contract Ballot is RBAC {
         uint256 _proposalId,
         string calldata _option
     ) external onlyVerifiedVoter onActiveProposals(_proposalId) {
-        require(msg.sender == authorizedCaller, NotAuthorized(msg.sender));
-        
+        if (msg.sender != authorizedCaller) {
+            revert NotAuthorized(msg.sender);
+        }        
         if (voterRegistry.checkVoterParticipation(_voter, _proposalId))
             revert VoteAlreadyCast(_proposalId, _voter);
 
@@ -137,8 +140,9 @@ contract Ballot is RBAC {
         uint256 _proposalId,
         string calldata _option
     ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_voter, _proposalId) {
-        require(msg.sender == authorizedCaller, NotAuthorized(msg.sender));
-        
+        if (msg.sender != authorizedCaller) {
+            revert NotAuthorized(msg.sender);
+        }        
         if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
             revert ImmutableVote(_proposalId, _voter);
             
@@ -151,8 +155,9 @@ contract Ballot is RBAC {
         uint256 _proposalId,
         string calldata _newOption
     ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_voter, _proposalId) {
-        require(msg.sender == authorizedCaller, NotAuthorized(msg.sender));
-        
+        if (msg.sender != authorizedCaller) {
+            revert NotAuthorized(msg.sender);
+        }        
         if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
             revert ImmutableVote(_proposalId, _voter);
 
