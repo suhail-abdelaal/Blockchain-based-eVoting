@@ -98,7 +98,7 @@ contract Ballot is RBAC {
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoter returns (uint256) {
+    ) external onlyVerifiedVoterAddr(_voter) returns (uint256) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }
@@ -124,7 +124,7 @@ contract Ballot is RBAC {
         address _voter,
         uint256 _proposalId,
         string calldata _option
-    ) external onlyVerifiedVoter onActiveProposals(_proposalId) {
+    ) external onlyVerifiedVoterAddr(_voter) onActiveProposals(_proposalId) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -139,7 +139,9 @@ contract Ballot is RBAC {
         address _voter,
         uint256 _proposalId,
         string calldata _option
-    ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_voter, _proposalId) {
+    ) external onlyVerifiedVoterAddr(_voter) 
+        onActiveProposals(_proposalId) 
+        onlyParticipants(_voter, _proposalId) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -154,7 +156,9 @@ contract Ballot is RBAC {
         address _voter,
         uint256 _proposalId,
         string calldata _newOption
-    ) external onlyVerifiedVoter onActiveProposals(_proposalId) onlyParticipants(_voter, _proposalId) {
+    ) external onlyVerifiedVoterAddr(_voter) 
+        onActiveProposals(_proposalId) 
+        onlyParticipants(_voter, _proposalId) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -222,7 +226,7 @@ contract Ballot is RBAC {
         // proposal.proposalStatus = (_startDate >= block.timestamp)
             // ? ProposalStatus.ACTIVE
             // : ProposalStatus.PENDING;
-        proposal.proposalStatus = ProposalStatus.PENDING;
+        proposal.proposalStatus = ProposalStatus.ACTIVE;
 
         for (uint256 i = 0; i < _options.length; ++i) {
             proposal.options.push(_options[i]);
