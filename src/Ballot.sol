@@ -179,8 +179,8 @@ contract Ballot is RBAC {
             revert ImmutableVote(_proposalId, _voter);
 
         string memory previousOption = voterRegistry.getVoterSelectedOption(_voter, _proposalId);
-        if (!proposals[proposalId].optionExistence[option])
-            revert InvalidOption(proposalId, option);
+        if (!proposals[_proposalId].optionExistence[previousOption])
+            revert InvalidOption(_proposalId, previousOption);
         if (_cmpStrings(previousOption, _newOption)) 
             revert VoteOptionIdentical(_proposalId, previousOption, _newOption);
 
