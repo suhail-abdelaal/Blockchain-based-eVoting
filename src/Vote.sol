@@ -45,7 +45,7 @@ contract Vote is RBAC {
         string calldata option) external onlyVerifiedVoter {
 
         // Cast vote
-        ballot.retractVote(msg.sender, proposalId, option);
+        ballot.retractVote(msg.sender, proposalId);
     }
 
 

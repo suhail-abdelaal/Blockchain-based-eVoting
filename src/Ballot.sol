@@ -78,7 +78,7 @@ contract Ballot is RBAC {
     // ------------------- Modifiers -------------------
 
     modifier onActiveProposals(uint256 proposalId) {
-        if (proposalId > proposalCount) revert ProposalNotFound(proposalId);
+        // if (proposalId > proposalCount) revert ProposalNotFound(proposalId);
         ProposalStatus status = proposals[proposalId].proposalStatus;
         if (status == ProposalStatus.COMPLETED) revert ProposalCompleted(proposalId);
         if (status == ProposalStatus.PENDING) revert ProposalNotStartedYet(proposalId);
@@ -150,19 +150,21 @@ contract Ballot is RBAC {
 
     function retractVote(
         address _voter,
-        uint256 _proposalId,
-        string calldata _option
+        uint256 _proposalId
     ) external onlyVerifiedVoterAddr(_voter) 
         onActiveProposals(_proposalId) 
-        onlyParticipants(_voter, _proposalId) 
-        onlyValidOptions(_proposalId, _option) {
+        onlyParticipants(_voter, _proposalId) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
         if (getProposalVoteMutability(_proposalId) == VoteMutability.IMMUTABLE)
             revert ImmutableVote(_proposalId, _voter);
-            
-        _retractVote(_proposalId, _voter, _option);
+
+        string memory option = voterRegistry.getVoterSelectedOption(_voter, _proposalId);
+        if (!proposals[_proposalId].optionExistence[option])
+            revert InvalidOption(_proposalId, option);
+
+        _retractVote(_proposalId, _voter, option);
     }
 
 
@@ -182,6 +184,7 @@ contract Ballot is RBAC {
         string memory previousOption = voterRegistry.getVoterSelectedOption(_voter, _proposalId);
         if (!proposals[_proposalId].optionExistence[previousOption])
             revert InvalidOption(_proposalId, previousOption);
+
         if (_cmpStrings(previousOption, _newOption)) 
             revert VoteOptionIdentical(_proposalId, previousOption, _newOption);
 
@@ -227,16 +230,17 @@ contract Ballot is RBAC {
     function _castVote(uint256 _proposalId, address _voter, string calldata _option) internal {
         proposals[_proposalId].optionVoteCounts[_option] += 1;
         proposals[_proposalId].isParticipant[_voter] = true;
-        voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
+        // voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
 
         emit VoteCast(_proposalId, _voter, _option);
     }
 
 
     function _retractVote(uint256 _proposalId, address _voter, string memory _option) internal {
+
         proposals[_proposalId].optionVoteCounts[_option] -= 1;
         proposals[_proposalId].isParticipant[_voter] = false;
-        voterRegistry.removeUserParticipation(_voter, _proposalId);
+        // voterRegistry.removeUserParticipation(_voter, _proposalId);
 
         emit VoteRetracted(_proposalId, _voter, _option);
     }
