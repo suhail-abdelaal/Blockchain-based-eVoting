@@ -81,10 +81,6 @@ contract VoterRegistry is RBAC {
         return voters[_voter].createdProposalsId;
     }
 
-    function checkVoterParticipation(address _voter, uint256 _proposalId) public view returns (bool) {
-        uint256 index = voters[_voter].participatedProposalIndex[_proposalId];
-        return (index == 0 && voters[_voter].participatedProposalsId.length > 1) ? false : true;
-    }
 
     function recordUserParticipation(
         address _voter,

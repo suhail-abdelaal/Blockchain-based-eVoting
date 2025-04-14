@@ -58,6 +58,7 @@ contract Ballot is RBAC {
         mapping(string => uint256) optionVoteCounts;
         ProposalStatus proposalStatus;
         VoteMutability voteMutability;
+        mapping(address => bool) isParticipant;
         uint256 startDate;
         uint256 endDate;
     }
@@ -86,7 +87,7 @@ contract Ballot is RBAC {
 
 
     modifier onlyParticipants(address voter, uint256 proposalId)  {
-        if (!voterRegistry.checkVoterParticipation(voter, proposalId))
+        if (!checkVoterParticipation(voter, proposalId))
             revert VoterNotParticipated(proposalId, voter);
         _;
     }
@@ -140,7 +141,7 @@ contract Ballot is RBAC {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
-        if (voterRegistry.checkVoterParticipation(_voter, _proposalId))
+        if (checkVoterParticipation(_voter, _proposalId))
             revert VoteAlreadyCast(_proposalId, _voter);
 
         _castVote(_proposalId, _voter, _option);
@@ -194,6 +195,10 @@ contract Ballot is RBAC {
     // ------------------- Public Methods -------------------
 
 
+    function checkVoterParticipation(address _voter, uint256 _proposalId) public view returns (bool) {
+        return proposals[_proposalId].isParticipant[_voter];
+    }
+
     function getVoteCount(
         uint256 _proposalId, 
         string calldata _option
@@ -219,19 +224,21 @@ contract Ballot is RBAC {
 
     // ------------------- Internal Methods -------------------
 
-    function _castVote(uint256 _proposalId, address voter, string calldata _option) internal {
+    function _castVote(uint256 _proposalId, address _voter, string calldata _option) internal {
         proposals[_proposalId].optionVoteCounts[_option] += 1;
-        voterRegistry.recordUserParticipation(voter, _proposalId, _option);
+        proposals[_proposalId].isParticipant[_voter] = true;
+        voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
 
-        emit VoteCast(_proposalId, voter, _option);
+        emit VoteCast(_proposalId, _voter, _option);
     }
 
 
-    function _retractVote(uint256 _proposalId, address voter, string memory _option) internal {
+    function _retractVote(uint256 _proposalId, address _voter, string memory _option) internal {
         proposals[_proposalId].optionVoteCounts[_option] -= 1;
-        voterRegistry.removeUserParticipation(voter, _proposalId);
+        proposals[_proposalId].isParticipant[_voter] = false;
+        voterRegistry.removeUserParticipation(_voter, _proposalId);
 
-        emit VoteRetracted(_proposalId, voter, _option);
+        emit VoteRetracted(_proposalId, _voter, _option);
     }
 
 
