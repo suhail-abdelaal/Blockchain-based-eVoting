@@ -171,8 +171,7 @@ contract Ballot is RBAC {
         string calldata _newOption
     ) external onlyVerifiedVoterAddr(_voter) 
         onActiveProposals(_proposalId) 
-        onlyParticipants(_voter, _proposalId) 
-        onlyValidOptions(_proposalId, _newOption) {
+        onlyParticipants(_voter, _proposalId) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -180,6 +179,8 @@ contract Ballot is RBAC {
             revert ImmutableVote(_proposalId, _voter);
 
         string memory previousOption = voterRegistry.getVoterSelectedOption(_voter, _proposalId);
+        if (!proposals[proposalId].optionExistence[option])
+            revert InvalidOption(proposalId, option);
         if (_cmpStrings(previousOption, _newOption)) 
             revert VoteOptionIdentical(_proposalId, previousOption, _newOption);
 
