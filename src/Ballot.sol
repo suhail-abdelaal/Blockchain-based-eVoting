@@ -18,6 +18,7 @@ contract Ballot is RBAC {
     error ImmutableVote(uint256 proposalId, address voter);
     error VoterNotParticipated(uint256 proposalId, address voter);
     error VoteOptionIdentical(uint256 proposalId, string oldOption, string newOption);
+    error InvalidOption(uint256 proposalId, string option);
 
     event ProposalCreated(
         uint256 indexed proposalId, 
@@ -53,6 +54,7 @@ contract Ballot is RBAC {
         address owner;
         string title;
         string[] options;
+        mapping(string => bool) optionExistence;
         mapping(string => uint256) optionVoteCounts;
         ProposalStatus proposalStatus;
         VoteMutability voteMutability;
@@ -86,6 +88,12 @@ contract Ballot is RBAC {
     modifier onlyParticipants(address voter, uint256 proposalId)  {
         if (!voterRegistry.checkVoterParticipation(voter, proposalId))
             revert VoterNotParticipated(proposalId, voter);
+        _;
+    }
+
+    modifier onlyValidOptions(uint256 proposalId, string calldata option) {
+        if (!proposals[proposalId].optionExistence[option])
+            revert InvalidOption(proposalId, option);
         _;
     }
 
@@ -125,7 +133,10 @@ contract Ballot is RBAC {
         address _voter,
         uint256 _proposalId,
         string calldata _option
-    ) external onlyVerifiedVoterAddr(_voter) onActiveProposals(_proposalId) {
+    ) external 
+        onlyVerifiedVoterAddr(_voter) 
+        onActiveProposals(_proposalId) 
+        onlyValidOptions(_proposalId, _option) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -142,7 +153,8 @@ contract Ballot is RBAC {
         string calldata _option
     ) external onlyVerifiedVoterAddr(_voter) 
         onActiveProposals(_proposalId) 
-        onlyParticipants(_voter, _proposalId) {
+        onlyParticipants(_voter, _proposalId) 
+        onlyValidOptions(_proposalId, _option) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -159,7 +171,8 @@ contract Ballot is RBAC {
         string calldata _newOption
     ) external onlyVerifiedVoterAddr(_voter) 
         onActiveProposals(_proposalId) 
-        onlyParticipants(_voter, _proposalId) {
+        onlyParticipants(_voter, _proposalId) 
+        onlyValidOptions(_proposalId, _option) {
         if (msg.sender != authorizedCaller) {
             revert NotAuthorized(msg.sender);
         }        
@@ -230,9 +243,10 @@ contract Ballot is RBAC {
             // : ProposalStatus.PENDING;
         proposal.proposalStatus = ProposalStatus.ACTIVE;
         proposal.voteMutability = _voteMutability;
-        
+
         for (uint256 i = 0; i < _options.length; ++i) {
             proposal.options.push(_options[i]);
+            proposal.optionExistence[_options[i]] = true;
             // proposal.optionVoteCounts[_options[i]] = 0;
         }
     }
