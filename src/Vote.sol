@@ -57,4 +57,12 @@ contract Vote is RBAC {
         ballot.changeVote(msg.sender, proposalId, option);
     }
 
+
+    function getVoteCount(
+        uint256 proposalId, 
+        string calldata option
+        ) external onlyVerifiedVoter view returns (uint256) {
+        return ballot.proposals[proposalId].optionVoteCounts[option];
+    }
+
 }
