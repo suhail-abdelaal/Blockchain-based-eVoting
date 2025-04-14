@@ -96,6 +96,7 @@ contract Ballot is RBAC {
         address _voter,
         string calldata _title,
         string[] calldata _options,
+        VoteMutability _voteMutability,
         uint256 _startDate,
         uint256 _endDate
     ) external onlyVerifiedVoterAddr(_voter) returns (uint256) {
@@ -111,7 +112,7 @@ contract Ballot is RBAC {
         ++proposalCount;
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
-        _initializeProposal(proposal, _voter, _title, _options, _startDate, _endDate);
+        _initializeProposal(proposal, _voter, _title, _options, _voteMutability, _startDate, _endDate);
 
         voterRegistry.recordUserCreatedProposal(_voter, id);
         emit ProposalCreated(id, _voter, _title, _startDate, _endDate);
@@ -216,6 +217,7 @@ contract Ballot is RBAC {
         address _owner,
         string calldata _title,
         string[] calldata _options,
+        VoteMutability _voteMutability,
         uint256 _startDate,
         uint256 _endDate
     ) internal {
@@ -227,7 +229,8 @@ contract Ballot is RBAC {
             // ? ProposalStatus.ACTIVE
             // : ProposalStatus.PENDING;
         proposal.proposalStatus = ProposalStatus.ACTIVE;
-
+        proposal.voteMutability = _voteMutability;
+        
         for (uint256 i = 0; i < _options.length; ++i) {
             proposal.options.push(_options[i]);
             // proposal.optionVoteCounts[_options[i]] = 0;
