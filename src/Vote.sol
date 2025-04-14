@@ -41,8 +41,7 @@ contract Vote is RBAC {
 
 
     function retractVote(
-        uint256 proposalId,
-        string calldata option) external onlyVerifiedVoter {
+        uint256 proposalId) external onlyVerifiedVoter {
 
         // Cast vote
         ballot.retractVote(msg.sender, proposalId);

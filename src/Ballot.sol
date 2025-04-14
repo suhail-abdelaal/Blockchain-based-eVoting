@@ -230,7 +230,7 @@ contract Ballot is RBAC {
     function _castVote(uint256 _proposalId, address _voter, string calldata _option) internal {
         proposals[_proposalId].optionVoteCounts[_option] += 1;
         proposals[_proposalId].isParticipant[_voter] = true;
-        // voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
+        voterRegistry.recordUserParticipation(_voter, _proposalId, _option);
 
         emit VoteCast(_proposalId, _voter, _option);
     }
