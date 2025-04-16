@@ -19,7 +19,9 @@ contract RBAC is AccessControl {
         _;
     }
 
-    modifier onlyVerifiedVoterAddr(address _voter) {
+    modifier onlyVerifiedVoterAddr(
+        address _voter
+    ) {
         _checkRole(VERIFIED_VOTER, _voter);
         _;
     }
@@ -29,21 +31,29 @@ contract RBAC is AccessControl {
         _;
     }
 
-    function grantRole(bytes32 role, address account) public override onlyAdmin {
+    function grantRole(
+        bytes32 role,
+        address account
+    ) public override onlyAdmin {
         _grantRole(role, account);
     }
 
-    function revokeRole(bytes32 role, address account) public override onlyAdmin {
+    function revokeRole(
+        bytes32 role,
+        address account
+    ) public override onlyAdmin {
         _revokeRole(role, account);
     }
 
-    function _verifyVoter(address _voter) internal {
+    function _verifyVoter(
+        address _voter
+    ) internal {
         _grantRole(VERIFIED_VOTER, _voter);
     }
 
-    function isVoterVerified(address _voter) public view returns(bool) {
+    function isVoterVerified(
+        address _voter
+    ) public view returns (bool) {
         return hasRole(VERIFIED_VOTER, _voter);
     }
-
-
 }

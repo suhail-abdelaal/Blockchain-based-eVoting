@@ -9,3 +9,9 @@ remappings = [
     "@openzeppelin/=lib/openzeppelin-contracts/",
 ]
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+[fmt]
+line_length = 80            
+tab_width = 4                       
+number_underscore = "thousands"  
+multiline_func_header = "params_first" 
+wrap_comments = true

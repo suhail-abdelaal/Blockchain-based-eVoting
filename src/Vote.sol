@@ -6,62 +6,60 @@ import {VoterRegistry} from "./VoterRegistry.sol";
 import {RBAC} from "./RBAC.sol";
 
 contract Vote is RBAC {
-
     Ballot public immutable ballot;
     VoterRegistry public immutable voterRegistry;
-
 
     constructor() {
         voterRegistry = new VoterRegistry();
         ballot = new Ballot(address(this), address(voterRegistry));
     }
 
-
     function createProposal(
         string calldata _title,
         string[] calldata _options,
         uint256 _startDate,
         uint256 _endDate
-    ) external onlyVerifiedVoter returns(uint256) {
-
+    ) external onlyVerifiedVoter returns (uint256) {
         // Create proposal
-        uint256 proposalId = ballot.addProposal(msg.sender, _title, _options, Ballot.VoteMutability.MUTABLE, _startDate, _endDate);
+        uint256 proposalId = ballot.addProposal(
+            msg.sender,
+            _title,
+            _options,
+            Ballot.VoteMutability.MUTABLE,
+            _startDate,
+            _endDate
+        );
 
         return proposalId;
     }
 
-
     function castVote(
         uint256 proposalId,
-        string calldata option) external onlyVerifiedVoter {
-
+        string calldata option
+    ) external onlyVerifiedVoter {
         // Cast vote
         ballot.castVote(msg.sender, proposalId, option);
     }
 
-
     function retractVote(
-        uint256 proposalId) external onlyVerifiedVoter {
-
+        uint256 proposalId
+    ) external onlyVerifiedVoter {
         // Cast vote
         ballot.retractVote(msg.sender, proposalId);
     }
 
-
     function changeVote(
         uint256 proposalId,
-        string calldata option) external onlyVerifiedVoter {
-
+        string calldata option
+    ) external onlyVerifiedVoter {
         // Change vote
         ballot.changeVote(msg.sender, proposalId, option);
     }
 
-
     function getVoteCount(
-        uint256 proposalId, 
+        uint256 proposalId,
         string calldata option
-        ) external onlyVerifiedVoter view returns (uint256) {
+    ) external view onlyVerifiedVoter returns (uint256) {
         return ballot.getVoteCount(proposalId, option);
     }
-
 }
