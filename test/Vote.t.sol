@@ -112,7 +112,7 @@ contract VoteTest is Test {
 
         assertEq(count, 0);
         assertEq(usr2Count, 0);
-        assertEq(usr2Count, 0);
+        assertEq(usr3Count, 0);
 
     }
 
