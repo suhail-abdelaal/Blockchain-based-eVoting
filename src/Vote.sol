@@ -10,8 +10,7 @@ contract Vote is RBACWrapper {
     Ballot private immutable ballot;
     VoterRegistry private immutable voterRegistry;
 
-    constructor(
-    ) RBACWrapper(address(new RBAC())) {
+    constructor() RBACWrapper(address(new RBAC())) {
         address rbac = getRBACaddr();
         voterRegistry = new VoterRegistry(rbac);
         ballot = new Ballot(rbac, address(this), address(voterRegistry));

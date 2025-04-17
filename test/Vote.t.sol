@@ -12,14 +12,13 @@ contract VoteTest is Test {
     Ballot public ballot;
     VoterRegistry public voterRegistry;
 
-
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
     address public user3 = makeAddr("user3");
     address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
 
     function setUp() public {
-        vm.deal(admin, 100001000010000 ether);
+        vm.deal(admin, 100_001_000_010_000 ether);
         vm.startPrank(admin);
         vote = new Vote();
         RBAC rbac = RBAC(vote.getRBACaddr());
@@ -32,9 +31,9 @@ contract VoteTest is Test {
         vote.verifyVoter(user1);
         vote.verifyVoter(user2);
         vote.verifyVoter(user3);
-        vm.deal(user1, 10000 ether);
-        vm.deal(user2, 10000 ether);
-        vm.deal(user3, 10000 ether);
+        vm.deal(user1, 10_000 ether);
+        vm.deal(user2, 10_000 ether);
+        vm.deal(user3, 10_000 ether);
     }
 
     function test_VerifiedUser() public view {
@@ -61,7 +60,6 @@ contract VoteTest is Test {
     }
 
     function test_VoteCast() public {
-
         vm.startPrank(user1);
         createProposal(2);
         vm.stopPrank();
@@ -95,7 +93,6 @@ contract VoteTest is Test {
         vm.prank(user1);
         createProposal(1);
 
-
         vm.startPrank(user2);
         vote.castVote(1, "one");
         vote.retractVote(1);
@@ -113,11 +110,11 @@ contract VoteTest is Test {
         assertEq(count, 0);
         assertEq(usr2Count, 0);
         assertEq(usr3Count, 0);
-
     }
 
-    function test_VoterRecords(uint256 num) public {
-
+    function test_VoterRecords(
+        uint256 num
+    ) public {
         vm.assume(num <= 1000);
         vm.startPrank(user1);
 
@@ -135,7 +132,9 @@ contract VoteTest is Test {
         assertEq(count, 0);
     }
 
-    function createProposal(uint256 n) public {
+    function createProposal(
+        uint256 n
+    ) public {
         for (uint256 i = 0; i < n; ++i) {
             string[] memory options = new string[](3);
             options[0] = "one";

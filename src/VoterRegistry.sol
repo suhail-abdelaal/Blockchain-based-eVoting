@@ -144,12 +144,15 @@ contract VoterRegistry is RBACWrapper {
         delete voter.createdProposalIndex[proposalId];
     }
 
-
-    function getParticipatedProposalsCount(address voter) external view returns (uint256) {
+    function getParticipatedProposalsCount(
+        address voter
+    ) external view returns (uint256) {
         return voters[voter].participatedProposalsId.length;
     }
 
-    function getCreatedProposalsCount(address voter) external view returns (uint256) {
+    function getCreatedProposalsCount(
+        address voter
+    ) external view returns (uint256) {
         return voters[voter].createdProposalsId.length;
     }
 }

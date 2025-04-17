@@ -23,24 +23,27 @@ contract RBAC is AccessControl {
         _checkRole(VERIFIED_VOTER, _voter);
     }
 
-    function onlyAdmin(address admin) public view {
+    function onlyAdmin(
+        address admin
+    ) public view {
         _checkRole(ADMIN, admin);
     }
 
-    function grantRole(bytes32 role, address account, address admin) external  {
+    function grantRole(bytes32 role, address account, address admin) external {
         onlyAdmin(admin);
         _grantRole(role, account);
     }
 
-    function revokeRole(bytes32 role, address account, address admin) external {
+    function revokeRole(
+        bytes32 role,
+        address account,
+        address admin
+    ) external {
         onlyAdmin(admin);
         _revokeRole(role, account);
     }
 
-    function verifyVoter(
-        address voter,
-        address admin
-    ) external {
+    function verifyVoter(address voter, address admin) external {
         onlyAdmin(admin);
         _grantRole(VERIFIED_VOTER, voter);
     }
