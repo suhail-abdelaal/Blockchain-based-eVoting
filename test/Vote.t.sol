@@ -91,6 +91,31 @@ contract VoteTest is Test {
         assertEq(count23, 0);
     }
 
+    function test_RetractVote() public {
+        vm.prank(user1);
+        createProposal(1);
+
+
+        vm.startPrank(user2);
+        vote.castVote(1, "one");
+        vote.retractVote(1);
+        vm.stopPrank();
+
+        vm.startPrank(user3);
+        vote.castVote(1, "one");
+        vote.retractVote(1);
+
+        uint256 count = vote.getVoteCount(1, "one");
+        uint256 usr2Count = voterRegistry.getParticipatedProposalsCount(user2);
+        uint256 usr3Count = voterRegistry.getParticipatedProposalsCount(user3);
+        vm.stopPrank();
+
+        assertEq(count, 0);
+        assertEq(usr2Count, 0);
+        assertEq(usr2Count, 0);
+
+    }
+
     function test_VoterRecords(uint256 num) public {
 
         vm.assume(num <= 1000);
