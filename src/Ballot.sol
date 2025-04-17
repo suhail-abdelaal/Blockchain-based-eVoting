@@ -255,7 +255,7 @@ contract Ballot is RBACWrapper {
 
     // ------------------- Internal Methods -------------------
 
-    function castVote(
+    function _castVote(
         uint256 proposalId,
         address voter,
         string calldata option
@@ -267,7 +267,7 @@ contract Ballot is RBACWrapper {
         emit VoteCast(proposalId, voter, option);
     }
 
-    function retractVote(
+    function _retractVote(
         uint256 proposalId,
         address voter,
         string memory option
@@ -279,7 +279,7 @@ contract Ballot is RBACWrapper {
         emit VoteRetracted(proposalId, voter, option);
     }
 
-    function initializeProposal(
+    function _initializeProposal(
         Proposal storage proposal,
         address owner,
         string calldata title,
@@ -305,7 +305,7 @@ contract Ballot is RBACWrapper {
         }
     }
 
-    function cmpStrings(
+    function _cmpStrings(
         string memory a,
         string memory b
     ) internal pure returns (bool) {
