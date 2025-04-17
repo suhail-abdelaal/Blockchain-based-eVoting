@@ -58,18 +58,18 @@ contract Vote is RBACWrapper {
         ballot.changeVote(msg.sender, proposalId, option);
     }
 
-    function grantRole(bytes32 role, address account) public onlyAdmin {
-        rbac.grantRole(role, account);
+    function grantRole(bytes32 role, address account) public {
+        rbac.grantRole(role, account, msg.sender);
     }
 
-    function revokeRole(bytes32 role, address account) public onlyAdmin {
-        rbac.revokeRole(role, account);
+    function revokeRole(bytes32 role, address account) public {
+        rbac.revokeRole(role, account, msg.sender);
     }
 
     function verifyVoter(
         address voter
-    ) external onlyAdmin {
-        rbac.verifyVoter(voter);
+    ) public {
+        rbac.verifyVoter(voter, msg.sender);
     }
 
     function getVoteCount(

@@ -38,7 +38,7 @@ contract VoterRegistry is RBACWrapper {
         address voter,
         string calldata voterName,
         uint256[] calldata featureVector
-    ) external onlyAdmin {
+    ) external onlyAdmin(msg.sender) {
         if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
         // register voter
@@ -48,7 +48,7 @@ contract VoterRegistry is RBACWrapper {
         }
 
         // verify voter
-        rbac.verifyVoter(voter);
+        // rbac.verifyVoter(voter);
 
         emit VoterVerified(voter);
     }

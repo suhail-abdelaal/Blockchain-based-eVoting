@@ -4,7 +4,7 @@ pragma solidity ^0.8.23;
 import "./RBAC.sol";
 
 abstract contract RBACWrapper {
-    RBAC public rbac;
+    RBAC internal rbac;
 
     constructor(
         address _rbac
@@ -16,8 +16,8 @@ abstract contract RBACWrapper {
         return address(rbac);
     }
 
-    modifier onlyAdmin() {
-        rbac.onlyAdmin();
+    modifier onlyAdmin(address admin) {
+        rbac.onlyAdmin(admin);
         _;
     }
 
