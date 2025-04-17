@@ -274,7 +274,7 @@ contract Ballot is RBACWrapper {
     ) internal {
         proposals[proposalId].optionVoteCounts[option] -= 1;
         proposals[proposalId].isParticipant[voter] = false;
-        // voterRegistry.removeUserParticipation(voter, proposalId);
+        voterRegistry.removeUserParticipation(voter, proposalId);
 
         emit VoteRetracted(proposalId, voter, option);
     }
