@@ -60,7 +60,36 @@ contract VoteTest is Test {
         assertEq(count, 3, "wrong proposal count");
     }
 
+    function test_VoteCast() public {
 
+        vm.startPrank(user1);
+        createProposal(2);
+        vm.stopPrank();
+
+        vm.startPrank(user2);
+        vote.castVote(1, "one");
+        vote.castVote(2, "one");
+        vm.stopPrank();
+
+        vm.startPrank(user3);
+        vote.castVote(1, "one");
+        vote.castVote(2, "two");
+
+        uint256 count11 = vote.getVoteCount(1, "one");
+        uint256 count12 = vote.getVoteCount(1, "two");
+        uint256 count13 = vote.getVoteCount(1, "three");
+        uint256 count21 = vote.getVoteCount(2, "one");
+        uint256 count22 = vote.getVoteCount(2, "two");
+        uint256 count23 = vote.getVoteCount(2, "three");
+        vm.stopPrank();
+
+        assertEq(count11, 2);
+        assertEq(count12, 0);
+        assertEq(count13, 0);
+        assertEq(count21, 1);
+        assertEq(count22, 1);
+        assertEq(count23, 0);
+    }
 
     function test_VoterRecords(uint256 num) public {
 
