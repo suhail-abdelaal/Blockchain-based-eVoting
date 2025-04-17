@@ -4,7 +4,6 @@ pragma solidity ^0.8.23;
 import {Ballot} from "./Ballot.sol";
 import {VoterRegistry} from "./VoterRegistry.sol";
 import {RBAC} from "./RBAC.sol";
-
 contract Vote is RBAC {
     Ballot public immutable ballot;
     VoterRegistry public immutable voterRegistry;
@@ -62,4 +61,9 @@ contract Vote is RBAC {
     ) external view onlyVerifiedVoter returns (uint256) {
         return ballot.getVoteCount(proposalId, option);
     }
+
+    function getProposalCount() external view returns (uint256) {
+        return ballot.getProposalCount();
+    }
+
 }

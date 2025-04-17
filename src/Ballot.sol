@@ -244,6 +244,10 @@ contract Ballot is RBAC {
         return proposals[_proposalId].optionVoteCounts[_option];
     }
 
+    function getProposalCount() external view returns (uint256) {
+        return proposalCount;
+    }
+
     function getProposalStatus(
         uint256 _proposalId
     ) public view returns (ProposalStatus) {
