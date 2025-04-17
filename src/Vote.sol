@@ -11,11 +11,10 @@ contract Vote is RBACWrapper {
     VoterRegistry private immutable voterRegistry;
 
     constructor(
-        address _rbac
-    ) RBACWrapper(_rbac) {
-        rbac = RBAC(_rbac);
-        voterRegistry = new VoterRegistry(_rbac);
-        ballot = new Ballot(_rbac, address(this), address(voterRegistry));
+    ) RBACWrapper(address(new RBAC())) {
+        address rbac = getRBACaddr();
+        voterRegistry = new VoterRegistry(rbac);
+        ballot = new Ballot(rbac, address(this), address(voterRegistry));
     }
 
     function createProposal(

@@ -12,7 +12,7 @@ abstract contract RBACWrapper {
         rbac = RBAC(_rbac);
     }
 
-    function _getRBACaddr() internal view returns (address) {
+    function getRBACaddr() public view returns (address) {
         return address(rbac);
     }
 

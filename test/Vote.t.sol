@@ -21,8 +21,8 @@ contract VoteTest is Test {
     function setUp() public {
         vm.deal(admin, 100001000010000 ether);
         vm.startPrank(admin);
-        RBAC rbac = new RBAC();
-        vote = new Vote(address(rbac));
+        vote = new Vote();
+        RBAC rbac = RBAC(vote.getRBACaddr());
         rbac.grantRole(keccak256("ADMIN_ROLE"), address(vote));
 
         voterRegistry = VoterRegistry(vote.getVoterRegistry());
