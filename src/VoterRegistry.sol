@@ -91,7 +91,7 @@ contract VoterRegistry is RBACWrapper {
 
         voters[voter].participatedProposalsId.push(proposalId);
         voters[voter].participatedProposalIndex[proposalId] =
-            voters[voter].participatedProposalsId.length - 1;
+            voters[voter].participatedProposalsId.length;
         voters[voter].selectedOption[proposalId] = selectedOption;
     }
 
