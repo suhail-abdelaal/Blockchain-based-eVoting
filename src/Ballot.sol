@@ -121,9 +121,7 @@ contract Ballot is RBACWrapper {
         uint256 startDate,
         uint256 endDate
     ) external onlyVerifiedVoterAddr(voter) returns (uint256) {
-        if (msg.sender != authorizedCaller) {
-            revert NotAuthorized(msg.sender);
-        }
+        if (msg.sender != authorizedCaller) revert NotAuthorized(msg.sender);
 
         if (startDate <= block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(startDate);
@@ -155,9 +153,7 @@ contract Ballot is RBACWrapper {
         onActiveProposals(proposalId)
         onlyValidOptions(proposalId, option)
     {
-        if (msg.sender != authorizedCaller) {
-            revert NotAuthorized(msg.sender);
-        }
+        if (msg.sender != authorizedCaller) revert NotAuthorized(msg.sender);
         if (checkVoterParticipation(voter, proposalId)) {
             revert VoteAlreadyCast(proposalId, voter);
         }
@@ -174,9 +170,7 @@ contract Ballot is RBACWrapper {
         onActiveProposals(proposalId)
         onlyParticipants(voter, proposalId)
     {
-        if (msg.sender != authorizedCaller) {
-            revert NotAuthorized(msg.sender);
-        }
+        if (msg.sender != authorizedCaller) revert NotAuthorized(msg.sender);
         if (getProposalVoteMutability(proposalId) == VoteMutability.IMMUTABLE) {
             revert ImmutableVote(proposalId, voter);
         }
@@ -200,9 +194,7 @@ contract Ballot is RBACWrapper {
         onActiveProposals(proposalId)
         onlyParticipants(voter, proposalId)
     {
-        if (msg.sender != authorizedCaller) {
-            revert NotAuthorized(msg.sender);
-        }
+        if (msg.sender != authorizedCaller) revert NotAuthorized(msg.sender);
         if (getProposalVoteMutability(proposalId) == VoteMutability.IMMUTABLE) {
             revert ImmutableVote(proposalId, voter);
         }

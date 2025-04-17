@@ -39,9 +39,7 @@ contract VoterRegistry is RBACWrapper {
         string calldata voterName,
         uint256[] calldata featureVector
     ) external onlyAdmin {
-        if (isVoterVerified(voter)) {
-            revert VoterAlreadyVerified(voter);
-        }
+        if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
         // register voter
         voters[voter].name = voterName;
