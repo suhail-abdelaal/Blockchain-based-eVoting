@@ -133,7 +133,7 @@ contract Ballot is RBACWrapper {
         ++proposalCount;
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
-        initializeProposal(
+        _initializeProposal(
             proposal, voter, title, options, voteMutability, startDate, endDate
         );
 
@@ -158,7 +158,7 @@ contract Ballot is RBACWrapper {
             revert VoteAlreadyCast(proposalId, voter);
         }
 
-        castVote(proposalId, voter, option);
+        _castVote(proposalId, voter, option);
     }
 
     function retractVote(
@@ -181,7 +181,7 @@ contract Ballot is RBACWrapper {
             revert InvalidOption(proposalId, option);
         }
 
-        retractVote(proposalId, voter, option);
+        _retractVote(proposalId, voter, option);
     }
 
     function changeVote(
@@ -205,12 +205,12 @@ contract Ballot is RBACWrapper {
             revert InvalidOption(proposalId, previousOption);
         }
 
-        if (cmpStrings(previousOption, newOption)) {
+        if (_cmpStrings(previousOption, newOption)) {
             revert VoteOptionIdentical(proposalId, previousOption, newOption);
         }
 
-        retractVote(proposalId, voter, previousOption);
-        castVote(proposalId, voter, newOption);
+        _retractVote(proposalId, voter, previousOption);
+        _castVote(proposalId, voter, newOption);
 
         emit VoteChanged(proposalId, voter, previousOption, newOption);
     }

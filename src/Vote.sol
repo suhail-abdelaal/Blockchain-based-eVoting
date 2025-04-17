@@ -7,8 +7,8 @@ import {RBAC} from "./RBAC.sol";
 import {RBACWrapper} from "./RBACWrapper.sol";
 
 contract Vote is RBACWrapper {
-    Ballot public immutable ballot;
-    VoterRegistry public immutable voterRegistry;
+    Ballot private immutable ballot;
+    VoterRegistry private immutable voterRegistry;
 
     constructor(
         address _rbac
@@ -46,7 +46,7 @@ contract Vote is RBACWrapper {
 
     function retractVote(
         uint256 proposalId
-    ) external onlyVerifiedVoter {
+    ) external onlyVerifiedVoterAddr(msg.sender) {
         // Cast vote
         ballot.retractVote(msg.sender, proposalId);
     }
@@ -54,7 +54,7 @@ contract Vote is RBACWrapper {
     function changeVote(
         uint256 proposalId,
         string calldata option
-    ) external onlyVerifiedVoter {
+    ) external onlyVerifiedVoterAddr(msg.sender) {
         // Change vote
         ballot.changeVote(msg.sender, proposalId, option);
     }
@@ -87,5 +87,13 @@ contract Vote is RBACWrapper {
         returns (uint256)
     {
         return ballot.getProposalCount();
+    }
+
+    function getVoterRegistry() external view returns (address) {
+        return address(voterRegistry);
+    }
+
+    function getBallot() external view returns (address) {
+        return address(ballot);
     }
 }
