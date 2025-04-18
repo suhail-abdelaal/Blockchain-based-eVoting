@@ -18,22 +18,24 @@ contract VoteTest is Test {
     address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
 
     function setUp() public {
-        vm.deal(admin, 100_001_000_010_000 ether);
+        vm.deal(admin, 100 ether);
         vm.startPrank(admin);
-        vote = new Vote();
-        RBAC rbac = RBAC(vote.getRBACaddr());
-        rbac.grantRole(keccak256("ADMIN_ROLE"), address(vote));
 
+        vote = new Vote();
+        vote.grantRole(keccak256("ADMIN_ROLE"), address(vote));
         voterRegistry = VoterRegistry(vote.getVoterRegistry());
         ballot = Ballot(vote.getBallot());
-        vm.stopPrank();
 
         vote.verifyVoter(user1);
         vote.verifyVoter(user2);
         vote.verifyVoter(user3);
-        vm.deal(user1, 10_000 ether);
-        vm.deal(user2, 10_000 ether);
-        vm.deal(user3, 10_000 ether);
+
+        vm.stopPrank();
+
+
+        vm.deal(user1, 100 ether);
+        vm.deal(user2, 100 ether);
+        vm.deal(user3, 100 ether);
     }
 
     function test_VerifiedUser() public view {
