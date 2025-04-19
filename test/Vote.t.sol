@@ -32,7 +32,6 @@ contract VoteTest is Test {
 
         vm.stopPrank();
 
-
         vm.deal(user1, 100 ether);
         vm.deal(user2, 100 ether);
         vm.deal(user3, 100 ether);

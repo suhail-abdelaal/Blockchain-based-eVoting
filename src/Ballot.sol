@@ -17,31 +17,31 @@ contract Ballot is RBACWrapper {
     error ImmutableVote(uint256 proposalId, address voter);
     error VoterNotParticipated(uint256 proposalId, address voter);
     error VoteOptionIdentical(
-        uint256 proposalId, string oldOption, string newOption
+        uint256 proposalId, bytes32 oldOption, bytes32 newOption
     );
-    error InvalidOption(uint256 proposalId, string option);
+    error InvalidOption(uint256 proposalId, bytes32 option);
 
     event ProposalCreated(
         uint256 indexed proposalId,
         address indexed owner,
-        string title,
+        bytes title,
         uint256 startDate,
         uint256 endDate
     );
 
     event VoteCast(
-        uint256 indexed proposalId, address indexed voter, string option
+        uint256 indexed proposalId, address indexed voter, bytes32 option
     );
 
     event VoteRetracted(
-        uint256 indexed proposalId, address indexed voter, string option
+        uint256 indexed proposalId, address indexed voter, bytes32 option
     );
 
     event VoteChanged(
         uint256 indexed proposalId,
         address indexed voter,
-        string oldOption,
-        string newOption
+        bytes32 oldOption,
+        bytes32 newOption
     );
 
     enum ProposalStatus {
@@ -56,10 +56,10 @@ contract Ballot is RBACWrapper {
 
     struct Proposal {
         address owner;
-        string title;
-        string[] options;
-        mapping(string => bool) optionExistence;
-        mapping(string => uint256) optionVoteCounts;
+        bytes title;
+        bytes32[] options;
+        mapping(bytes32 => bool) optionExistence;
+        mapping(bytes32 => uint256) optionVoteCounts;
         ProposalStatus proposalStatus;
         VoteMutability voteMutability;
         mapping(address => bool) isParticipant;
@@ -105,8 +105,9 @@ contract Ballot is RBACWrapper {
     }
 
     modifier onlyValidOptions(uint256 proposalId, string calldata option) {
-        if (!proposals[proposalId].optionExistence[option]) {
-            revert InvalidOption(proposalId, option);
+        bytes32 bytesOption = _stringToBytes32(option);
+        if (!proposals[proposalId].optionExistence[bytesOption]) {
+            revert InvalidOption(proposalId, bytesOption);
         }
         _;
     }
@@ -133,12 +134,19 @@ contract Ballot is RBACWrapper {
         ++proposalCount;
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
+        bytes memory bytesTitle = bytes(title);
         _initializeProposal(
-            proposal, voter, title, options, voteMutability, startDate, endDate
+            proposal,
+            voter,
+            bytesTitle,
+            options,
+            voteMutability,
+            startDate,
+            endDate
         );
 
         voterRegistry.recordUserCreatedProposal(voter, id);
-        emit ProposalCreated(id, voter, title, startDate, endDate);
+        emit ProposalCreated(id, voter, bytesTitle, startDate, endDate);
 
         return id;
     }
@@ -157,8 +165,8 @@ contract Ballot is RBACWrapper {
         if (checkVoterParticipation(voter, proposalId)) {
             revert VoteAlreadyCast(proposalId, voter);
         }
-
-        _castVote(proposalId, voter, option);
+        bytes32 bytesOption = _stringToBytes32(option);
+        _castVote(proposalId, voter, bytesOption);
     }
 
     function retractVote(
@@ -175,8 +183,7 @@ contract Ballot is RBACWrapper {
             revert ImmutableVote(proposalId, voter);
         }
 
-        string memory option =
-            voterRegistry.getVoterSelectedOption(voter, proposalId);
+        bytes32 option = voterRegistry.getVoterSelectedOption(voter, proposalId);
         if (!proposals[proposalId].optionExistence[option]) {
             revert InvalidOption(proposalId, option);
         }
@@ -199,20 +206,23 @@ contract Ballot is RBACWrapper {
             revert ImmutableVote(proposalId, voter);
         }
 
-        string memory previousOption =
+        bytes32 previousOption =
             voterRegistry.getVoterSelectedOption(voter, proposalId);
         if (!proposals[proposalId].optionExistence[previousOption]) {
             revert InvalidOption(proposalId, previousOption);
         }
 
-        if (_cmpStrings(previousOption, newOption)) {
-            revert VoteOptionIdentical(proposalId, previousOption, newOption);
+        bytes32 bytesNewOption = _stringToBytes32(newOption);
+        if (_cmp(previousOption, bytesNewOption)) {
+            revert VoteOptionIdentical(
+                proposalId, previousOption, bytesNewOption
+            );
         }
 
         _retractVote(proposalId, voter, previousOption);
-        _castVote(proposalId, voter, newOption);
+        _castVote(proposalId, voter, bytesNewOption);
 
-        emit VoteChanged(proposalId, voter, previousOption, newOption);
+        emit VoteChanged(proposalId, voter, previousOption, bytesNewOption);
     }
 
     // ------------------- Public Methods -------------------
@@ -228,7 +238,8 @@ contract Ballot is RBACWrapper {
         uint256 proposalId,
         string calldata option
     ) external view returns (uint256) {
-        return proposals[proposalId].optionVoteCounts[option];
+        bytes32 bytesOption = _stringToBytes32(option);
+        return proposals[proposalId].optionVoteCounts[bytesOption];
     }
 
     function getProposalCount() external view returns (uint256) {
@@ -258,7 +269,7 @@ contract Ballot is RBACWrapper {
     function _castVote(
         uint256 proposalId,
         address voter,
-        string calldata option
+        bytes32 option
     ) internal {
         proposals[proposalId].optionVoteCounts[option] += 1;
         proposals[proposalId].isParticipant[voter] = true;
@@ -270,7 +281,7 @@ contract Ballot is RBACWrapper {
     function _retractVote(
         uint256 proposalId,
         address voter,
-        string memory option
+        bytes32 option
     ) internal {
         proposals[proposalId].optionVoteCounts[option] -= 1;
         proposals[proposalId].isParticipant[voter] = false;
@@ -282,14 +293,14 @@ contract Ballot is RBACWrapper {
     function _initializeProposal(
         Proposal storage proposal,
         address owner,
-        string calldata title,
+        bytes memory title,
         string[] calldata options,
         VoteMutability voteMutability,
         uint256 startDate,
         uint256 endDate
     ) internal {
         proposal.owner = owner;
-        proposal.title = title;
+        proposal.title = bytes(title);
         proposal.startDate = startDate;
         proposal.endDate = endDate;
         // proposal.proposalStatus = (startDate >= block.timestamp)
@@ -299,17 +310,24 @@ contract Ballot is RBACWrapper {
         proposal.voteMutability = voteMutability;
 
         for (uint256 i = 0; i < options.length; ++i) {
-            proposal.options.push(options[i]);
-            proposal.optionExistence[options[i]] = true;
-            // proposal.optionVoteCounts[options[i]] = 0;
+            string memory tempOption = options[i];
+            bytes32 bytesOption = _stringToBytes32(tempOption);
+            proposal.options.push(bytesOption);
+            proposal.optionExistence[bytesOption] = true;
         }
     }
 
-    function _cmpStrings(
-        string memory a,
-        string memory b
-    ) internal pure returns (bool) {
-        // Convert the strings to bytes and check if they are of the same length
+    function _cmp(bytes32 a, bytes32 b) internal pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
+    }
+
+    function _stringToBytes32(
+        string memory str
+    ) private pure returns (bytes32) {
+        bytes32 convertedStr;
+        assembly {
+            convertedStr := mload(add(str, 32))
+        }
+        return convertedStr;
     }
 }
