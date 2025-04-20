@@ -35,18 +35,6 @@ abstract contract RBACWrapper {
         _;
     }
 
-    // function grantRole(bytes32 role, address account) public onlyAdmin {
-    //     rbac.grantRole(role, account);
-    // }
-
-    // function revokeRole(bytes32 role, address account) public onlyAdmin {
-    //     rbac.revokeRole(role, account);
-    // }
-
-    // function _verifyVoter(address voter) internal {
-    //     rbac.grantRole(rbac.VERIFIED_VOTER(), voter);
-    // }
-
     function isVoterVerified(
         address voter
     ) public view returns (bool) {

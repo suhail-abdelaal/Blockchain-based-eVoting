@@ -261,13 +261,13 @@ contract Ballot is RBACWrapper {
         return proposals[proposalId].owner;
     }
 
-    // ------------------- Internal Methods -------------------
+    // ------------------- Private Methods -------------------
 
     function _castVote(
         uint256 proposalId,
         address voter,
         bytes32 option
-    ) internal {
+    ) private {
         proposals[proposalId].optionVoteCounts[option] += 1;
         proposals[proposalId].isParticipant[voter] = true;
         voterRegistry.recordUserParticipation(voter, proposalId, option);
@@ -279,7 +279,7 @@ contract Ballot is RBACWrapper {
         uint256 proposalId,
         address voter,
         bytes32 option
-    ) internal {
+    ) private {
         proposals[proposalId].optionVoteCounts[option] -= 1;
         proposals[proposalId].isParticipant[voter] = false;
         voterRegistry.removeUserParticipation(voter, proposalId);
@@ -294,7 +294,7 @@ contract Ballot is RBACWrapper {
         string[] calldata options,
         uint256 startDate,
         uint256 endDate
-    ) internal {
+    ) private {
         proposal.owner = owner;
         proposal.title = bytes(title);
         proposal.startDate = startDate;
@@ -310,7 +310,7 @@ contract Ballot is RBACWrapper {
         }
     }
 
-    function _cmp(bytes32 a, bytes32 b) internal pure returns (bool) {
+    function _cmp(bytes32 a, bytes32 b) private pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 
