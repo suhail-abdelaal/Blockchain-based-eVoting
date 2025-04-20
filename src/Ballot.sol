@@ -108,10 +108,6 @@ contract Ballot is RBACWrapper {
         bytes32 bytesOption = _stringToBytes32(option);
         if (!proposals[proposalId].optionExistence[bytesOption]) 
             revert InvalidOption(proposalId, bytesOption);
-        bytes32 bytesOption = _stringToBytes32(option);
-        if (!proposals[proposalId].optionExistence[bytesOption]) {
-            revert InvalidOption(proposalId, bytesOption);
-        }
         _;
     }
 
@@ -296,7 +292,6 @@ contract Ballot is RBACWrapper {
     function _initializeProposal(
         Proposal storage proposal,
         address owner,
-        bytes memory title,
         bytes memory title,
         string[] calldata options,
         VoteMutability voteMutability,

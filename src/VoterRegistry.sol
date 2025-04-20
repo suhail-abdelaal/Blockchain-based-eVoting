@@ -14,7 +14,6 @@ contract VoterRegistry is RBACWrapper {
     /* User Defined Datatypes */
     struct Voter {
         bytes32 name;
-        bytes32 name;
         uint256[] featureVector;
         uint256[] participatedProposalsId;
         mapping(uint256 proposalId => uint256 proposalIdx)
