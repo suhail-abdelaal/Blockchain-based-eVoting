@@ -117,7 +117,6 @@ contract Ballot is RBACWrapper {
         address voter,
         string calldata title,
         string[] calldata options,
-        VoteMutability voteMutability,
         uint256 startDate,
         uint256 endDate
     ) external onlyVerifiedVoterAddr(voter) returns (uint256) {
@@ -139,7 +138,6 @@ contract Ballot is RBACWrapper {
             voter,
             bytesTitle,
             options,
-            voteMutability,
             startDate,
             endDate
         );
@@ -294,7 +292,6 @@ contract Ballot is RBACWrapper {
         address owner,
         bytes memory title,
         string[] calldata options,
-        VoteMutability voteMutability,
         uint256 startDate,
         uint256 endDate
     ) internal {
@@ -302,11 +299,8 @@ contract Ballot is RBACWrapper {
         proposal.title = bytes(title);
         proposal.startDate = startDate;
         proposal.endDate = endDate;
-        // proposal.proposalStatus = (startDate >= block.timestamp)
-        // ? ProposalStatus.ACTIVE
-        // : ProposalStatus.PENDING;
-        proposal.proposalStatus = ProposalStatus.ACTIVE;
-        proposal.voteMutability = voteMutability;
+        proposal.proposalStatus = ProposalStatus.ACTIVE;     // Temporary
+        proposal.voteMutability = VoteMutability.MUTABLE;    // Temporary
 
         for (uint256 i = 0; i < options.length; ++i) {
             string memory tempOption = options[i];

@@ -27,7 +27,6 @@ contract Vote is RBACWrapper {
             msg.sender,
             title,
             options,
-            Ballot.VoteMutability.MUTABLE,
             startDate,
             endDate
         );
