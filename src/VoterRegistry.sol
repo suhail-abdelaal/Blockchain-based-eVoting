@@ -20,14 +20,12 @@ contract VoterRegistry is RBACWrapper {
         mapping(uint256 proposalId => uint256 proposalIdx)
             participatedProposalIndex;
         mapping(uint256 => bytes32) selectedOption;
-        mapping(uint256 => bytes32) selectedOption;
         mapping(uint256 proposalId => uint256 proposalIdx) createdProposalIndex;
         uint256[] createdProposalsId;
     }
 
     /* State Variables */
     mapping(address => Voter) public voters;
-    mapping(address voter => mapping(uint256 proposalId => bytes32 option))
     mapping(address voter => mapping(uint256 proposalId => bytes32 option))
         public systemLog;
 
@@ -40,7 +38,6 @@ contract VoterRegistry is RBACWrapper {
     function verifyVoter(
         address voter,
         string memory voterName,
-        string memory voterName,
         uint256[] calldata featureVector
     ) external onlyAdmin(msg.sender) {
         if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
@@ -51,13 +48,11 @@ contract VoterRegistry is RBACWrapper {
         }
         // register voter
         voters[voter].name = bytesVoterName;
-        voters[voter].name = bytesVoterName;
         for (uint256 i = 0; i < featureVector.length; ++i) {
             voters[voter].featureVector.push(featureVector[i]);
         }
 
         // verify voter
-        rbac.verifyVoter(voter, msg.sender);
         rbac.verifyVoter(voter, msg.sender);
 
         emit VoterVerified(voter);
@@ -79,7 +74,6 @@ contract VoterRegistry is RBACWrapper {
         address voter,
         uint256 proposalId
     ) external view returns (bytes32) {
-    ) external view returns (bytes32) {
         return voters[voter].selectedOption[proposalId];
     }
 
@@ -92,7 +86,6 @@ contract VoterRegistry is RBACWrapper {
     function recordUserParticipation(
         address voter,
         uint256 proposalId,
-        bytes32 selectedOption
         bytes32 selectedOption
     ) external {
         if (voters[voter].participatedProposalIndex[proposalId] != 0) {
