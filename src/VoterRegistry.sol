@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.23;
 
-import {RBAC} from "./RBAC.sol";
+import {RBACWrapper} from "./RBACWrapper.sol";
 
-contract VoterRegistry is RBAC {
-    /* Erros and Events */
+contract VoterRegistry is RBACWrapper {
+    /* Errors and Events */
     error VoterAlreadyVerified(address voter);
     error ProposalNotFound(uint256 proposalId);
     error RecordAlreadyExists(address voter, uint256 proposalId);
@@ -13,108 +13,112 @@ contract VoterRegistry is RBAC {
 
     /* User Defined Datatypes */
     struct Voter {
-        string name;
-        bool isVerified;
+        bytes32 name;
+        bytes32 name;
         uint256[] featureVector;
         uint256[] participatedProposalsId;
-        mapping(uint256 proposalId => uint256 proposalIdx) participatedProposalIndex;
-        mapping(uint256 => string) selectedOption;
+        mapping(uint256 proposalId => uint256 proposalIdx)
+            participatedProposalIndex;
+        mapping(uint256 => bytes32) selectedOption;
         mapping(uint256 proposalId => uint256 proposalIdx) createdProposalIndex;
         uint256[] createdProposalsId;
     }
 
     /* State Variables */
     mapping(address => Voter) public voters;
-    mapping(address voter => mapping(uint256 proposalId => string option)) public systemLog;
+    mapping(address voter => mapping(uint256 proposalId => bytes32 option))
+        public systemLog;
 
     /* Constructor */
-    constructor() {
-    }
-
+    constructor(
+        address _rbac
+    ) RBACWrapper(_rbac) {}
 
     /* Public Methods */
     function verifyVoter(
-        address _voter,
-        string calldata _voterName,
-        uint256[] calldata _featureVector
-        ) external onlyAdmin {
+        address voter,
+        string memory voterName,
+        uint256[] calldata featureVector
+    ) external onlyAdmin(msg.sender) {
+        if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
-
-        if (voters[_voter].isVerified) {
-            revert VoterAlreadyVerified(_voter);
+        bytes32 bytesVoterName;
+        assembly {
+            bytesVoterName := mload(add(voterName, 32))
         }
-
         // register voter
-        voters[_voter].name = _voterName;
-        voters[_voter].isVerified = true;
-        for (uint256 i = 0; i < _featureVector.length; ++i) {
-            voters[_voter].featureVector.push(_featureVector[i]);
+        voters[voter].name = bytesVoterName;
+        for (uint256 i = 0; i < featureVector.length; ++i) {
+            voters[voter].featureVector.push(featureVector[i]);
         }
 
         // verify voter
-        _verifyVoter(_voter);
+        rbac.verifyVoter(voter, msg.sender);
 
-        emit VoterVerified(_voter);
+        emit VoterVerified(voter);
     }
 
-    function getVoterVerification(address _voter) external view returns (bool) {
-        return isVoterVerified(_voter);
+    function getVoterVerification(
+        address voter
+    ) external view returns (bool) {
+        return isVoterVerified(voter);
     }
 
     function getVoterParticipatedProposals(
-        address _voter
-        ) external view returns (uint256[] memory) {
-
-        return voters[_voter].participatedProposalsId;
+        address voter
+    ) external view returns (uint256[] memory) {
+        return voters[voter].participatedProposalsId;
     }
 
     function getVoterSelectedOption(
-        address _voter,
-        uint256 _proposalId
-        ) external view returns (string memory) {
-
-        return voters[_voter].selectedOption[_proposalId];
+        address voter,
+        uint256 proposalId
+    ) external view returns (bytes32) {
+        return voters[voter].selectedOption[proposalId];
     }
 
     function getVoterCreatedProposals(
-        address _voter
-        ) external view returns (uint256[] memory) {
-
-        return voters[_voter].createdProposalsId;
+        address voter
+    ) external view returns (uint256[] memory) {
+        return voters[voter].createdProposalsId;
     }
 
     function recordUserParticipation(
-        address _voter,
-        uint256 _proposalId,
-        string calldata _selectedOption) external {
-
-        if (voters[_voter].participatedProposalIndex[_proposalId] != 0) {
-            revert RecordAlreadyExists(_voter, _proposalId);
+        address voter,
+        uint256 proposalId,
+        bytes32 selectedOption
+    ) external {
+        if (voters[voter].participatedProposalIndex[proposalId] != 0) {
+            revert RecordAlreadyExists(voter, proposalId);
         }
 
-        voters[_voter].participatedProposalsId.push(_proposalId);
-        voters[_voter].participatedProposalIndex[_proposalId] = voters[_voter].participatedProposalsId.length - 1;
-        voters[_voter].selectedOption[_proposalId] = _selectedOption;
+        voters[voter].participatedProposalsId.push(proposalId);
+        voters[voter].participatedProposalIndex[proposalId] =
+            voters[voter].participatedProposalsId.length;
+        voters[voter].selectedOption[proposalId] = selectedOption;
     }
 
     function recordUserCreatedProposal(
-        address _voter,
-        uint256 _proposalId
-        ) external {
-            
-        if (voters[_voter].createdProposalIndex[_proposalId] != 0) {
-            revert RecordAlreadyExists(_voter, _proposalId);
+        address voter,
+        uint256 proposalId
+    ) external {
+        if (voters[voter].createdProposalIndex[proposalId] != 0) {
+            revert RecordAlreadyExists(voter, proposalId);
         }
 
-        voters[_voter].createdProposalsId.push(_proposalId);
-        voters[_voter].createdProposalIndex[_proposalId] = voters[_voter].createdProposalsId.length;
+        voters[voter].createdProposalsId.push(proposalId);
+        voters[voter].createdProposalIndex[proposalId] =
+            voters[voter].createdProposalsId.length;
     }
 
-    function removeUserParticipation(address _voter, uint256 _proposalId) external {
+    function removeUserParticipation(
+        address _voter,
+        uint256 proposalId
+    ) external {
         Voter storage voter = voters[_voter];
 
-        uint256 index = voter.participatedProposalIndex[_proposalId];
-        if (index == 0) revert ProposalNotFound(_proposalId);
+        uint256 index = voter.participatedProposalIndex[proposalId];
+        if (index == 0) revert ProposalNotFound(proposalId);
 
         uint256 lastIndex = voter.participatedProposalsId.length - 1;
         uint256 lastProposalId = voter.participatedProposalsId[lastIndex];
@@ -124,15 +128,15 @@ contract VoterRegistry is RBAC {
         voter.participatedProposalIndex[lastProposalId] = index;
 
         voter.participatedProposalsId.pop();
-        delete voter.participatedProposalIndex[_proposalId];
-        delete voter.selectedOption[_proposalId];
+        delete voter.participatedProposalIndex[proposalId];
+        delete voter.selectedOption[proposalId];
     }
 
-    function removeUserProposal(address _voter, uint256 _proposalId) external {
+    function removeUserProposal(address _voter, uint256 proposalId) external {
         Voter storage voter = voters[_voter];
 
-        uint256 index = voter.createdProposalIndex[_proposalId];
-        if (index == 0) revert ProposalNotFound(_proposalId);
+        uint256 index = voter.createdProposalIndex[proposalId];
+        if (index == 0) revert ProposalNotFound(proposalId);
 
         uint256 lastIndex = voter.createdProposalsId.length - 1;
         uint256 lastProposalId = voter.createdProposalsId[lastIndex];
@@ -142,7 +146,18 @@ contract VoterRegistry is RBAC {
         voter.createdProposalIndex[lastProposalId] = index;
 
         voter.createdProposalsId.pop();
-        delete voter.createdProposalIndex[_proposalId];
+        delete voter.createdProposalIndex[proposalId];
     }
 
+    function getParticipatedProposalsCount(
+        address voter
+    ) external view returns (uint256) {
+        return voters[voter].participatedProposalsId.length;
+    }
+
+    function getCreatedProposalsCount(
+        address voter
+    ) external view returns (uint256) {
+        return voters[voter].createdProposalsId.length;
+    }
 }
