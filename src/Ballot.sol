@@ -119,7 +119,7 @@ contract Ballot is RBACWrapper {
         string[] calldata options,
         uint256 startDate,
         uint256 endDate
-    ) external onlyVerifiedVoterAddr(voter) returns (uint256) {
+    ) external onlyVerifiedAddr(voter) returns (uint256) {
         if (msg.sender != authorizedCaller) revert NotAuthorized(msg.sender);
 
         if (startDate <= block.timestamp + 10 minutes) {
@@ -154,7 +154,7 @@ contract Ballot is RBACWrapper {
         string calldata option
     )
         external
-        onlyVerifiedVoterAddr(voter)
+        onlyVerifiedAddr(voter)
         onActiveProposals(proposalId)
         onlyValidOptions(proposalId, option)
     {
@@ -171,7 +171,7 @@ contract Ballot is RBACWrapper {
         uint256 proposalId
     )
         external
-        onlyVerifiedVoterAddr(voter)
+        onlyVerifiedAddr(voter)
         onActiveProposals(proposalId)
         onlyParticipants(voter, proposalId)
     {
@@ -194,7 +194,7 @@ contract Ballot is RBACWrapper {
         string calldata newOption
     )
         external
-        onlyVerifiedVoterAddr(voter)
+        onlyVerifiedAddr(voter)
         onActiveProposals(proposalId)
         onlyParticipants(voter, proposalId)
     {

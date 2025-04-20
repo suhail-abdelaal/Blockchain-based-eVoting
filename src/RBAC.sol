@@ -17,7 +17,7 @@ contract RBAC is AccessControl {
         _checkRole(VERIFIED_VOTER);
     }
 
-    function onlyVerifiedVoterAddr(
+    function onlyVerifiedAddr(
         address _voter
     ) public view {
         _checkRole(VERIFIED_VOTER, _voter);

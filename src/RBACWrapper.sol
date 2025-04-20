@@ -28,10 +28,10 @@ abstract contract RBACWrapper {
         _;
     }
 
-    modifier onlyVerifiedVoterAddr(
+    modifier onlyVerifiedAddr(
         address voter
     ) {
-        rbac.onlyVerifiedVoterAddr(voter);
+        rbac.onlyVerifiedAddr(voter);
         _;
     }
 
