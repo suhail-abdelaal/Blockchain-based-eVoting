@@ -138,7 +138,6 @@ contract Ballot is RBACWrapper {
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
         bytes memory bytesTitle = bytes(title);
-        bytes memory bytesTitle = bytes(title);
         _initializeProposal(
             proposal,
             voter,
@@ -150,7 +149,6 @@ contract Ballot is RBACWrapper {
         );
 
         voterRegistry.recordUserCreatedProposal(voter, id);
-        emit ProposalCreated(id, voter, bytesTitle, startDate, endDate);
         emit ProposalCreated(id, voter, bytesTitle, startDate, endDate);
 
         return id;
@@ -226,9 +224,7 @@ contract Ballot is RBACWrapper {
 
         _retractVote(proposalId, voter, previousOption);
         _castVote(proposalId, voter, bytesNewOption);
-        _castVote(proposalId, voter, bytesNewOption);
 
-        emit VoteChanged(proposalId, voter, previousOption, bytesNewOption);
         emit VoteChanged(proposalId, voter, previousOption, bytesNewOption);
     }
 
@@ -245,8 +241,6 @@ contract Ballot is RBACWrapper {
         uint256 proposalId,
         string calldata option
     ) external view returns (uint256) {
-        bytes32 bytesOption = _stringToBytes32(option);
-        return proposals[proposalId].optionVoteCounts[bytesOption];
         bytes32 bytesOption = _stringToBytes32(option);
         return proposals[proposalId].optionVoteCounts[bytesOption];
     }
