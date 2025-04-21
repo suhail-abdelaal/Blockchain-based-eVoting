@@ -11,7 +11,7 @@ contract Ballot is RBACWrapper {
     error ProposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
     error ProposalNotStartedYet(uint256 proposalId);
     error ProposalPeriodTooShort(uint256 startDate, uint256 endDate);
-    error ProposalCompleted(uint256 proposalId);
+    error ProposalClosed(uint256 proposalId);
     error NotAuthorized(address addr);
     error VoteAlreadyCast(uint256 proposalId, address voter);
     error ImmutableVote(uint256 proposalId, address voter);
@@ -52,7 +52,7 @@ contract Ballot is RBACWrapper {
         NONE,
         PENDING,
         ACTIVE,
-        COMPLETED
+        CLOSED
     }
     enum VoteMutability {
         IMMUTABLE,
@@ -70,6 +70,7 @@ contract Ballot is RBACWrapper {
         mapping(address => bool) isParticipant;
         uint256 startDate;
         uint256 endDate;
+        bytes32[50] winners;
     }
 
     mapping(uint256 => Proposal) public proposals;
@@ -93,8 +94,8 @@ contract Ballot is RBACWrapper {
     ) {
         _updateProposalStatus(proposalId);
         ProposalStatus status = proposals[proposalId].status;
-        if (status == ProposalStatus.COMPLETED) {
-            revert ProposalCompleted(proposalId);
+        if (status == ProposalStatus.CLOSED) {
+            revert ProposalClosed(proposalId);
         }
         if (status == ProposalStatus.PENDING) {
             revert ProposalNotStartedYet(proposalId);
@@ -234,12 +235,35 @@ contract Ballot is RBACWrapper {
         return proposals[proposalId].isParticipant[voter];
     }
 
+    function tallyVotes(uint256 proposalId) public {
+        uint256 highestVoteCount;
+        bytes32 winner;
+        bytes32[] initialWinners;
+        Proposal memory proposal = proposals[proposalId];
+        for (uint256 i; i < proposal.options.length; ++i) {
+            uint256 optionVoteCount = _getVoteCount(proposalId, proposal.options[i]);
+            if (optionVoteCount > highestVoteCount) {
+                winner = proposal.options[i];
+                initialWinners.push(winner);
+                highestVoteCount = optionVoteCount;
+            }
+        }
+
+        for (uint256 i; i < initialWinners.length; ++i) {
+            uint256 optionVoteCount = _getVoteCount(proposalId, initialWinners[i]);
+            if (optionVoteCount == highestVoteCount) {
+                proposals[proposalId].winners.push(initialWinners[i]);
+            }
+        }
+    }
+
     function getVoteCount(
         uint256 proposalId,
         string calldata option
     ) external view returns (uint256) {
         bytes32 bytesOption = _stringToBytes32(option);
-        return proposals[proposalId].optionVoteCounts[bytesOption];
+        return _getVoteCount(proposalId, bytesOption);
+
     }
 
     function getProposalCount() external view returns (uint256) {
@@ -299,7 +323,8 @@ contract Ballot is RBACWrapper {
         if (proposal.startDate <= block.timestamp) {
             status = ProposalStatus.ACTIVE;
         } else if (proposal.endDate <= block.timestamp) {
-            status = ProposalStatus.COMPLETED;
+            status = ProposalStatus.CLOSED;
+            tallyVotes(id);
         }
 
         if (status != ProposalStatus.NONE) {
@@ -329,6 +354,14 @@ contract Ballot is RBACWrapper {
             proposal.options.push(bytesOption);
             proposal.optionExistence[bytesOption] = true;
         }
+    }
+
+
+    function _getVoteCount(
+        uint256 proposalId,
+        bytes32 option
+    ) private view returns (uint256) {
+        return proposals[proposalId].optionVoteCounts[option];
     }
 
     function _cmp(bytes32 a, bytes32 b) private pure returns (bool) {
