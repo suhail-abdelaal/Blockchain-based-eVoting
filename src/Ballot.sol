@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import {RBACWrapper} from "./RBACWrapper.sol";
 import {VoterRegistry} from "./VoterRegistry.sol";
-import {Vote} from "./Vote.sol";
 
 contract Ballot is RBACWrapper {
     /* Errors and Events */

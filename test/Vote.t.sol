@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Vote} from "../src/Vote.sol";
-import {RBAC} from "../src/RBAC.sol";
 import {Ballot} from "../src/Ballot.sol";
 import {VoterRegistry} from "../src/VoterRegistry.sol";
 

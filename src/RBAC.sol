@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract RBAC is AccessControl {
     bytes32 public constant VERIFIED_VOTER = keccak256("VERIFIED_VOTER_ROLE");
