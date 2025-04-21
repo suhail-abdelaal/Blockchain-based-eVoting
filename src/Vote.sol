@@ -23,13 +23,8 @@ contract Vote is RBACWrapper {
         uint256 endDate
     ) external onlyVerifiedAddr(msg.sender) returns (uint256) {
         // Create proposal
-        uint256 proposalId = ballot.addProposal(
-            msg.sender,
-            title,
-            options,
-            startDate,
-            endDate
-        );
+        uint256 proposalId =
+            ballot.addProposal(msg.sender, title, options, startDate, endDate);
         return proposalId;
     }
 

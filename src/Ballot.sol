@@ -10,8 +10,9 @@ contract Ballot is RBACWrapper {
     error ProposalNotFound(uint256 proposalId);
     error ProposalStartDateTooEarly(uint256 startDate);
     error ProposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
-    error ProposalCompleted(uint256 proposalId);
     error ProposalNotStartedYet(uint256 proposalId);
+    error ProposalPeriodTooShort(uint256 startDate, uint256 endDate);
+    error ProposalCompleted(uint256 proposalId);
     error NotAuthorized(address addr);
     error VoteAlreadyCast(uint256 proposalId, address voter);
     error ImmutableVote(uint256 proposalId, address voter);
@@ -27,6 +28,10 @@ contract Ballot is RBACWrapper {
         bytes title,
         uint256 startDate,
         uint256 endDate
+    );
+
+    event ProposalStatusUpdated(
+        uint256 indexed proposalId, ProposalStatus status
     );
 
     event VoteCast(
@@ -45,6 +50,7 @@ contract Ballot is RBACWrapper {
     );
 
     enum ProposalStatus {
+        NONE,
         PENDING,
         ACTIVE,
         COMPLETED
@@ -60,7 +66,7 @@ contract Ballot is RBACWrapper {
         bytes32[] options;
         mapping(bytes32 => bool) optionExistence;
         mapping(bytes32 => uint256) optionVoteCounts;
-        ProposalStatus proposalStatus;
+        ProposalStatus status;
         VoteMutability voteMutability;
         mapping(address => bool) isParticipant;
         uint256 startDate;
@@ -86,8 +92,8 @@ contract Ballot is RBACWrapper {
     modifier onActiveProposals(
         uint256 proposalId
     ) {
-        // if (proposalId > proposalCount) revert ProposalNotFound(proposalId);
-        ProposalStatus status = proposals[proposalId].proposalStatus;
+        _updateProposalStatus(proposalId);
+        ProposalStatus status = proposals[proposalId].status;
         if (status == ProposalStatus.COMPLETED) {
             revert ProposalCompleted(proposalId);
         }
@@ -106,8 +112,9 @@ contract Ballot is RBACWrapper {
 
     modifier onlyValidOptions(uint256 proposalId, string calldata option) {
         bytes32 bytesOption = _stringToBytes32(option);
-        if (!proposals[proposalId].optionExistence[bytesOption]) 
+        if (!proposals[proposalId].optionExistence[bytesOption]) {
             revert InvalidOption(proposalId, bytesOption);
+        }
         _;
     }
 
@@ -122,24 +129,21 @@ contract Ballot is RBACWrapper {
     ) external onlyVerifiedAddr(voter) returns (uint256) {
         if (msg.sender != authorizedCaller) revert NotAuthorized(msg.sender);
 
-        if (startDate <= block.timestamp + 10 minutes) {
+        if (startDate < block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(startDate);
         }
         if (endDate <= startDate) {
             revert ProposalEndDateLessThanStartDate(startDate, endDate);
         }
-
+        if ((endDate - startDate) < 1 hours) {
+            revert ProposalPeriodTooShort(startDate, endDate);
+        }
         ++proposalCount;
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
         bytes memory bytesTitle = bytes(title);
         _initializeProposal(
-            proposal,
-            voter,
-            bytesTitle,
-            options,
-            startDate,
-            endDate
+            proposal, voter, bytesTitle, options, startDate, endDate
         );
 
         voterRegistry.recordUserCreatedProposal(voter, id);
@@ -245,8 +249,9 @@ contract Ballot is RBACWrapper {
 
     function getProposalStatus(
         uint256 proposalId
-    ) public view returns (ProposalStatus) {
-        return proposals[proposalId].proposalStatus;
+    ) public returns (ProposalStatus) {
+        _updateProposalStatus(proposalId);
+        return proposals[proposalId].status;
     }
 
     function getProposalVoteMutability(
@@ -287,6 +292,23 @@ contract Ballot is RBACWrapper {
         emit VoteRetracted(proposalId, voter, option);
     }
 
+    function _updateProposalStatus(
+        uint256 id
+    ) private {
+        Proposal storage proposal = proposals[id];
+        ProposalStatus status;
+        if (proposal.startDate <= block.timestamp) {
+            status = ProposalStatus.ACTIVE;
+        } else if (proposal.endDate <= block.timestamp) {
+            status = ProposalStatus.COMPLETED;
+        }
+
+        if (status != ProposalStatus.NONE) {
+            proposal.status = status;
+            emit ProposalStatusUpdated(id, status);
+        }
+    }
+
     function _initializeProposal(
         Proposal storage proposal,
         address owner,
@@ -299,8 +321,8 @@ contract Ballot is RBACWrapper {
         proposal.title = bytes(title);
         proposal.startDate = startDate;
         proposal.endDate = endDate;
-        proposal.proposalStatus = ProposalStatus.ACTIVE;     // Temporary
-        proposal.voteMutability = VoteMutability.MUTABLE;    // Temporary
+        proposal.status = ProposalStatus.PENDING;
+        proposal.voteMutability = VoteMutability.MUTABLE; // Temporary
 
         for (uint256 i = 0; i < options.length; ++i) {
             string memory tempOption = options[i];
