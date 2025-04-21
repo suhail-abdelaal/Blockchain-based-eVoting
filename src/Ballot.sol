@@ -90,8 +90,9 @@ contract Ballot is RBACWrapper {
     // ------------------- Modifiers -------------------
 
     modifier onlyAutorizedCaller() {
-        if (msg.sender != authorizedCaller || msg.sender != address(this)) 
+        if (msg.sender != authorizedCaller || msg.sender != address(this)) {
             revert NotAuthorized(msg.sender);
+        }
         _;
     }
 
@@ -131,7 +132,6 @@ contract Ballot is RBACWrapper {
         uint256 startDate,
         uint256 endDate
     ) external onlyAutorizedCaller onlyVerifiedAddr(voter) returns (uint256) {
-
         if (startDate < block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(startDate);
         }
@@ -274,7 +274,12 @@ contract Ballot is RBACWrapper {
         return _getVoteCount(proposalId, bytesOption);
     }
 
-    function getProposalCount() external view onlyAutorizedCaller returns (uint256) {
+    function getProposalCount()
+        external
+        view
+        onlyAutorizedCaller
+        returns (uint256)
+    {
         return proposalCount;
     }
 
