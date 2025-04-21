@@ -70,13 +70,13 @@ contract Ballot is RBACWrapper {
         mapping(address => bool) isParticipant;
         uint256 startDate;
         uint256 endDate;
-        bytes32[50] winners;
+        bytes32[] winners;
     }
 
-    mapping(uint256 => Proposal) public proposals;
-    uint256 public proposalCount;
-    VoterRegistry public voterRegistry;
-    address authorizedCaller;
+    mapping(uint256 => Proposal) private proposals;
+    uint256 private proposalCount;
+    VoterRegistry private voterRegistry;
+    address private authorizedCaller;
 
     constructor(
         address _rbac,
@@ -238,21 +238,23 @@ contract Ballot is RBACWrapper {
     function tallyVotes(uint256 proposalId) public {
         uint256 highestVoteCount;
         bytes32 winner;
-        bytes32[] initialWinners;
-        Proposal memory proposal = proposals[proposalId];
+        bytes32[] memory initialWinners;
+        uint256 initialWinnersIndex;
+        Proposal storage proposal = proposals[proposalId];
         for (uint256 i; i < proposal.options.length; ++i) {
             uint256 optionVoteCount = _getVoteCount(proposalId, proposal.options[i]);
             if (optionVoteCount > highestVoteCount) {
                 winner = proposal.options[i];
-                initialWinners.push(winner);
+                initialWinners[initialWinnersIndex] = winner;
+                ++initialWinnersIndex;
                 highestVoteCount = optionVoteCount;
             }
         }
 
-        for (uint256 i; i < initialWinners.length; ++i) {
+        for (uint256 i; i < initialWinnersIndex; ++i) {
             uint256 optionVoteCount = _getVoteCount(proposalId, initialWinners[i]);
             if (optionVoteCount == highestVoteCount) {
-                proposals[proposalId].winners.push(initialWinners[i]);
+                proposal.winners.push(initialWinners[i]);
             }
         }
     }
