@@ -81,6 +81,14 @@ contract Vote is RBACWrapper {
         return ballot.getProposalCount();
     }
 
+    function getPoposalWinner(uint256 proposalId) external  
+        onlyVerifiedAddr(msg.sender) 
+        returns (string[] memory, bool) 
+    {
+        return ballot.getProposalWinner(proposalId);
+
+    }
+
     function getVoterRegistry() external view returns (address) {
         return address(voterRegistry);
     }

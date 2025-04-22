@@ -12,6 +12,7 @@ contract Ballot is RBACWrapper {
     error ProposalNotStartedYet(uint256 proposalId);
     error ProposalPeriodTooShort(uint256 startDate, uint256 endDate);
     error ProposalClosed(uint256 proposalId);
+    error ProposalNotClosed(uint256 proposalId);
     error NotAuthorized(address addr);
     error VoteAlreadyCast(uint256 proposalId, address voter);
     error ImmutableVote(uint256 proposalId, address voter);
@@ -52,7 +53,8 @@ contract Ballot is RBACWrapper {
         NONE,
         PENDING,
         ACTIVE,
-        CLOSED
+        CLOSED,
+        FINALIZED
     }
     enum VoteMutability {
         IMMUTABLE,
@@ -60,6 +62,7 @@ contract Ballot is RBACWrapper {
     }
 
     struct Proposal {
+        uint256 id;
         address owner;
         bytes title;
         bytes32[] options;
@@ -70,7 +73,8 @@ contract Ballot is RBACWrapper {
         mapping(address => bool) isParticipant;
         uint256 startDate;
         uint256 endDate;
-        bytes32[] winners;
+        string[] winners;
+        bool isDraw;
     }
 
     mapping(uint256 => Proposal) private proposals;
@@ -90,7 +94,7 @@ contract Ballot is RBACWrapper {
     // ------------------- Modifiers -------------------
 
     modifier onlyAutorizedCaller() {
-        if (msg.sender != authorizedCaller || msg.sender != address(this)) {
+        if (msg.sender != authorizedCaller && msg.sender != address(this)) {
             revert NotAuthorized(msg.sender);
         }
         _;
@@ -238,40 +242,27 @@ contract Ballot is RBACWrapper {
         return proposals[proposalId].isParticipant[voter];
     }
 
-    function tallyVotes(
-        uint256 proposalId
-    ) public onlyAutorizedCaller {
-        uint256 highestVoteCount;
-        bytes32 winner;
-        bytes32[] memory initialWinners;
-        uint256 initialWinnersIndex;
-        Proposal storage proposal = proposals[proposalId];
-        for (uint256 i; i < proposal.options.length; ++i) {
-            uint256 optionVoteCount =
-                _getVoteCount(proposalId, proposal.options[i]);
-            if (optionVoteCount > highestVoteCount) {
-                winner = proposal.options[i];
-                initialWinners[initialWinnersIndex] = winner;
-                ++initialWinnersIndex;
-                highestVoteCount = optionVoteCount;
-            }
-        }
-
-        for (uint256 i; i < initialWinnersIndex; ++i) {
-            uint256 optionVoteCount =
-                _getVoteCount(proposalId, initialWinners[i]);
-            if (optionVoteCount == highestVoteCount) {
-                proposal.winners.push(initialWinners[i]);
-            }
-        }
-    }
-
     function getVoteCount(
         uint256 proposalId,
         string calldata option
     ) external view onlyAutorizedCaller returns (uint256) {
         bytes32 bytesOption = _stringToBytes32(option);
         return _getVoteCount(proposalId, bytesOption);
+    }
+
+    function getProposalWinner(
+        uint256 proposalId
+    ) external onlyAutorizedCaller returns (string[] memory, bool) 
+    {
+        Proposal storage proposal = proposals[proposalId];
+        if (proposal.status == ProposalStatus.FINALIZED) 
+            return (proposal.winners, proposal.isDraw);
+        
+        _updateProposalStatus(proposalId);
+        if (proposal.status != ProposalStatus.CLOSED) 
+            revert ProposalNotClosed(proposalId);
+
+        return (proposal.winners, proposal.isDraw);
     }
 
     function getProposalCount()
@@ -328,24 +319,6 @@ contract Ballot is RBACWrapper {
         emit VoteRetracted(proposalId, voter, option);
     }
 
-    function _updateProposalStatus(
-        uint256 id
-    ) private {
-        Proposal storage proposal = proposals[id];
-        ProposalStatus status;
-        if (proposal.startDate <= block.timestamp) {
-            status = ProposalStatus.ACTIVE;
-        } else if (proposal.endDate <= block.timestamp) {
-            status = ProposalStatus.CLOSED;
-            tallyVotes(id);
-        }
-
-        if (status != ProposalStatus.NONE) {
-            proposal.status = status;
-            emit ProposalStatusUpdated(id, status);
-        }
-    }
-
     function _initializeProposal(
         Proposal storage proposal,
         address owner,
@@ -376,8 +349,56 @@ contract Ballot is RBACWrapper {
         return proposals[proposalId].optionVoteCounts[option];
     }
 
+    function _updateProposalStatus(
+        uint256 proposalId
+    ) private {
+        Proposal storage proposal = proposals[proposalId];
+        uint256 currentTime = block.timestamp;
+        if (proposal.startDate <= currentTime && proposal.endDate > currentTime) {
+            proposal.status = ProposalStatus.ACTIVE;
+            emit ProposalStatusUpdated(proposalId, ProposalStatus.ACTIVE);
+        } else if (proposal.endDate <= currentTime) {
+            proposal.status = ProposalStatus.CLOSED;
+            emit ProposalStatusUpdated(proposalId, ProposalStatus.ACTIVE);
+            _tallyVotes(proposal);
+        }
+    }
+
+    function _tallyVotes(
+        Proposal storage proposal
+    ) private onlyAutorizedCaller {
+        uint256 highestVoteCount;
+        bytes32 winner;
+        bytes32[] memory initialWinners;
+        uint256 initialWinnersIndex;
+        for (uint256 i; i < proposal.options.length; ++i) {
+            uint256 optionVoteCount =
+                _getVoteCount(proposal.id, proposal.options[i]);
+            if (optionVoteCount >= highestVoteCount) {
+                winner = proposal.options[i];
+                initialWinners[initialWinnersIndex] = winner;
+                ++initialWinnersIndex;
+                highestVoteCount = optionVoteCount;
+            }
+        }
+
+        for (uint256 i; i < initialWinnersIndex; ++i) {
+            uint256 optionVoteCount =
+                _getVoteCount(proposal.id, initialWinners[i]);
+            if (optionVoteCount == highestVoteCount) {
+                proposal.winners.push(_bytes32ToString(initialWinners[i]));
+            }
+        }
+        proposal.isDraw = (proposal.winners.length > 1) ? true : false;
+        proposal.status = ProposalStatus.FINALIZED;
+    }
+
     function _cmp(bytes32 a, bytes32 b) private pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
+    }
+
+    function _bytes32ToString(bytes32 _bytes32) private pure returns (string memory) { return   
+        string(abi.encodePacked(_bytes32));
     }
 
     function _stringToBytes32(
