@@ -59,6 +59,26 @@ contract VoteTest is Test {
         assertEq(count, 3, "wrong proposal count");
     }
 
+    function test_ProposalFinalizationNoDraw() public {
+        vm.prank(user1);
+        createProposal(1);
+
+        vm.prank(user2);
+        vote.castVote(1, "one");
+
+        vm.prank(user3);
+        vote.castVote(1, "one");
+
+        vm.startPrank(user1);
+        vote.castVote(1, "one");
+
+        vm.warp(block.timestamp + 11 days);
+        (string[] memory winners, bool isDraw) = vote.getPoposalWinner(1);
+        vm.stopPrank();
+        assertEq(winners[0], "one");
+        assert(!isDraw);
+    }
+
     function test_VoteCast() public {
         vm.startPrank(user1);
         createProposal(2);
@@ -170,7 +190,10 @@ contract VoteTest is Test {
             options[2] = "three";
 
             vote.createProposal(
-                "Prop", options, block.timestamp + 11 minutes, 200_000_000_000
+                "Prop",
+                options,
+                block.timestamp + 11 minutes,
+                block.timestamp + 10 days
             );
         }
         vm.warp(block.timestamp + 11 minutes);
