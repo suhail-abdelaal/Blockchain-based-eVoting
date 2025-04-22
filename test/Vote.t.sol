@@ -79,6 +79,27 @@ contract VoteTest is Test {
         assert(!isDraw);
     }
 
+    function test_ProposalFinalizationDraw() public {
+        vm.prank(user1);
+        createProposal(1);
+
+        vm.prank(user2);
+        vote.castVote(1, "one");
+
+        vm.prank(user3);
+        vote.castVote(1, "two");
+
+        vm.startPrank(user1);
+        vote.castVote(1, "three");
+
+        vm.warp(block.timestamp + 11 days);
+        (string[] memory winners, bool isDraw) = vote.getPoposalWinner(1);
+        vm.stopPrank();
+    
+        assertEq(winners.length, 3);
+        assert(isDraw);
+    }
+
     function test_VoteCast() public {
         vm.startPrank(user1);
         createProposal(2);
