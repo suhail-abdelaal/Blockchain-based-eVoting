@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.23;
 
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract RBAC is AccessControl {
     bytes32 public constant VERIFIED_VOTER = keccak256("VERIFIED_VOTER_ROLE");
@@ -14,46 +13,44 @@ contract RBAC is AccessControl {
         _grantRole(VERIFIED_VOTER, 0x45586259E1816AC7784Ae83e704eD354689081b1);
     }
 
-    modifier onlyVerifiedVoter() {
+    function onlyVerifiedVoter() public view {
         _checkRole(VERIFIED_VOTER);
-        _;
     }
 
-    modifier onlyVerifiedVoterAddr(
+    function onlyVerifiedAddr(
         address _voter
-    ) {
+    ) public view {
         _checkRole(VERIFIED_VOTER, _voter);
-        _;
     }
 
-    modifier onlyAdmin() {
-        _checkRole(ADMIN, msg.sender);
-        _;
+    function onlyAdmin(
+        address admin
+    ) public view {
+        _checkRole(ADMIN, admin);
     }
 
-    function grantRole(
-        bytes32 role,
-        address account
-    ) public override onlyAdmin {
+    function grantRole(bytes32 role, address account, address admin) external {
+        onlyAdmin(admin);
         _grantRole(role, account);
     }
 
     function revokeRole(
         bytes32 role,
-        address account
-    ) public override onlyAdmin {
+        address account,
+        address admin
+    ) external {
+        onlyAdmin(admin);
         _revokeRole(role, account);
     }
 
-    function _verifyVoter(
-        address _voter
-    ) internal {
-        _grantRole(VERIFIED_VOTER, _voter);
+    function verifyVoter(address voter, address admin) external {
+        onlyAdmin(admin);
+        _grantRole(VERIFIED_VOTER, voter);
     }
 
     function isVoterVerified(
-        address _voter
+        address voter
     ) public view returns (bool) {
-        return hasRole(VERIFIED_VOTER, _voter);
+        return hasRole(VERIFIED_VOTER, voter);
     }
 }
