@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import {Test, console} from "forge-std/Test.sol";
 import {Vote} from "../src/Vote.sol";
-import {RBAC} from "../src/RBAC.sol";
 import {Ballot} from "../src/Ballot.sol";
 import {VoterRegistry} from "../src/VoterRegistry.sol";
 
@@ -31,7 +30,6 @@ contract VoteTest is Test {
         vote.verifyVoter(user3);
 
         vm.stopPrank();
-
 
         vm.deal(user1, 100 ether);
         vm.deal(user2, 100 ether);
@@ -134,6 +132,34 @@ contract VoteTest is Test {
         assertEq(count, 0);
     }
 
+    function test_ProposalStatus() public {
+        vm.startPrank(user1);
+        string[] memory options = new string[](3);
+        options[0] = "one";
+        options[1] = "two";
+        options[2] = "three";
+
+        uint256 start = block.timestamp + 1 days;
+        uint256 end = start + 1 days;
+
+        vote.createProposal("Prop", options, start, end);
+
+        vm.expectRevert();
+        vote.castVote(1, "one");
+
+        vm.warp(block.timestamp + 1 days);
+        vote.castVote(1, "one");
+        uint256 count = vote.getVoteCount(1, "one");
+
+        vm.warp(block.timestamp + 1 days);
+
+        vm.expectRevert();
+        vote.castVote(1, "one");
+
+        vm.stopPrank();
+        assertEq(count, 1);
+    }
+
     function createProposal(
         uint256 n
     ) public {
@@ -144,8 +170,9 @@ contract VoteTest is Test {
             options[2] = "three";
 
             vote.createProposal(
-                "First prop", options, 100_000_000_000, 200_000_000_000
+                "Prop", options, block.timestamp + 11 minutes, 200_000_000_000
             );
         }
+        vm.warp(block.timestamp + 11 minutes);
     }
 }

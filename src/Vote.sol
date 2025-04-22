@@ -21,30 +21,24 @@ contract Vote is RBACWrapper {
         string[] calldata options,
         uint256 startDate,
         uint256 endDate
-    ) external onlyVerifiedVoterAddr(msg.sender) returns (uint256) {
+    ) external onlyVerifiedAddr(msg.sender) returns (uint256) {
         // Create proposal
-        uint256 proposalId = ballot.addProposal(
-            msg.sender,
-            title,
-            options,
-            Ballot.VoteMutability.MUTABLE,
-            startDate,
-            endDate
-        );
+        uint256 proposalId =
+            ballot.addProposal(msg.sender, title, options, startDate, endDate);
         return proposalId;
     }
 
     function castVote(
         uint256 proposalId,
         string calldata option
-    ) external onlyVerifiedVoterAddr(msg.sender) {
+    ) external onlyVerifiedAddr(msg.sender) {
         // Cast vote
         ballot.castVote(msg.sender, proposalId, option);
     }
 
     function retractVote(
         uint256 proposalId
-    ) external onlyVerifiedVoterAddr(msg.sender) {
+    ) external onlyVerifiedAddr(msg.sender) {
         // Cast vote
         ballot.retractVote(msg.sender, proposalId);
     }
@@ -52,7 +46,7 @@ contract Vote is RBACWrapper {
     function changeVote(
         uint256 proposalId,
         string calldata option
-    ) external onlyVerifiedVoterAddr(msg.sender) {
+    ) external onlyVerifiedAddr(msg.sender) {
         // Change vote
         ballot.changeVote(msg.sender, proposalId, option);
     }
@@ -74,17 +68,25 @@ contract Vote is RBACWrapper {
     function getVoteCount(
         uint256 proposalId,
         string calldata option
-    ) external view onlyVerifiedVoterAddr(msg.sender) returns (uint256) {
+    ) external view onlyVerifiedAddr(msg.sender) returns (uint256) {
         return ballot.getVoteCount(proposalId, option);
     }
 
     function getProposalCount()
         external
         view
-        onlyVerifiedVoterAddr(msg.sender)
+        onlyVerifiedAddr(msg.sender)
         returns (uint256)
     {
         return ballot.getProposalCount();
+    }
+
+    function getPoposalWinner(uint256 proposalId) external  
+        onlyVerifiedAddr(msg.sender) 
+        returns (string[] memory, bool) 
+    {
+        return ballot.getProposalWinner(proposalId);
+
     }
 
     function getVoterRegistry() external view returns (address) {
