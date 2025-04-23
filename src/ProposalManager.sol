@@ -3,7 +3,6 @@ pragma solidity ^0.8.23;
 
 import {RBACWrapper} from "./RBACWrapper.sol";
 import {VoterManager} from "./VoterManager.sol";
-import {console} from "forge-std/Test.sol";
 
 contract ProposalManager is RBACWrapper {
     /* Errors and Events */

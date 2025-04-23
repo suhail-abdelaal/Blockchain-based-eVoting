@@ -81,7 +81,7 @@ contract VotingSystem is RBACWrapper {
         return proposalManager.getProposalCount();
     }
 
-    function getPoposalWinner(
+    function getProposalWinner(
         uint256 proposalId
     ) external onlyVerifiedAddr(msg.sender) returns (string[] memory, bool) {
         return proposalManager.getProposalWinner(proposalId);
