@@ -7,7 +7,8 @@ import {IProposalManager} from "./interfaces/IProposalManager.sol";
 
 contract ProposalManager is IProposalManager, RBACWrapper {
 
-    /* Errors and Events */
+    // ------------------- Errors and Events -------------------
+
     error ProposalNotFound(uint256 proposalId);
     error ProposalStartDateTooEarly(uint256 startDate);
     error ProposalEndDateLessThanStartDate(uint256 startDate, uint256 endDate);
@@ -51,6 +52,8 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         bytes32 newOption
     );
 
+    // ------------------- State Variables -------------------
+
     enum ProposalStatus {
         NONE,
         PENDING,
@@ -84,15 +87,10 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     IVoterManager private voterManager;
     address private authorizedCaller;
 
+    // ------------------- Constructor -------------------
+
     constructor(address _rbac, address _voterManager) RBACWrapper(_rbac) {
         voterManager = IVoterManager(_voterManager);
-    }
-
-    function setAuthorizedCaller(address newAuthorizedCaller)
-        external
-        onlyAdmin(msg.sender)
-    {
-        authorizedCaller = newAuthorizedCaller;
     }
 
     // ------------------- Modifiers -------------------
@@ -130,6 +128,13 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     }
 
     // ------------------- External Methods -------------------
+
+    function setAuthorizedCaller(address newAuthorizedCaller)
+        external
+        onlyAdmin(msg.sender)
+    {
+        authorizedCaller = newAuthorizedCaller;
+    }
 
     function addProposal(
         address voter,
@@ -264,7 +269,6 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         }
 
         _checkProposalStatus(proposalId);
-        // @audit
         if (proposal.status != ProposalStatus.FINALIZED) {
             revert ProposalNotFinalized(proposalId);
         }
@@ -347,7 +351,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         proposal.startDate = startDate;
         proposal.endDate = endDate;
         proposal.status = ProposalStatus.PENDING;
-        proposal.voteMutability = VoteMutability.MUTABLE; // Temporary
+        proposal.voteMutability = VoteMutability.MUTABLE;
 
         for (uint256 i = 0; i < options.length; ++i) {
             string memory tempOption = options[i];
@@ -434,5 +438,4 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     {
         return bytes32(bytes(str));
     }
-
 }

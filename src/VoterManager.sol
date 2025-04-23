@@ -1,62 +1,136 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+// ------------------- Imports -------------------
+
 import {RBACWrapper} from "./RBACWrapper.sol";
 import {IVoterManager} from "./interfaces/IVoterManager.sol";
 
+// ------------------- Contract -------------------
+
 contract VoterManager is IVoterManager, RBACWrapper {
 
-    /* Errors and Events */
+    // ------------------- Errors and Events -------------------
+
     error VoterAlreadyVerified(address voter);
     error ProposalNotFound(uint256 proposalId);
     error RecordAlreadyExists(address voter, uint256 proposalId);
 
     event VoterVerified(address indexed voter);
 
-    /* User Defined Datatypes */
+    // ------------------- State Variables -------------------
+
     struct Voter {
         bytes32 name;
         uint256[] featureVector;
         uint256[] participatedProposalsId;
-        mapping(uint256 proposalId => uint256 proposalIdx)
-            participatedProposalIndex;
+        mapping(uint256 => uint256) participatedProposalIndex;
         mapping(uint256 => bytes32) selectedOption;
-        mapping(uint256 proposalId => uint256 proposalIdx) createdProposalIndex;
+        mapping(uint256 => uint256) createdProposalIndex;
         uint256[] createdProposalsId;
     }
 
-    /* State Variables */
     mapping(address => Voter) public voters;
-    mapping(address voter => mapping(uint256 proposalId => bytes32 option))
-        public systemLog;
+    mapping(address => mapping(uint256 => bytes32)) public systemLog;
 
-    /* Constructor */
+    // ------------------- Constructor -------------------
+
     constructor(address _rbac) RBACWrapper(_rbac) {}
 
-    /* Public Methods */
+    // ------------------- External Methods -------------------
+
     function verifyVoter(
         address voter,
         string memory voterName,
         uint256[] calldata featureVector
     ) external onlyAdmin(msg.sender) {
-        if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
+        if (_isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
         bytes32 bytesVoterName = bytes32(bytes(voterName));
 
-        // register voter
+        // Register voter
         voters[voter].name = bytesVoterName;
         for (uint256 i = 0; i < featureVector.length; ++i) {
             voters[voter].featureVector.push(featureVector[i]);
         }
 
-        // verify voter
+        // Verify voter
         rbac.verifyVoter(voter, msg.sender);
 
         emit VoterVerified(voter);
     }
 
+    function recordUserParticipation(
+        address voter,
+        uint256 proposalId,
+        bytes32 selectedOption
+    ) external onlyAuthorizedCaller {
+        if (voters[voter].participatedProposalIndex[proposalId] != 0) {
+            revert RecordAlreadyExists(voter, proposalId);
+        }
+
+        voters[voter].participatedProposalsId.push(proposalId);
+        voters[voter].participatedProposalIndex[proposalId] =
+            voters[voter].participatedProposalsId.length;
+        voters[voter].selectedOption[proposalId] = selectedOption;
+    }
+
+    function recordUserCreatedProposal(
+        address voter,
+        uint256 proposalId
+    ) external onlyAuthorizedCaller {
+        if (voters[voter].createdProposalIndex[proposalId] != 0) {
+            revert RecordAlreadyExists(voter, proposalId);
+        }
+
+        voters[voter].createdProposalsId.push(proposalId);
+        voters[voter].createdProposalIndex[proposalId] =
+            voters[voter].createdProposalsId.length;
+    }
+
+    function removeUserParticipation(
+        address voter,
+        uint256 proposalId
+    ) external onlyAuthorizedCaller {
+        Voter storage voterData = voters[voter];
+
+        uint256 index = voterData.participatedProposalIndex[proposalId];
+        if (index == 0) revert ProposalNotFound(proposalId);
+
+        uint256 lastIndex = voterData.participatedProposalsId.length - 1;
+        uint256 lastProposalId = voterData.participatedProposalsId[lastIndex];
+
+        // Swap and pop
+        voterData.participatedProposalsId[index - 1] = lastProposalId;
+        voterData.participatedProposalIndex[lastProposalId] = index;
+
+        voterData.participatedProposalsId.pop();
+        delete voterData.participatedProposalIndex[proposalId];
+        delete voterData.selectedOption[proposalId];
+    }
+
+    function removeUserProposal(
+        address voter,
+        uint256 proposalId
+    ) external onlyAuthorizedCaller {
+        Voter storage voterData = voters[voter];
+
+        uint256 index = voterData.createdProposalIndex[proposalId];
+        if (index == 0) revert ProposalNotFound(proposalId);
+
+        uint256 lastIndex = voterData.createdProposalsId.length - 1;
+        uint256 lastProposalId = voterData.createdProposalsId[lastIndex];
+
+        // Swap and pop
+        voterData.createdProposalsId[index - 1] = lastProposalId;
+        voterData.createdProposalIndex[lastProposalId] = index;
+
+        voterData.createdProposalsId.pop();
+        delete voterData.createdProposalIndex[proposalId];
+    }
+
     function getVoterVerification(address voter) external view returns (bool) {
-        return isVoterVerified(voter);
+        return _isVoterVerified(voter);
     }
 
     function getVoterParticipatedProposals(address voter)
@@ -82,72 +156,6 @@ contract VoterManager is IVoterManager, RBACWrapper {
         return voters[voter].createdProposalsId;
     }
 
-    function recordUserParticipation(
-        address voter,
-        uint256 proposalId,
-        bytes32 selectedOption
-    ) external {
-        if (voters[voter].participatedProposalIndex[proposalId] != 0) {
-            revert RecordAlreadyExists(voter, proposalId);
-        }
-
-        voters[voter].participatedProposalsId.push(proposalId);
-        voters[voter].participatedProposalIndex[proposalId] =
-            voters[voter].participatedProposalsId.length;
-        voters[voter].selectedOption[proposalId] = selectedOption;
-    }
-
-    function recordUserCreatedProposal(
-        address voter,
-        uint256 proposalId
-    ) external {
-        if (voters[voter].createdProposalIndex[proposalId] != 0) {
-            revert RecordAlreadyExists(voter, proposalId);
-        }
-
-        voters[voter].createdProposalsId.push(proposalId);
-        voters[voter].createdProposalIndex[proposalId] =
-            voters[voter].createdProposalsId.length;
-    }
-
-    function removeUserParticipation(
-        address _voter,
-        uint256 proposalId
-    ) external {
-        Voter storage voter = voters[_voter];
-
-        uint256 index = voter.participatedProposalIndex[proposalId];
-        if (index == 0) revert ProposalNotFound(proposalId);
-
-        uint256 lastIndex = voter.participatedProposalsId.length - 1;
-        uint256 lastProposalId = voter.participatedProposalsId[lastIndex];
-
-        // Swap and pop
-        voter.participatedProposalsId[index - 1] = lastProposalId;
-        voter.participatedProposalIndex[lastProposalId] = index;
-
-        voter.participatedProposalsId.pop();
-        delete voter.participatedProposalIndex[proposalId];
-        delete voter.selectedOption[proposalId];
-    }
-
-    function removeUserProposal(address _voter, uint256 proposalId) external {
-        Voter storage voter = voters[_voter];
-
-        uint256 index = voter.createdProposalIndex[proposalId];
-        if (index == 0) revert ProposalNotFound(proposalId);
-
-        uint256 lastIndex = voter.createdProposalsId.length - 1;
-        uint256 lastProposalId = voter.createdProposalsId[lastIndex];
-
-        // Swap and pop
-        voter.createdProposalsId[index - 1] = lastProposalId;
-        voter.createdProposalIndex[lastProposalId] = index;
-
-        voter.createdProposalsId.pop();
-        delete voter.createdProposalIndex[proposalId];
-    }
-
     function getParticipatedProposalsCount(address voter)
         external
         view
@@ -162,6 +170,12 @@ contract VoterManager is IVoterManager, RBACWrapper {
         returns (uint256)
     {
         return voters[voter].createdProposalsId.length;
+    }
+
+    // ------------------- Private Methods -------------------
+
+    function _isVoterVerified(address voter) private view returns (bool) {
+        return rbac.isVerifiedVoter(voter);
     }
 
 }
