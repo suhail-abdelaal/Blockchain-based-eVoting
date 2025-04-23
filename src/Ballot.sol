@@ -223,7 +223,7 @@ contract Ballot is RBACWrapper {
         }
 
         bytes32 bytesNewOption = _stringToBytes32(newOption);
-        if (_cmp(previousOption, bytesNewOption)) {
+        if (previousOption == bytesNewOption) {
             revert VoteOptionIdentical(
                 proposalId, previousOption, bytesNewOption
             );
@@ -403,9 +403,6 @@ contract Ballot is RBACWrapper {
         proposal.status = ProposalStatus.FINALIZED;
     }
 
-    function _cmp(bytes32 a, bytes32 b) private pure returns (bool) {
-        return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
-    }
 
     function _bytes32ToString(
         bytes32 _bytes32
