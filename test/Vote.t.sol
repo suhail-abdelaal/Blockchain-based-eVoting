@@ -2,14 +2,14 @@
 pragma solidity ^0.8.23;
 
 import {Test, console} from "forge-std/Test.sol";
-import {Vote} from "../src/Vote.sol";
-import {Ballot} from "../src/Ballot.sol";
-import {VoterRegistry} from "../src/VoterRegistry.sol";
+import {VotingSystem} from "../src/VotingSystem.sol";
+import {ProposalManager} from "../src/ProposalManager.sol";
+import {VoterManager} from "../src/VoterManager.sol";
 
 contract VoteTest is Test {
-    Vote public vote;
-    Ballot public ballot;
-    VoterRegistry public voterRegistry;
+    VotingSystem public votingSysstem;
+    ProposalManager public proposalManager;
+    VoterManager public voterManager;
 
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
@@ -20,14 +20,14 @@ contract VoteTest is Test {
         vm.deal(admin, 100 ether);
         vm.startPrank(admin);
 
-        vote = new Vote();
-        vote.grantRole(keccak256("ADMIN_ROLE"), address(vote));
-        voterRegistry = VoterRegistry(vote.getVoterRegistry());
-        ballot = Ballot(vote.getBallot());
+        votingSysstem = new VotingSystem();
+        votingSysstem.grantRole(keccak256("ADMIN_ROLE"), address(votingSysstem));
+        voterManager = VoterManager(votingSysstem.getVoterManager());
+        proposalManager = ProposalManager(votingSysstem.getProposalManager());
 
-        vote.verifyVoter(user1);
-        vote.verifyVoter(user2);
-        vote.verifyVoter(user3);
+        votingSysstem.verifyVoter(user1);
+        votingSysstem.verifyVoter(user2);
+        votingSysstem.verifyVoter(user3);
 
         vm.stopPrank();
 
@@ -38,9 +38,9 @@ contract VoteTest is Test {
 
     function test_VerifiedUser() public view {
         // console.log(user1);
-        assert(vote.isVoterVerified(user1));
-        assert(vote.isVoterVerified(user2));
-        assert(vote.isVoterVerified(user3));
+        assert(votingSysstem.isVoterVerified(user1));
+        assert(votingSysstem.isVoterVerified(user2));
+        assert(votingSysstem.isVoterVerified(user3));
     }
 
     function test_CreateProposal() public {
@@ -54,7 +54,7 @@ contract VoteTest is Test {
         createProposal(1);
 
         vm.prank(admin);
-        uint256 count = vote.getProposalCount();
+        uint256 count = votingSysstem.getProposalCount();
 
         assertEq(count, 3, "wrong proposal count");
     }
@@ -64,16 +64,16 @@ contract VoteTest is Test {
         createProposal(1);
 
         vm.prank(user2);
-        vote.castVote(1, "one");
+        votingSysstem.castVote(1, "one");
 
         vm.prank(user3);
-        vote.castVote(1, "one");
+        votingSysstem.castVote(1, "one");
 
         vm.startPrank(user1);
-        vote.castVote(1, "one");
+        votingSysstem.castVote(1, "one");
 
         vm.warp(block.timestamp + 11 days);
-        (string[] memory winners, bool isDraw) = vote.getPoposalWinner(1);
+        (string[] memory winners, bool isDraw) = votingSysstem.getPoposalWinner(1);
         vm.stopPrank();
         assertEq(winners[0], "one");
         assert(!isDraw);
@@ -84,16 +84,16 @@ contract VoteTest is Test {
         createProposal(1);
 
         vm.prank(user2);
-        vote.castVote(1, "one");
+        votingSysstem.castVote(1, "one");
 
         vm.prank(user3);
-        vote.castVote(1, "two");
+        votingSysstem.castVote(1, "two");
 
         vm.startPrank(user1);
-        vote.castVote(1, "three");
+        votingSysstem.castVote(1, "three");
 
         vm.warp(block.timestamp + 11 days);
-        (string[] memory winners, bool isDraw) = vote.getPoposalWinner(1);
+        (string[] memory winners, bool isDraw) = votingSysstem.getPoposalWinner(1);
         vm.stopPrank();
     
         assertEq(winners.length, 3);
@@ -106,20 +106,20 @@ contract VoteTest is Test {
         vm.stopPrank();
 
         vm.startPrank(user2);
-        vote.castVote(1, "one");
-        vote.castVote(2, "one");
+        votingSysstem.castVote(1, "one");
+        votingSysstem.castVote(2, "one");
         vm.stopPrank();
 
         vm.startPrank(user3);
-        vote.castVote(1, "one");
-        vote.castVote(2, "two");
+        votingSysstem.castVote(1, "one");
+        votingSysstem.castVote(2, "two");
 
-        uint256 count11 = vote.getVoteCount(1, "one");
-        uint256 count12 = vote.getVoteCount(1, "two");
-        uint256 count13 = vote.getVoteCount(1, "three");
-        uint256 count21 = vote.getVoteCount(2, "one");
-        uint256 count22 = vote.getVoteCount(2, "two");
-        uint256 count23 = vote.getVoteCount(2, "three");
+        uint256 count11 = votingSysstem.getVoteCount(1, "one");
+        uint256 count12 = votingSysstem.getVoteCount(1, "two");
+        uint256 count13 = votingSysstem.getVoteCount(1, "three");
+        uint256 count21 = votingSysstem.getVoteCount(2, "one");
+        uint256 count22 = votingSysstem.getVoteCount(2, "two");
+        uint256 count23 = votingSysstem.getVoteCount(2, "three");
         vm.stopPrank();
 
         assertEq(count11, 2);
@@ -135,17 +135,17 @@ contract VoteTest is Test {
         createProposal(1);
 
         vm.startPrank(user2);
-        vote.castVote(1, "one");
-        vote.retractVote(1);
+        votingSysstem.castVote(1, "one");
+        votingSysstem.retractVote(1);
         vm.stopPrank();
 
         vm.startPrank(user3);
-        vote.castVote(1, "one");
-        vote.retractVote(1);
+        votingSysstem.castVote(1, "one");
+        votingSysstem.retractVote(1);
 
-        uint256 count = vote.getVoteCount(1, "one");
-        uint256 usr2Count = voterRegistry.getParticipatedProposalsCount(user2);
-        uint256 usr3Count = voterRegistry.getParticipatedProposalsCount(user3);
+        uint256 count = votingSysstem.getVoteCount(1, "one");
+        uint256 usr2Count = voterManager.getParticipatedProposalsCount(user2);
+        uint256 usr3Count = voterManager.getParticipatedProposalsCount(user3);
         vm.stopPrank();
 
         assertEq(count, 0);
@@ -160,13 +160,13 @@ contract VoteTest is Test {
         vm.startPrank(user1);
 
         for (uint256 i = 0; i < num; ++i) {
-            voterRegistry.recordUserCreatedProposal(user1, i);
+            voterManager.recordUserCreatedProposal(user1, i);
         }
 
         for (uint256 i = 0; i < num; ++i) {
-            voterRegistry.removeUserProposal(user1, i);
+            voterManager.removeUserProposal(user1, i);
         }
-        uint256 count = voterRegistry.getCreatedProposalsCount(user1);
+        uint256 count = voterManager.getCreatedProposalsCount(user1);
 
         vm.stopPrank();
 
@@ -183,19 +183,19 @@ contract VoteTest is Test {
         uint256 start = block.timestamp + 1 days;
         uint256 end = start + 1 days;
 
-        vote.createProposal("Prop", options, start, end);
+        votingSysstem.createProposal("Prop", options, start, end);
 
         vm.expectRevert();
-        vote.castVote(1, "one");
+        votingSysstem.castVote(1, "one");
 
         vm.warp(block.timestamp + 1 days);
-        vote.castVote(1, "one");
-        uint256 count = vote.getVoteCount(1, "one");
+        votingSysstem.castVote(1, "one");
+        uint256 count = votingSysstem.getVoteCount(1, "one");
 
         vm.warp(block.timestamp + 1 days);
 
         vm.expectRevert();
-        vote.castVote(1, "one");
+        votingSysstem.castVote(1, "one");
 
         vm.stopPrank();
         assertEq(count, 1);
@@ -210,7 +210,7 @@ contract VoteTest is Test {
             options[1] = "two";
             options[2] = "three";
 
-            vote.createProposal(
+            votingSysstem.createProposal(
                 "Prop",
                 options,
                 block.timestamp + 11 minutes,
