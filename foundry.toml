@@ -11,6 +11,6 @@ zksolc = "1.5.11"
 line_length = 80            
 tab_width = 4                       
 number_underscore = "thousands"  
-multiline_func_header = "params_first" 
+multiline_func_header = "params_first_multi" 
 wrap_comments = true
 single_line_statement_blocks = "single"

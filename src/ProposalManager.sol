@@ -2,9 +2,10 @@
 pragma solidity ^0.8.23;
 
 import {RBACWrapper} from "./RBACWrapper.sol";
-import {VoterManager} from "./VoterManager.sol";
+import {IVoterManager} from "./interfaces/IVoterManager.sol";
+import {IProposalManager} from "./interfaces/IProposalManager.sol";
 
-contract ProposalManager is RBACWrapper {
+contract ProposalManager is IProposalManager, RBACWrapper {
     /* Errors and Events */
     error ProposalNotFound(uint256 proposalId);
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -79,16 +80,21 @@ contract ProposalManager is RBACWrapper {
 
     mapping(uint256 => Proposal) private proposals;
     uint256 private proposalCount;
-    VoterManager private voterManager;
+    IVoterManager private voterManager;
     address private authorizedCaller;
 
     constructor(
         address _rbac,
-        address _authorizedCaller,
         address _voterManager
     ) RBACWrapper(_rbac) {
-        authorizedCaller = _authorizedCaller;
-        voterManager = VoterManager(_voterManager);
+        voterManager = IVoterManager(_voterManager);
+    }
+
+    function setAuthorizedCaller(address newAuthorizedCaller)
+        external
+        onlyAdmin(msg.sender)
+    {
+        authorizedCaller = newAuthorizedCaller;
     }
 
     // ------------------- Modifiers -------------------
@@ -100,9 +106,7 @@ contract ProposalManager is RBACWrapper {
         _;
     }
 
-    modifier onActiveProposals(
-        uint256 proposalId
-    ) {
+    modifier onActiveProposals(uint256 proposalId) {
         _checkProposalStatus(proposalId);
         ProposalStatus status = proposals[proposalId].status;
         if (status == ProposalStatus.CLOSED) revert ProposalClosed(proposalId);
@@ -251,9 +255,11 @@ contract ProposalManager is RBACWrapper {
         return _getVoteCount(proposalId, bytesOption);
     }
 
-    function getProposalWinner(
-        uint256 proposalId
-    ) external onlyAutorizedCaller returns (string[] memory, bool) {
+    function getProposalWinner(uint256 proposalId)
+        external
+        onlyAutorizedCaller
+        returns (string[] memory, bool)
+    {
         Proposal storage proposal = proposals[proposalId];
         if (proposal.status == ProposalStatus.FINALIZED) {
             return (proposal.winners, proposal.isDraw);
@@ -277,22 +283,30 @@ contract ProposalManager is RBACWrapper {
         return proposalCount;
     }
 
-    function getProposalStatus(
-        uint256 proposalId
-    ) public onlyAutorizedCaller returns (ProposalStatus) {
+    function getProposalStatus(uint256 proposalId)
+        public
+        onlyAutorizedCaller
+        returns (ProposalStatus)
+    {
         _checkProposalStatus(proposalId);
         return proposals[proposalId].status;
     }
 
-    function getProposalVoteMutability(
-        uint256 proposalId
-    ) public view onlyAutorizedCaller returns (VoteMutability) {
+    function getProposalVoteMutability(uint256 proposalId)
+        public
+        view
+        onlyAutorizedCaller
+        returns (VoteMutability)
+    {
         return proposals[proposalId].voteMutability;
     }
 
-    function getProposalOwner(
-        uint256 proposalId
-    ) public view onlyAutorizedCaller returns (address) {
+    function getProposalOwner(uint256 proposalId)
+        public
+        view
+        onlyAutorizedCaller
+        returns (address)
+    {
         return proposals[proposalId].owner;
     }
 
@@ -352,9 +366,7 @@ contract ProposalManager is RBACWrapper {
         return proposals[proposalId].optionVoteCounts[option];
     }
 
-    function _checkProposalStatus(
-        uint256 proposalId
-    ) private {
+    function _checkProposalStatus(uint256 proposalId) private {
         Proposal storage proposal = proposals[proposalId];
         uint256 currentTime = block.timestamp;
         if (
@@ -380,18 +392,17 @@ contract ProposalManager is RBACWrapper {
         emit ProposalStatusUpdated(proposal.id, status);
     }
 
-    function _tallyVotes(
-        Proposal storage proposal
-    ) private onlyAutorizedCaller {
+    function _tallyVotes(Proposal storage proposal)
+        private
+        onlyAutorizedCaller
+    {
         uint256 highestVoteCount;
 
-        // 1. First pass to find the highest vote count
         for (uint256 i = 0; i < proposal.options.length; ++i) {
             uint256 voteCount = _getVoteCount(proposal.id, proposal.options[i]);
             if (voteCount > highestVoteCount) highestVoteCount = voteCount;
         }
 
-        // 2. Second pass to collect all winners who match that count
         for (uint256 i = 0; i < proposal.options.length; ++i) {
             uint256 voteCount = _getVoteCount(proposal.id, proposal.options[i]);
             if (voteCount == highestVoteCount) {
@@ -402,9 +413,11 @@ contract ProposalManager is RBACWrapper {
         proposal.status = ProposalStatus.FINALIZED;
     }
 
-    function _bytes32ToString(
-        bytes32 _bytes32
-    ) private pure returns (string memory) {
+    function _bytes32ToString(bytes32 _bytes32)
+        private
+        pure
+        returns (string memory)
+    {
         uint8 i = 0;
         while (i < 32 && _bytes32[i] != 0) i++;
 
@@ -416,9 +429,11 @@ contract ProposalManager is RBACWrapper {
         return string(bytesArray);
     }
 
-    function _stringToBytes32(
-        string memory str
-    ) private pure returns (bytes32) {
+    function _stringToBytes32(string memory str)
+        private
+        pure
+        returns (bytes32)
+    {
         return bytes32(bytes(str));
     }
 }

@@ -1,20 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {ProposalManager} from "./ProposalManager.sol";
-import {VoterManager} from "./VoterManager.sol";
-import {RBAC} from "./RBAC.sol";
+import {IVotingSystem} from "./interfaces/IVotingSystem.sol";
+import {IVoterManager} from "./interfaces/IVoterManager.sol";
+import {IProposalManager} from "./interfaces/IProposalManager.sol";
 import {RBACWrapper} from "./RBACWrapper.sol";
 
-contract VotingSystem is RBACWrapper {
-    ProposalManager private immutable proposalManager;
-    VoterManager private immutable voterManager;
+contract VotingSystem is IVotingSystem, RBACWrapper {
+    IProposalManager private immutable proposalManager;
+    IVoterManager private immutable voterManager;
 
-    constructor() RBACWrapper(address(new RBAC())) {
-        address rbac = getRBACaddr();
-        voterManager = new VoterManager(rbac);
-        proposalManager =
-            new ProposalManager(rbac, address(this), address(voterManager));
+    constructor(
+        address _rbac,
+        address _voterManager,
+        address _propossalManager
+    ) RBACWrapper(_rbac) {
+        voterManager = IVoterManager(_voterManager);
+        proposalManager = IProposalManager(_propossalManager);
     }
 
     function createProposal(
@@ -38,9 +40,10 @@ contract VotingSystem is RBACWrapper {
         proposalManager.castVote(msg.sender, proposalId, option);
     }
 
-    function retractVote(
-        uint256 proposalId
-    ) external onlyVerifiedAddr(msg.sender) {
+    function retractVote(uint256 proposalId)
+        external
+        onlyVerifiedAddr(msg.sender)
+    {
         // Cast vote
         proposalManager.retractVote(msg.sender, proposalId);
     }
@@ -61,9 +64,7 @@ contract VotingSystem is RBACWrapper {
         rbac.revokeRole(role, account, msg.sender);
     }
 
-    function verifyVoter(
-        address voter
-    ) public {
+    function verifyVoter(address voter) public {
         rbac.verifyVoter(voter, msg.sender);
     }
 
@@ -83,9 +84,11 @@ contract VotingSystem is RBACWrapper {
         return proposalManager.getProposalCount();
     }
 
-    function getProposalWinner(
-        uint256 proposalId
-    ) external onlyVerifiedAddr(msg.sender) returns (string[] memory, bool) {
+    function getProposalWinner(uint256 proposalId)
+        external
+        onlyVerifiedAddr(msg.sender)
+        returns (string[] memory, bool)
+    {
         return proposalManager.getProposalWinner(proposalId);
     }
 

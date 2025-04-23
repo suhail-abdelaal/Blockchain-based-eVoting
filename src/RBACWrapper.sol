@@ -1,24 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "./RBAC.sol";
+import {IRBAC} from "./interfaces/IRBAC.sol";
 
 abstract contract RBACWrapper {
-    RBAC internal rbac;
+    IRBAC internal rbac;
 
-    constructor(
-        address _rbac
-    ) {
-        rbac = RBAC(_rbac);
+    constructor(address _rbac) {
+        rbac = IRBAC(_rbac);
     }
 
-    function getRBACaddr() public view returns (address) {
-        return address(rbac);
-    }
-
-    modifier onlyAdmin(
-        address admin
-    ) {
+    modifier onlyAdmin(address admin) {
         rbac.onlyAdmin(admin);
         _;
     }
@@ -28,16 +20,12 @@ abstract contract RBACWrapper {
         _;
     }
 
-    modifier onlyVerifiedAddr(
-        address voter
-    ) {
+    modifier onlyVerifiedAddr(address voter) {
         rbac.onlyVerifiedAddr(voter);
         _;
     }
 
-    function isVoterVerified(
-        address voter
-    ) public view returns (bool) {
-        return rbac.hasRole(rbac.VERIFIED_VOTER(), voter);
+    function isVoterVerified(address voter) public view returns (bool) {
+        return rbac.isVoterVerified(voter);
     }
 }

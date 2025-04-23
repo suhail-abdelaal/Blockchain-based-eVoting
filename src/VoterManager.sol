@@ -2,8 +2,9 @@
 pragma solidity ^0.8.23;
 
 import {RBACWrapper} from "./RBACWrapper.sol";
+import {IVoterManager} from "./interfaces/IVoterManager.sol";
 
-contract VoterManager is RBACWrapper {
+contract VoterManager is IVoterManager, RBACWrapper {
     /* Errors and Events */
     error VoterAlreadyVerified(address voter);
     error ProposalNotFound(uint256 proposalId);
@@ -29,9 +30,7 @@ contract VoterManager is RBACWrapper {
         public systemLog;
 
     /* Constructor */
-    constructor(
-        address _rbac
-    ) RBACWrapper(_rbac) {}
+    constructor(address _rbac) RBACWrapper(_rbac) {}
 
     /* Public Methods */
     function verifyVoter(
@@ -41,10 +40,8 @@ contract VoterManager is RBACWrapper {
     ) external onlyAdmin(msg.sender) {
         if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
-        bytes32 bytesVoterName;
-        assembly {
-            bytesVoterName := mload(add(voterName, 32))
-        }
+        bytes32 bytesVoterName = bytes32(bytes(voterName));
+
         // register voter
         voters[voter].name = bytesVoterName;
         for (uint256 i = 0; i < featureVector.length; ++i) {
@@ -57,15 +54,15 @@ contract VoterManager is RBACWrapper {
         emit VoterVerified(voter);
     }
 
-    function getVoterVerification(
-        address voter
-    ) external view returns (bool) {
+    function getVoterVerification(address voter) external view returns (bool) {
         return isVoterVerified(voter);
     }
 
-    function getVoterParticipatedProposals(
-        address voter
-    ) external view returns (uint256[] memory) {
+    function getVoterParticipatedProposals(address voter)
+        external
+        view
+        returns (uint256[] memory)
+    {
         return voters[voter].participatedProposalsId;
     }
 
@@ -76,9 +73,11 @@ contract VoterManager is RBACWrapper {
         return voters[voter].selectedOption[proposalId];
     }
 
-    function getVoterCreatedProposals(
-        address voter
-    ) external view returns (uint256[] memory) {
+    function getVoterCreatedProposals(address voter)
+        external
+        view
+        returns (uint256[] memory)
+    {
         return voters[voter].createdProposalsId;
     }
 
@@ -148,15 +147,19 @@ contract VoterManager is RBACWrapper {
         delete voter.createdProposalIndex[proposalId];
     }
 
-    function getParticipatedProposalsCount(
-        address voter
-    ) external view returns (uint256) {
+    function getParticipatedProposalsCount(address voter)
+        external
+        view
+        returns (uint256)
+    {
         return voters[voter].participatedProposalsId.length;
     }
 
-    function getCreatedProposalsCount(
-        address voter
-    ) external view returns (uint256) {
+    function getCreatedProposalsCount(address voter)
+        external
+        view
+        returns (uint256)
+    {
         return voters[voter].createdProposalsId.length;
     }
 }

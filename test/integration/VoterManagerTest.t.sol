@@ -3,20 +3,28 @@ pragma solidity ^0.8.23;
 
 import {Test, console} from "forge-std/Test.sol";
 import {VotingSystem} from "../../src/VotingSystem.sol";
+import {RBAC} from "../../src/RBAC.sol";
 import {VoterManager} from "../../src/VoterManager.sol";
-
+import {ProposalManager} from "../../src/ProposalManager.sol";
 contract VoterManagerTest is Test {
     VotingSystem public votingSystem;
+    RBAC public rbac;
     VoterManager public voterManager;
+    ProposalManager public proposalManager;
+
     address public user1 = makeAddr("user1");
     address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
 
     function setUp() public {
-        vm.deal(admin, 10 ether);
+        rbac = new RBAC();
+        voterManager = new VoterManager(address(rbac));
+        proposalManager = new ProposalManager(address(rbac), address(voterManager));
 
+        vm.deal(admin, 10 ether);
         vm.startPrank(admin);
 
-        votingSystem = new VotingSystem();
+        votingSystem = new VotingSystem(address(rbac), address(voterManager), address(proposalManager));
+        proposalManager.setAuthorizedCaller(address(votingSystem));
 
         votingSystem.verifyVoter(address(this));
         votingSystem.verifyVoter(user1);
@@ -44,7 +52,7 @@ contract VoterManagerTest is Test {
         }
 
         uint256 proposalCount = voterManager.getCreatedProposalsCount(user1);
-        
+
         vm.stopPrank();
 
         assertEq(
