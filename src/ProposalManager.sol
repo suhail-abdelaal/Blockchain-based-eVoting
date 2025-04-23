@@ -2,10 +2,10 @@
 pragma solidity ^0.8.23;
 
 import {RBACWrapper} from "./RBACWrapper.sol";
-import {VoterRegistry} from "./VoterRegistry.sol";
+import {VoterManager} from "./VoterManager.sol";
 import {console} from "forge-std/Test.sol";
 
-contract Ballot is RBACWrapper {
+contract ProposalManager is RBACWrapper {
     /* Errors and Events */
     error ProposalNotFound(uint256 proposalId);
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -80,16 +80,16 @@ contract Ballot is RBACWrapper {
 
     mapping(uint256 => Proposal) private proposals;
     uint256 private proposalCount;
-    VoterRegistry private voterRegistry;
+    VoterManager private voterManager;
     address private authorizedCaller;
 
     constructor(
         address _rbac,
         address _authorizedCaller,
-        address _voterRegistry
+        address _voterManager
     ) RBACWrapper(_rbac) {
         authorizedCaller = _authorizedCaller;
-        voterRegistry = VoterRegistry(_voterRegistry);
+        voterManager = VoterManager(_voterManager);
     }
 
     // ------------------- Modifiers -------------------
@@ -155,7 +155,7 @@ contract Ballot is RBACWrapper {
             proposal, voter, bytesTitle, options, startDate, endDate
         );
 
-        voterRegistry.recordUserCreatedProposal(voter, id);
+        voterManager.recordUserCreatedProposal(voter, id);
         emit ProposalCreated(id, voter, bytesTitle, startDate, endDate);
 
         return id;
@@ -193,7 +193,7 @@ contract Ballot is RBACWrapper {
             revert ImmutableVote(proposalId, voter);
         }
 
-        bytes32 option = voterRegistry.getVoterSelectedOption(voter, proposalId);
+        bytes32 option = voterManager.getVoterSelectedOption(voter, proposalId);
         if (!proposals[proposalId].optionExistence[option]) {
             revert InvalidOption(proposalId, option);
         }
@@ -217,7 +217,7 @@ contract Ballot is RBACWrapper {
         }
 
         bytes32 previousOption =
-            voterRegistry.getVoterSelectedOption(voter, proposalId);
+            voterManager.getVoterSelectedOption(voter, proposalId);
         if (!proposals[proposalId].optionExistence[previousOption]) {
             revert InvalidOption(proposalId, previousOption);
         }
@@ -306,7 +306,7 @@ contract Ballot is RBACWrapper {
     ) private {
         proposals[proposalId].optionVoteCounts[option] += 1;
         proposals[proposalId].isParticipant[voter] = true;
-        voterRegistry.recordUserParticipation(voter, proposalId, option);
+        voterManager.recordUserParticipation(voter, proposalId, option);
 
         emit VoteCast(proposalId, voter, option);
     }
@@ -318,7 +318,7 @@ contract Ballot is RBACWrapper {
     ) private {
         proposals[proposalId].optionVoteCounts[option] -= 1;
         proposals[proposalId].isParticipant[voter] = false;
-        voterRegistry.removeUserParticipation(voter, proposalId);
+        voterManager.removeUserParticipation(voter, proposalId);
 
         emit VoteRetracted(proposalId, voter, option);
     }

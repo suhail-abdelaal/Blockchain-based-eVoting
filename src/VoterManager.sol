@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {RBACWrapper} from "./RBACWrapper.sol";
 
-contract VoterRegistry is RBACWrapper {
+contract VoterManager is RBACWrapper {
     /* Errors and Events */
     error VoterAlreadyVerified(address voter);
     error ProposalNotFound(uint256 proposalId);
