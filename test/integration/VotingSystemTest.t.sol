@@ -25,21 +25,25 @@ contract VotingSystemTest is Test {
         vm.stopPrank();
 
         vm.deal(user1, 10 ether);
-        vm.deal(user2, 10 ether);  
+        vm.deal(user2, 10 ether);
         vm.deal(user3, 10 ether);
     }
 
     function test_CastVote() public {
-
         string[] memory options = new string[](3);
         options[0] = "Option A";
         options[1] = "Option B";
         options[2] = "Option C";
-        
+
         vm.prank(user1);
-        votingSystem.createProposal("Proposal 1", options, block.timestamp + 1 days, block.timestamp + 10 days);
+        votingSystem.createProposal(
+            "Proposal 1",
+            options,
+            block.timestamp + 1 days,
+            block.timestamp + 10 days
+        );
         vm.warp(block.timestamp + 1 days);
-    
+
         vm.prank(user2);
         votingSystem.castVote(1, "Option A");
 
@@ -55,16 +59,21 @@ contract VotingSystemTest is Test {
         options[0] = "Option A";
         options[1] = "Option B";
         options[2] = "Option C";
-        
+
         vm.prank(user1);
-        votingSystem.createProposal("Proposal 1", options, block.timestamp + 1 days, block.timestamp + 10 days);
+        votingSystem.createProposal(
+            "Proposal 1",
+            options,
+            block.timestamp + 1 days,
+            block.timestamp + 10 days
+        );
         vm.warp(block.timestamp + 1 days);
 
         vm.startPrank(user2);
         votingSystem.castVote(1, "Option A");
         votingSystem.retractVote(1);
         vm.stopPrank();
-        
+
         uint256 voteCount = votingSystem.getVoteCount(1, "Option A");
         assertEq(voteCount, 0, "Vote count should be zero after retraction");
     }

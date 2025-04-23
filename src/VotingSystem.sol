@@ -13,7 +13,8 @@ contract VotingSystem is RBACWrapper {
     constructor() RBACWrapper(address(new RBAC())) {
         address rbac = getRBACaddr();
         voterManager = new VoterManager(rbac);
-        proposalManager = new ProposalManager(rbac, address(this), address(voterManager));
+        proposalManager =
+            new ProposalManager(rbac, address(this), address(voterManager));
     }
 
     function createProposal(
@@ -23,8 +24,9 @@ contract VotingSystem is RBACWrapper {
         uint256 endDate
     ) external onlyVerifiedAddr(msg.sender) returns (uint256) {
         // Create proposal
-        uint256 proposalId =
-            proposalManager.addProposal(msg.sender, title, options, startDate, endDate);
+        uint256 proposalId = proposalManager.addProposal(
+            msg.sender, title, options, startDate, endDate
+        );
         return proposalId;
     }
 

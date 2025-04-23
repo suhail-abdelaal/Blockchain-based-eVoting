@@ -402,7 +402,6 @@ contract ProposalManager is RBACWrapper {
         proposal.status = ProposalStatus.FINALIZED;
     }
 
-
     function _bytes32ToString(
         bytes32 _bytes32
     ) private pure returns (string memory) {

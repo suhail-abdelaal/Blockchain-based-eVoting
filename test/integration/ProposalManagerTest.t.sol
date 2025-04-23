@@ -25,14 +25,18 @@ contract ProposalManagerTest is Test {
         vm.stopPrank();
 
         vm.deal(user1, 10 ether);
-        vm.deal(user2, 10 ether);  
+        vm.deal(user2, 10 ether);
         vm.deal(user3, 10 ether);
     }
 
-
     function test_CreateProposal() public {
         vm.prank(user1);
-        votingSystem.createProposal("Proposal 1", new string[](3), block.timestamp + 1 days, block.timestamp + 10 days);
+        votingSystem.createProposal(
+            "Proposal 1",
+            new string[](3),
+            block.timestamp + 1 days,
+            block.timestamp + 10 days
+        );
 
         console.log("caller:'", address(this), "'");
         uint256 count = votingSystem.getProposalCount();
@@ -47,7 +51,12 @@ contract ProposalManagerTest is Test {
         options[1] = "Option B";
         options[2] = "Option C";
 
-        votingSystem.createProposal("Proposal 1", options, block.timestamp + 1 days, block.timestamp + 10 days);
+        votingSystem.createProposal(
+            "Proposal 1",
+            options,
+            block.timestamp + 1 days,
+            block.timestamp + 10 days
+        );
 
         vm.warp(block.timestamp + 1 days);
 
@@ -58,7 +67,8 @@ contract ProposalManagerTest is Test {
         votingSystem.castVote(1, "Option A");
 
         vm.warp(block.timestamp + 11 days);
-        (string[] memory winners, bool isDraw) = votingSystem.getProposalWinner(1);
+        (string[] memory winners, bool isDraw) =
+            votingSystem.getProposalWinner(1);
 
         assertEq(winners.length, 1);
         assertEq(winners[0], "Option A");
@@ -72,8 +82,13 @@ contract ProposalManagerTest is Test {
         options[0] = "Option A";
         options[1] = "Option B";
         options[2] = "Option C";
-        
-        votingSystem.createProposal("Proposal 1", options, block.timestamp + 1 days, block.timestamp + 10 days);
+
+        votingSystem.createProposal(
+            "Proposal 1",
+            options,
+            block.timestamp + 1 days,
+            block.timestamp + 10 days
+        );
 
         vm.warp(block.timestamp + 1 days);
 
@@ -84,7 +99,8 @@ contract ProposalManagerTest is Test {
         votingSystem.castVote(1, "Option B");
 
         vm.warp(block.timestamp + 11 days);
-        (string[] memory winners, bool isDraw) = votingSystem.getProposalWinner(1);
+        (string[] memory winners, bool isDraw) =
+            votingSystem.getProposalWinner(1);
 
         assertEq(winners.length, 2);
         assert(isDraw);

@@ -22,17 +22,14 @@ contract VoterManagerTest is Test {
         votingSystem.verifyVoter(user1);
         voterManager = VoterManager(votingSystem.getVoterManager());
 
-
         vm.stopPrank();
 
         vm.deal(user1, 10 ether);
     }
 
-
     function test_VerifiedUser() public view {
         assert(votingSystem.isVoterVerified(address(this)));
         assert(votingSystem.isVoterVerified(user1));
-
     }
 
     function test_RecordAndRemoveProposals() public {
@@ -49,6 +46,8 @@ contract VoterManagerTest is Test {
         uint256 proposalCount = voterManager.getCreatedProposalsCount(user1);
         vm.stopPrank();
 
-        assertEq(proposalCount, 0, "Proposal count should be zero after removal");
+        assertEq(
+            proposalCount, 0, "Proposal count should be zero after removal"
+        );
     }
 }
