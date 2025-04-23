@@ -77,4 +77,31 @@ contract VotingSystemTest is Test {
         uint256 voteCount = votingSystem.getVoteCount(1, "Option A");
         assertEq(voteCount, 0, "Vote count should be zero after retraction");
     }
+
+    function test_ChangeVote() public {
+        string[] memory options = new string[](3);
+        options[0] = "Option A";
+        options[1] = "Option B";
+        options[2] = "Option C";
+
+        vm.prank(user1);
+        votingSystem.createProposal(
+            "Proposal 1",
+            options,
+            block.timestamp + 1 days,
+            block.timestamp + 10 days
+        );
+        vm.warp(block.timestamp + 1 days);
+
+        vm.startPrank(user2);
+        votingSystem.castVote(1, "Option A");
+        votingSystem.changeVote(1, "Option B");
+        vm.stopPrank();
+
+        uint256 voteCountOptionA = votingSystem.getVoteCount(1, "Option A");
+        uint256 voteCountOptionB = votingSystem.getVoteCount(1, "Option B");
+
+        assertEq(voteCountOptionA, 0, "Vote count for Option A should be zero after changing vote");
+        assertEq(voteCountOptionB, 1, "Vote count for Option B should be one after changing vote");
+    }
 }
