@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Ballot} from "./Ballot.sol";
-import {VoterRegistry} from "./VoterRegistry.sol";
+import {ProposalManager} from "./ProposalManager.sol";
+import {VoterManager} from "./VoterManager.sol";
 import {RBAC} from "./RBAC.sol";
 import {RBACWrapper} from "./RBACWrapper.sol";
 
-contract Vote is RBACWrapper {
-    Ballot private immutable ballot;
-    VoterRegistry private immutable voterRegistry;
+contract VotingSystem is RBACWrapper {
+    ProposalManager private immutable proposalManager;
+    VoterManager private immutable voterManager;
 
     constructor() RBACWrapper(address(new RBAC())) {
         address rbac = getRBACaddr();
-        voterRegistry = new VoterRegistry(rbac);
-        ballot = new Ballot(rbac, address(this), address(voterRegistry));
+        voterManager = new VoterManager(rbac);
+        proposalManager = new ProposalManager(rbac, address(this), address(voterManager));
     }
 
     function createProposal(
@@ -24,7 +24,7 @@ contract Vote is RBACWrapper {
     ) external onlyVerifiedAddr(msg.sender) returns (uint256) {
         // Create proposal
         uint256 proposalId =
-            ballot.addProposal(msg.sender, title, options, startDate, endDate);
+            proposalManager.addProposal(msg.sender, title, options, startDate, endDate);
         return proposalId;
     }
 
@@ -33,14 +33,14 @@ contract Vote is RBACWrapper {
         string calldata option
     ) external onlyVerifiedAddr(msg.sender) {
         // Cast vote
-        ballot.castVote(msg.sender, proposalId, option);
+        proposalManager.castVote(msg.sender, proposalId, option);
     }
 
     function retractVote(
         uint256 proposalId
     ) external onlyVerifiedAddr(msg.sender) {
         // Cast vote
-        ballot.retractVote(msg.sender, proposalId);
+        proposalManager.retractVote(msg.sender, proposalId);
     }
 
     function changeVote(
@@ -48,7 +48,7 @@ contract Vote is RBACWrapper {
         string calldata option
     ) external onlyVerifiedAddr(msg.sender) {
         // Change vote
-        ballot.changeVote(msg.sender, proposalId, option);
+        proposalManager.changeVote(msg.sender, proposalId, option);
     }
 
     function grantRole(bytes32 role, address account) public {
@@ -69,7 +69,7 @@ contract Vote is RBACWrapper {
         uint256 proposalId,
         string calldata option
     ) external view onlyVerifiedAddr(msg.sender) returns (uint256) {
-        return ballot.getVoteCount(proposalId, option);
+        return proposalManager.getVoteCount(proposalId, option);
     }
 
     function getProposalCount()
@@ -78,20 +78,20 @@ contract Vote is RBACWrapper {
         onlyVerifiedAddr(msg.sender)
         returns (uint256)
     {
-        return ballot.getProposalCount();
+        return proposalManager.getProposalCount();
     }
 
     function getPoposalWinner(
         uint256 proposalId
     ) external onlyVerifiedAddr(msg.sender) returns (string[] memory, bool) {
-        return ballot.getProposalWinner(proposalId);
+        return proposalManager.getProposalWinner(proposalId);
     }
 
-    function getVoterRegistry() external view returns (address) {
-        return address(voterRegistry);
+    function getVoterManager() external view returns (address) {
+        return address(voterManager);
     }
 
-    function getBallot() external view returns (address) {
-        return address(ballot);
+    function getProposalManager() external view returns (address) {
+        return address(proposalManager);
     }
 }
