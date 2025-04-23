@@ -5,6 +5,7 @@ import {RBACWrapper} from "./RBACWrapper.sol";
 import {IVoterManager} from "./interfaces/IVoterManager.sol";
 
 contract VoterManager is IVoterManager, RBACWrapper {
+
     /* Errors and Events */
     error VoterAlreadyVerified(address voter);
     error ProposalNotFound(uint256 proposalId);
@@ -162,4 +163,5 @@ contract VoterManager is IVoterManager, RBACWrapper {
     {
         return voters[voter].createdProposalsId.length;
     }
+
 }

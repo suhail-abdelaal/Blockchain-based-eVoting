@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 interface IVotingSystem {
+
     function createProposal(
         string calldata title,
         string[] calldata options,
@@ -35,4 +36,5 @@ interface IVotingSystem {
     function getProposalManager() external view returns (address);
 
     function getVoterManager() external view returns (address);
+
 }

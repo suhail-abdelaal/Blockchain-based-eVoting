@@ -14,3 +14,4 @@ number_underscore = "thousands"
 multiline_func_header = "params_first_multi" 
 wrap_comments = true
 single_line_statement_blocks = "single"
+contract_new_lines = true

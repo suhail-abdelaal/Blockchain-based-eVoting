@@ -8,6 +8,7 @@ import {VoterManager} from "../../src/VoterManager.sol";
 import {ProposalManager} from "../../src/ProposalManager.sol";
 
 contract ProposalManagerTest is Test {
+
     VotingSystem public votingSystem;
     RBAC public rbac;
     VoterManager public voterManager;
@@ -21,12 +22,15 @@ contract ProposalManagerTest is Test {
     function setUp() public {
         rbac = new RBAC();
         voterManager = new VoterManager(address(rbac));
-        proposalManager = new ProposalManager(address(rbac), address(voterManager));
+        proposalManager =
+            new ProposalManager(address(rbac), address(voterManager));
 
         vm.deal(admin, 10 ether);
         vm.startPrank(admin);
 
-        votingSystem = new VotingSystem(address(rbac), address(voterManager), address(proposalManager));
+        votingSystem = new VotingSystem(
+            address(rbac), address(voterManager), address(proposalManager)
+        );
         proposalManager.setAuthorizedCaller(address(votingSystem));
 
         votingSystem.verifyVoter(address(this));
@@ -115,4 +119,5 @@ contract ProposalManagerTest is Test {
         assertEq(winners.length, 2);
         assert(isDraw);
     }
+
 }

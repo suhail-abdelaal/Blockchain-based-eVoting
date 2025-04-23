@@ -6,6 +6,7 @@ import {IVoterManager} from "./interfaces/IVoterManager.sol";
 import {IProposalManager} from "./interfaces/IProposalManager.sol";
 
 contract ProposalManager is IProposalManager, RBACWrapper {
+
     /* Errors and Events */
     error ProposalNotFound(uint256 proposalId);
     error ProposalStartDateTooEarly(uint256 startDate);
@@ -83,10 +84,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     IVoterManager private voterManager;
     address private authorizedCaller;
 
-    constructor(
-        address _rbac,
-        address _voterManager
-    ) RBACWrapper(_rbac) {
+    constructor(address _rbac, address _voterManager) RBACWrapper(_rbac) {
         voterManager = IVoterManager(_voterManager);
     }
 
@@ -436,4 +434,5 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     {
         return bytes32(bytes(str));
     }
+
 }

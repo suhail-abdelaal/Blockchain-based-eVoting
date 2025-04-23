@@ -7,6 +7,7 @@ import {IProposalManager} from "./interfaces/IProposalManager.sol";
 import {RBACWrapper} from "./RBACWrapper.sol";
 
 contract VotingSystem is IVotingSystem, RBACWrapper {
+
     IProposalManager private immutable proposalManager;
     IVoterManager private immutable voterManager;
 
@@ -99,4 +100,5 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
     function getProposalManager() external view returns (address) {
         return address(proposalManager);
     }
+
 }

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 interface IProposalManager {
+
     function addProposal(
         address creator,
         string memory title,
@@ -34,4 +35,5 @@ interface IProposalManager {
     function getProposalWinner(uint256 proposalId)
         external
         returns (string[] memory winners, bool isDraw);
+
 }

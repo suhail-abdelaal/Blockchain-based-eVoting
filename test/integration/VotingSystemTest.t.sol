@@ -7,8 +7,8 @@ import {RBAC} from "../../src/RBAC.sol";
 import {VoterManager} from "../../src/VoterManager.sol";
 import {ProposalManager} from "../../src/ProposalManager.sol";
 
-
 contract VotingSystemTest is Test {
+
     VotingSystem public votingSystem;
     RBAC public rbac;
     VoterManager public voterManager;
@@ -22,14 +22,17 @@ contract VotingSystemTest is Test {
     function setUp() public {
         rbac = new RBAC();
         voterManager = new VoterManager(address(rbac));
-        proposalManager = new ProposalManager(address(rbac), address(voterManager));
+        proposalManager =
+            new ProposalManager(address(rbac), address(voterManager));
 
         vm.deal(admin, 10 ether);
         vm.startPrank(admin);
 
-        votingSystem = new VotingSystem(address(rbac), address(voterManager), address(proposalManager));
+        votingSystem = new VotingSystem(
+            address(rbac), address(voterManager), address(proposalManager)
+        );
         proposalManager.setAuthorizedCaller(address(votingSystem));
-        
+
         votingSystem.verifyVoter(address(this));
         votingSystem.verifyVoter(user1);
         votingSystem.verifyVoter(user2);
@@ -125,4 +128,5 @@ contract VotingSystemTest is Test {
             "Vote count for Option B should be one after changing vote"
         );
     }
+
 }

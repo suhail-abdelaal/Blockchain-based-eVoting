@@ -2,6 +2,7 @@
 pragma solidity ^0.8.23;
 
 interface IVoterManager {
+
     function verifyVoter(
         address voter,
         string memory voterName,
@@ -52,4 +53,5 @@ interface IVoterManager {
         external
         view
         returns (uint256);
+
 }

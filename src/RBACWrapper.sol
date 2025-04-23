@@ -4,6 +4,7 @@ pragma solidity ^0.8.23;
 import {IRBAC} from "./interfaces/IRBAC.sol";
 
 abstract contract RBACWrapper {
+
     IRBAC internal rbac;
 
     constructor(address _rbac) {
@@ -28,4 +29,5 @@ abstract contract RBACWrapper {
     function isVoterVerified(address voter) public view returns (bool) {
         return rbac.isVoterVerified(voter);
     }
+
 }
