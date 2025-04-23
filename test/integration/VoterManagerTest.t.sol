@@ -44,6 +44,7 @@ contract VoterManagerTest is Test {
         }
 
         uint256 proposalCount = voterManager.getCreatedProposalsCount(user1);
+        
         vm.stopPrank();
 
         assertEq(

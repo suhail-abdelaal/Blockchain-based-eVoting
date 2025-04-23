@@ -44,13 +44,12 @@ contract ProposalManagerTest is Test {
     }
 
     function test_ProposalFinalizationNoDraw() public {
-        vm.prank(user1);
-
         string[] memory options = new string[](3);
         options[0] = "Option A";
         options[1] = "Option B";
         options[2] = "Option C";
 
+        vm.prank(user1);
         votingSystem.createProposal(
             "Proposal 1",
             options,
@@ -76,13 +75,12 @@ contract ProposalManagerTest is Test {
     }
 
     function test_ProposalFinalizationDraw() public {
-        vm.prank(user1);
-
         string[] memory options = new string[](3);
         options[0] = "Option A";
         options[1] = "Option B";
         options[2] = "Option C";
 
+        vm.prank(user1);
         votingSystem.createProposal(
             "Proposal 1",
             options,
