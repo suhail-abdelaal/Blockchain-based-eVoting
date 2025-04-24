@@ -31,14 +31,16 @@ contract ProposalManagerTest is Test {
         votingSystem = new VotingSystem(
             address(rbac), address(voterManager), address(proposalManager)
         );
-        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(proposalManager));
-        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
-        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
+        rbac.grantRole(
+            rbac.AUTHORIZED_CALLER(), address(proposalManager)
+        );
+        rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
+        rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
 
-        votingSystem.verifyVoter(address(this));
-        votingSystem.verifyVoter(user1);
-        votingSystem.verifyVoter(user2);
-        votingSystem.verifyVoter(user3);
+        rbac.verifyVoter(address(this));
+        rbac.verifyVoter(user1);
+        rbac.verifyVoter(user2);
+        rbac.verifyVoter(user3);
 
         vm.stopPrank();
 

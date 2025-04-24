@@ -43,7 +43,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
         address voter,
         string memory voterName,
         uint256[] calldata featureVector
-    ) external onlyAdmin(msg.sender) {
+    ) external onlyAdmin {
         if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
         bytes32 bytesVoterName = bytes32(bytes(voterName));
@@ -55,7 +55,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
         }
 
         // Verify voter
-        rbac.verifyVoter(voter, msg.sender);
+        rbac.verifyVoter(voter);
 
         emit VoterVerified(voter);
     }

@@ -128,7 +128,12 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         string[] calldata options,
         uint256 startDate,
         uint256 endDate
-    ) external onlyAuthorizedCaller(msg.sender) onlyVerifiedAddr(voter) returns (uint256) {
+    )
+        external
+        onlyAuthorizedCaller(msg.sender)
+        onlyVerifiedAddr(voter)
+        returns (uint256)
+    {
         if (startDate < block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(startDate);
         }
@@ -424,4 +429,5 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     {
         return bytes32(bytes(str));
     }
+
 }

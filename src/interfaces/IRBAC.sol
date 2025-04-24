@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 interface IRBAC {
 
-    function onlyAdmin(address admin) external view;
+    function onlyAdmin() external view;
 
     function onlyVerifiedVoter() external view;
 
@@ -16,15 +16,11 @@ interface IRBAC {
         address account
     ) external view returns (bool);
 
-    function grantRole(bytes32 role, address account, address admin) external;
+    function grantRole(bytes32 role, address account) external;
 
-    function revokeRole(
-        bytes32 role,
-        address account,
-        address admin
-    ) external;
+    function revokeRole(bytes32 role, address account) external;
 
-    function verifyVoter(address voter, address admin) external;
+    function verifyVoter(address voter) external;
 
     function isVoterVerified(address voter) external view returns (bool);
 

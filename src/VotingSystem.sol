@@ -58,15 +58,15 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
     }
 
     function grantRole(bytes32 role, address account) public {
-        rbac.grantRole(role, account, msg.sender);
+        rbac.grantRole(role, account);
     }
 
     function revokeRole(bytes32 role, address account) public {
-        rbac.revokeRole(role, account, msg.sender);
+        rbac.revokeRole(role, account);
     }
 
     function verifyVoter(address voter) public {
-        rbac.verifyVoter(voter, msg.sender);
+        rbac.verifyVoter(voter);
     }
 
     function getVoteCount(

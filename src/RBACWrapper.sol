@@ -11,8 +11,8 @@ abstract contract RBACWrapper {
         rbac = IRBAC(_rbac);
     }
 
-    modifier onlyAdmin(address admin) {
-        rbac.onlyAdmin(admin);
+    modifier onlyAdmin() {
+        rbac.onlyAdmin();
         _;
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test} from "forge-std/Test.sol";
+import {Test, console} from "forge-std/Test.sol";
 import {VotingSystem} from "../../src/VotingSystem.sol";
 import {RBAC} from "../../src/RBAC.sol";
 import {VoterManager} from "../../src/VoterManager.sol";
@@ -20,25 +20,30 @@ contract VotingSystemTest is Test {
     address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
 
     function setUp() public {
+        vm.deal(admin, 10 ether);
+        vm.startPrank(admin);
+        console.log("Admin address: ", admin);
+        console.log("Contract address: ", address(this));
+
         rbac = new RBAC();
         voterManager = new VoterManager(address(rbac));
         proposalManager =
             new ProposalManager(address(rbac), address(voterManager));
 
-        vm.deal(admin, 10 ether);
-        vm.startPrank(admin);
 
         votingSystem = new VotingSystem(
             address(rbac), address(voterManager), address(proposalManager)
         );
-        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(proposalManager));
-        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
-        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
-        
-        votingSystem.verifyVoter(address(this));
-        votingSystem.verifyVoter(user1);
-        votingSystem.verifyVoter(user2);
-        votingSystem.verifyVoter(user3);
+        rbac.grantRole(
+            rbac.AUTHORIZED_CALLER(), address(proposalManager)
+        );
+        rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
+        rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
+
+        rbac.verifyVoter(address(this));
+        rbac.verifyVoter(user1);
+        rbac.verifyVoter(user2);
+        rbac.verifyVoter(user3);
 
         vm.stopPrank();
 

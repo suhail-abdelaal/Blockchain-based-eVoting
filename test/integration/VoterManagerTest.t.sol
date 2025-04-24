@@ -20,7 +20,8 @@ contract VoterManagerTest is Test {
     function setUp() public {
         rbac = new RBAC();
         voterManager = new VoterManager(address(rbac));
-        proposalManager = new ProposalManager(address(rbac), address(voterManager));
+        proposalManager =
+            new ProposalManager(address(rbac), address(voterManager));
         votingSystem = new VotingSystem(
             address(rbac), address(voterManager), address(proposalManager)
         );
@@ -28,13 +29,10 @@ contract VoterManagerTest is Test {
         vm.deal(admin, 10 ether);
         vm.startPrank(admin);
 
-        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(this));
-        // votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
-        // votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
+        rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(this));
 
-        votingSystem.verifyVoter(address(this));
-        votingSystem.verifyVoter(user1);
-        
+        rbac.verifyVoter(address(this));
+        rbac.verifyVoter(user1);
 
         vm.stopPrank();
 
@@ -47,7 +45,6 @@ contract VoterManagerTest is Test {
     }
 
     function test_RecordAndRemoveProposals() public {
-        
         for (uint256 i = 0; i < 5; ++i) {
             voterManager.recordUserCreatedProposal(user1, i);
         }
