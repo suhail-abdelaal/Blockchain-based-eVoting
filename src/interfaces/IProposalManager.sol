@@ -30,6 +30,18 @@ interface IProposalManager {
         string memory option
     ) external view returns (uint256);
 
+    function getProposalDetails(uint256 proposalId)
+        external
+        returns (
+            string memory title,
+            string[] memory options,
+            uint256 startDate,
+            uint256 endDate,
+            address owner,
+            bool isDraw,
+            string[] memory winners
+        );
+
     function getProposalCount() external view returns (uint256);
 
     function getProposalWinner(uint256 proposalId)

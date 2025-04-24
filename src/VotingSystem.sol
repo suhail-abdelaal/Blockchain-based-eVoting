@@ -25,7 +25,7 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
         string[] calldata options,
         uint256 startDate,
         uint256 endDate
-    ) external onlyVerifiedAddr(msg.sender) returns (uint256) {
+    ) external returns (uint256) {
         // Create proposal
         uint256 proposalId = proposalManager.addProposal(
             msg.sender, title, options, startDate, endDate
@@ -36,14 +36,13 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
     function castVote(
         uint256 proposalId,
         string calldata option
-    ) external onlyVerifiedAddr(msg.sender) {
+    ) external {
         // Cast vote
         proposalManager.castVote(msg.sender, proposalId, option);
     }
 
     function retractVote(uint256 proposalId)
         external
-        onlyVerifiedAddr(msg.sender)
     {
         // Cast vote
         proposalManager.retractVote(msg.sender, proposalId);
@@ -52,7 +51,7 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
     function changeVote(
         uint256 proposalId,
         string calldata option
-    ) external onlyVerifiedAddr(msg.sender) {
+    ) external  {
         // Change vote
         proposalManager.changeVote(msg.sender, proposalId, option);
     }
@@ -99,6 +98,22 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
 
     function getProposalManager() external view returns (address) {
         return address(proposalManager);
+    }
+
+    function getProposalDetails(uint256 proposalId)
+        external
+        onlyVerifiedAddr(msg.sender)
+        returns (
+            string memory title,
+            string[] memory options,
+            uint256 startDate,
+            uint256 endDate,
+            address owner,
+            bool isDraw,
+            string[] memory winners
+        )
+    {
+        return proposalManager.getProposalDetails(proposalId);
     }
 
 }

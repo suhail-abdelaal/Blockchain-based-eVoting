@@ -146,9 +146,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         uint256 id = proposalCount;
         Proposal storage proposal = proposals[id];
         proposal.id = id;
-        _initializeProposal(
-            proposal, voter, title, options, startDate, endDate
-        );
+        _initializeProposal(proposal, voter, title, options, startDate, endDate);
 
         voterManager.recordUserCreatedProposal(voter, id);
         emit ProposalCreated(id, voter, title, startDate, endDate);
@@ -187,7 +185,8 @@ contract ProposalManager is IProposalManager, RBACWrapper {
             revert ImmutableVote(proposalId, voter);
         }
 
-        string memory option = voterManager.getVoterSelectedOption(voter, proposalId);
+        string memory option =
+            voterManager.getVoterSelectedOption(voter, proposalId);
         if (!proposals[proposalId].optionExistence[option]) {
             revert InvalidOption(proposalId, option);
         }
@@ -217,9 +216,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         }
 
         if (_cmp(previousOption, newOption)) {
-            revert VoteOptionIdentical(
-                proposalId, previousOption, newOption
-            );
+            revert VoteOptionIdentical(proposalId, previousOption, newOption);
         }
 
         _retractVote(proposalId, voter, previousOption);
@@ -228,19 +225,30 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         emit VoteChanged(proposalId, voter, previousOption, newOption);
     }
 
-        function getProposalDetails(uint256 proposalId)
+    function getProposalDetails(uint256 proposalId)
         external
-        view
-        onlyVerifiedAddr(msg.sender)
+        onlyAuthorizedCaller(msg.sender)
         returns (
             string memory title,
             string[] memory options,
             uint256 startDate,
             uint256 endDate,
-            address creator
+            address owner,
+            bool isDraw,
+            string[] memory winners
         )
     {
-        
+        _checkProposalStatus(proposalId);
+        Proposal storage proposal = proposals[proposalId];
+        return (
+            proposal.title,
+            proposal.options,
+            proposal.startDate,
+            proposal.endDate,
+            proposal.owner,
+            proposal.isDraw,
+            proposal.winners
+        );
     }
 
     // ------------------- Public Methods -------------------
@@ -413,11 +421,10 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         proposal.status = ProposalStatus.FINALIZED;
     }
 
-    function _cmp(string memory a, string memory b)
-        private
-        pure
-        returns (bool)
-    {
+    function _cmp(
+        string memory a,
+        string memory b
+    ) private pure returns (bool) {
         return keccak256(abi.encodePacked(a)) == keccak256(abi.encodePacked(b));
     }
 

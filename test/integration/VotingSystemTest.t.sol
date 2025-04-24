@@ -30,13 +30,10 @@ contract VotingSystemTest is Test {
         proposalManager =
             new ProposalManager(address(rbac), address(voterManager));
 
-
         votingSystem = new VotingSystem(
             address(rbac), address(voterManager), address(proposalManager)
         );
-        rbac.grantRole(
-            rbac.AUTHORIZED_CALLER(), address(proposalManager)
-        );
+        rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(proposalManager));
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
 
