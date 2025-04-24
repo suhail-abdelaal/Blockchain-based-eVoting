@@ -32,8 +32,8 @@ contract RBAC is AccessControl {
         _checkRole(AUTHORIZED_CALLER, caller);
     }
 
-    function onlyAdmin() private view {
-        _checkRole(ADMIN);
+    function onlyAdmin(address account) private view {
+        _checkRole(ADMIN, account);
     }
 
     function grantRole(bytes32 role, address account) public override {

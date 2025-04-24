@@ -12,7 +12,7 @@ abstract contract RBACWrapper {
     }
 
     modifier onlyAdmin() {
-        rbac.onlyAdmin();
+        rbac.onlyAdmin(msg.sender);
         _;
     }
 

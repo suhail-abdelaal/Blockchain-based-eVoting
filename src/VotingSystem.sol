@@ -51,7 +51,7 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
     function changeVote(
         uint256 proposalId,
         string calldata option
-    ) external  {
+    ) external {
         // Change vote
         proposalManager.changeVote(msg.sender, proposalId, option);
     }
@@ -60,7 +60,7 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
         address voter,
         string calldata voterName,
         uint256[] calldata featureVector
-    ) external onlyAdmin {
+    ) external {
         // Register voter
         voterManager.verifyVoter(voter, voterName, featureVector);
     }

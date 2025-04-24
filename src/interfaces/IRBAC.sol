@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 interface IRBAC {
 
-    function onlyAdmin() external view;
+    function onlyAdmin(address account) external view;
 
     function onlyVerifiedVoter() external view;
 
