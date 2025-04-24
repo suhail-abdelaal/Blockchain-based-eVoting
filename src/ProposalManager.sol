@@ -355,6 +355,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     ) private {
         proposals[proposalId].optionVoteCounts[option] += 1;
         proposals[proposalId].isParticipant[voter] = true;
+        proposals[proposalId].numOfParticipants++;
         voterManager.recordUserParticipation(voter, proposalId, option);
     }
 
@@ -365,6 +366,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     ) private {
         proposals[proposalId].optionVoteCounts[option] -= 1;
         proposals[proposalId].isParticipant[voter] = false;
+        proposals[proposalId].numOfParticipants--;
         voterManager.removeUserParticipation(voter, proposalId);
     }
 
