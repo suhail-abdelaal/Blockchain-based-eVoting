@@ -112,12 +112,6 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         _;
     }
 
-    modifier onlyValidOptions(uint256 proposalId, string calldata option) {
-        if (!proposals[proposalId].optionExistence[option]) {
-            revert InvalidOption(proposalId, option);
-        }
-        _;
-    }
 
     // ------------------- External Methods -------------------
 
@@ -163,10 +157,12 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         onlyAuthorizedCaller(msg.sender)
         onlyVerifiedAddr(voter)
         onActiveProposals(proposalId)
-        onlyValidOptions(proposalId, option)
     {
         if (checkVoterParticipation(voter, proposalId)) {
             revert VoteAlreadyCast(proposalId, voter);
+        }
+        if (!proposals[proposalId].optionExistence[option]) {
+            revert InvalidOption(proposalId, option);
         }
         _castVote(proposalId, voter, option);
     }
