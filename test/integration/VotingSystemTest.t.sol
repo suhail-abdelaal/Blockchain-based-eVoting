@@ -33,16 +33,18 @@ contract VotingSystemTest is Test {
         votingSystem = new VotingSystem(
             address(rbac), address(voterManager), address(proposalManager)
         );
+        rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(this));
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(proposalManager));
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
 
+        vm.stopPrank();
+        
         rbac.verifyVoter(address(this));
         rbac.verifyVoter(user1);
         rbac.verifyVoter(user2);
         rbac.verifyVoter(user3);
 
-        vm.stopPrank();
 
         vm.deal(user1, 10 ether);
         vm.deal(user2, 10 ether);

@@ -15,9 +15,9 @@ contract RBAC is AccessControl {
         _setRoleAdmin(VERIFIED_VOTER, ADMIN);
         _setRoleAdmin(AUTHORIZED_CALLER, ADMIN);
         _grantRole(VERIFIED_VOTER, 0x45586259E1816AC7784Ae83e704eD354689081b1);
-        _grantRole(
-            AUTHORIZED_CALLER, 0x45586259E1816AC7784Ae83e704eD354689081b1
-        );
+        // _grantRole(
+        //     AUTHORIZED_CALLER, 0x45586259E1816AC7784Ae83e704eD354689081b1
+        // );
     }
 
     function onlyVerifiedVoter() public view {
