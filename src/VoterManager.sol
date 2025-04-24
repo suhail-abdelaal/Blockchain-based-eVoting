@@ -22,12 +22,13 @@ contract VoterManager is IVoterManager, RBACWrapper {
 
     struct Voter {
         string name;
-        uint256[] featureVector;
+        uint8 NID;
+        uint8[] featureVector;
         uint256[] participatedProposalsId;
         mapping(uint256 => uint256) participatedProposalIndex;
         mapping(uint256 => string) selectedOption;
-        mapping(uint256 => uint256) createdProposalIndex;
         uint256[] createdProposalsId;
+        mapping(uint256 => uint256) createdProposalIndex;
     }
 
     mapping(address => Voter) public voters;
@@ -42,15 +43,15 @@ contract VoterManager is IVoterManager, RBACWrapper {
     function verifyVoter(
         address voter,
         string calldata voterName,
-        uint256[] calldata featureVector
+        uint8 nid,
+        uint8[] memory featureVector
     ) external onlyAdmin {
         if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
         // Register voter
         voters[voter].name = voterName;
-        for (uint256 i = 0; i < featureVector.length; ++i) {
-            voters[voter].featureVector.push(featureVector[i]);
-        }
+        voters[voter].featureVector = featureVector;
+        voters[voter].NID = nid;
 
         // Verify voter
         rbac.verifyVoter(voter);
@@ -127,9 +128,6 @@ contract VoterManager is IVoterManager, RBACWrapper {
         delete userData.createdProposalIndex[proposalId];
     }
 
-    function getVoterVerification(address voter) external view returns (bool) {
-        return isVoterVerified(voter);
-    }
 
     function getVoterParticipatedProposals(address voter)
         external

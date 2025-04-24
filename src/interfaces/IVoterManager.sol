@@ -6,10 +6,10 @@ interface IVoterManager {
     function verifyVoter(
         address voter,
         string calldata voterName,
-        uint256[] calldata featureVector
+        uint8 nid,
+        uint8[] memory featureVector
     ) external;
 
-    function getVoterVerification(address voter) external view returns (bool);
 
     function getVoterParticipatedProposals(address voter)
         external

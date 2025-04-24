@@ -51,10 +51,11 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
     function registerVoter(
         address voter,
         string calldata voterName,
-        uint256[] calldata featureVector
+        uint8 nid,
+        uint8[] memory featureVector
     ) external {
         // Register voter
-        voterManager.verifyVoter(voter, voterName, featureVector);
+        voterManager.verifyVoter(voter, voterName, nid, featureVector);
     }
 
     function removeUserProposal(uint256 proposalId) external onlyAdmin {
