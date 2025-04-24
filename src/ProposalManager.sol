@@ -37,6 +37,12 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         uint256 indexed proposalId, ProposalStatus status
     );
 
+    event ProposalVotesTally(
+        uint256 indexed proposalId,
+        string[] winners,
+        bool isDraw
+    );
+
     event VoteCast(
         uint256 indexed proposalId, address indexed voter, string option
     );
@@ -347,12 +353,13 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         Proposal storage proposal,
         address owner,
         string memory title,
-        string[] calldata options,
+        string[] memory options,
         uint256 startDate,
         uint256 endDate
     ) private {
         proposal.owner = owner;
         proposal.title = title;
+        proposal.options = options;
         proposal.startDate = startDate;
         proposal.endDate = endDate;
         proposal.status = ProposalStatus.PENDING;
@@ -395,7 +402,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         proposal.status = status;
         emit ProposalStatusUpdated(proposal.id, status);
     }
-
+    
     function _tallyVotes(Proposal storage proposal)
         private
         onlyAuthorizedCaller(msg.sender)
@@ -414,7 +421,12 @@ contract ProposalManager is IProposalManager, RBACWrapper {
             }
         }
         proposal.isDraw = (proposal.winners.length > 1);
-        proposal.status = ProposalStatus.FINALIZED;
+        emit ProposalVotesTally(
+            proposal.id,
+            proposal.winners,
+            proposal.isDraw
+        );
+        _updateProposalStatus(proposal, ProposalStatus.FINALIZED);
     }
 
     function _cmp(

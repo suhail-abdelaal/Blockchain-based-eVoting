@@ -41,7 +41,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
 
     function verifyVoter(
         address voter,
-        string memory voterName,
+        string calldata voterName,
         uint256[] calldata featureVector
     ) external onlyAdmin {
         if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);

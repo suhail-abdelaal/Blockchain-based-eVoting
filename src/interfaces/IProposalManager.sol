@@ -5,8 +5,8 @@ interface IProposalManager {
 
     function addProposal(
         address creator,
-        string memory title,
-        string[] memory options,
+        string calldata title,
+        string[] calldata options,
         uint256 startDate,
         uint256 endDate
     ) external returns (uint256);
@@ -22,19 +22,19 @@ interface IProposalManager {
     function changeVote(
         address voter,
         uint256 proposalId,
-        string memory newOption
+        string calldata newOption
     ) external;
 
     function getVoteCount(
         uint256 proposalId,
-        string memory option
+        string calldata option
     ) external view returns (uint256);
 
     function getProposalDetails(uint256 proposalId)
         external
         returns (
-            string memory title,
-            string[] memory options,
+            string calldata title,
+            string[] calldata options,
             uint256 startDate,
             uint256 endDate,
             address owner,

@@ -99,7 +99,7 @@ contract ProposalManagerTest is Test {
         options[2] = "Option C";
 
         vm.prank(user1);
-        votingSystem.createProposal(
+        uint256 id = votingSystem.createProposal(
             "Proposal 1",
             options,
             block.timestamp + 1 days,
@@ -109,14 +109,15 @@ contract ProposalManagerTest is Test {
         vm.warp(block.timestamp + 1 days);
 
         vm.prank(user2);
-        votingSystem.castVote(1, "Option A");
+        votingSystem.castVote(id, "Option A");
 
         vm.prank(user3);
-        votingSystem.castVote(1, "Option B");
+        votingSystem.castVote(id, "Option B");
 
         vm.warp(block.timestamp + 11 days);
         (string[] memory winners, bool isDraw) =
-            votingSystem.getProposalWinner(1);
+            votingSystem.getProposalWinner(id);
+
 
         assertEq(winners.length, 2);
         assert(isDraw);

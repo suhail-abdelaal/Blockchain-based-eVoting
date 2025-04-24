@@ -56,6 +56,23 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
         proposalManager.changeVote(msg.sender, proposalId, option);
     }
 
+    function registerVoter(
+        address voter,
+        string calldata voterName,
+        uint256[] calldata featureVector
+    ) external onlyAdmin {
+        // Register voter
+        voterManager.verifyVoter(voter, voterName, featureVector);
+    }
+
+    function removeUserProposal(
+        address voter,
+        uint256 proposalId
+    ) external onlyAdmin {
+        // Remove user proposal
+        voterManager.removeUserProposal(voter, proposalId);
+    }
+
     function grantRole(bytes32 role, address account) public {
         rbac.grantRole(role, account);
     }
@@ -66,6 +83,24 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
 
     function verifyVoter(address voter) public {
         rbac.verifyVoter(voter);
+    }
+
+    function getVoterParticipatedProposals(address voter)
+        external
+        view
+        onlyAdmin
+        returns (uint256[] memory)
+    {
+        return voterManager.getVoterParticipatedProposals(voter);
+    }
+
+    function getVoterCreatedProposals(address voter)
+        external
+        view
+        onlyAdmin
+        returns (uint256[] memory)
+    {
+        return voterManager.getVoterCreatedProposals(voter);
     }
 
     function getVoteCount(

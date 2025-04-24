@@ -5,7 +5,7 @@ interface IVoterManager {
 
     function verifyVoter(
         address voter,
-        string memory voterName,
+        string calldata voterName,
         uint256[] calldata featureVector
     ) external;
 
