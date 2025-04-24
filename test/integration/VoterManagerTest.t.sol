@@ -20,20 +20,21 @@ contract VoterManagerTest is Test {
     function setUp() public {
         rbac = new RBAC();
         voterManager = new VoterManager(address(rbac));
-        proposalManager =
-            new ProposalManager(address(rbac), address(voterManager));
+        proposalManager = new ProposalManager(address(rbac), address(voterManager));
+        votingSystem = new VotingSystem(
+            address(rbac), address(voterManager), address(proposalManager)
+        );
 
         vm.deal(admin, 10 ether);
         vm.startPrank(admin);
 
-        votingSystem = new VotingSystem(
-            address(rbac), address(voterManager), address(proposalManager)
-        );
-        proposalManager.setAuthorizedCaller(address(votingSystem));
+        votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(this));
+        // votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(voterManager));
+        // votingSystem.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
 
         votingSystem.verifyVoter(address(this));
         votingSystem.verifyVoter(user1);
-        voterManager = VoterManager(votingSystem.getVoterManager());
+        
 
         vm.stopPrank();
 
@@ -46,8 +47,7 @@ contract VoterManagerTest is Test {
     }
 
     function test_RecordAndRemoveProposals() public {
-        vm.startPrank(user1);
-
+        
         for (uint256 i = 0; i < 5; ++i) {
             voterManager.recordUserCreatedProposal(user1, i);
         }
@@ -57,8 +57,6 @@ contract VoterManagerTest is Test {
         }
 
         uint256 proposalCount = voterManager.getCreatedProposalsCount(user1);
-
-        vm.stopPrank();
 
         assertEq(
             proposalCount, 0, "Proposal count should be zero after removal"

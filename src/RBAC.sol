@@ -5,8 +5,9 @@ import "openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract RBAC is AccessControl {
 
-    bytes32 private constant VERIFIED_VOTER = keccak256("VERIFIED_VOTER_ROLE");
-    bytes32 private constant ADMIN = keccak256("ADMIN_ROLE");
+    bytes32 public constant VERIFIED_VOTER = keccak256("VERIFIED_VOTER_ROLE");
+    bytes32 public constant ADMIN = keccak256("ADMIN_ROLE");
+    bytes32 public constant AUTHORIZED_CALLER = keccak256("AUTHORIZED_CALLER_ROLE");
 
     constructor() {
         _grantRole(ADMIN, 0x45586259E1816AC7784Ae83e704eD354689081b1);
@@ -18,8 +19,8 @@ contract RBAC is AccessControl {
         _checkRole(VERIFIED_VOTER);
     }
 
-    function onlyVerifiedAddr(address _voter) public view {
-        _checkRole(VERIFIED_VOTER, _voter);
+    function onlyVerifiedAddr(address voter) public view {
+        _checkRole(VERIFIED_VOTER, voter);
     }
 
     function onlyAdmin(address admin) public view {
@@ -29,6 +30,10 @@ contract RBAC is AccessControl {
     function grantRole(bytes32 role, address account, address admin) external {
         onlyAdmin(admin);
         _grantRole(role, account);
+    }
+
+    function onlyAuthorizedCaller(address caller) public view {
+        _checkRole(AUTHORIZED_CALLER, caller);
     }
 
     function revokeRole(
@@ -45,7 +50,7 @@ contract RBAC is AccessControl {
         _grantRole(VERIFIED_VOTER, voter);
     }
 
-    function isVoterVerified(address voter) public view returns (bool) {
+    function isVoterVerified(address voter) external view returns (bool) {
         return hasRole(VERIFIED_VOTER, voter);
     }
 

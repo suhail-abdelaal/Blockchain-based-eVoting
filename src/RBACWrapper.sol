@@ -26,6 +26,11 @@ abstract contract RBACWrapper {
         _;
     }
 
+    modifier onlyAuthorizedCaller(address caller) {
+        rbac.onlyAuthorizedCaller(caller);
+        _;
+    }
+
     function isVoterVerified(address voter) public view returns (bool) {
         return rbac.isVoterVerified(voter);
     }

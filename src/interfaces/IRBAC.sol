@@ -9,6 +9,8 @@ interface IRBAC {
 
     function onlyVerifiedAddr(address voter) external view;
 
+    function onlyAuthorizedCaller(address caller) external view;
+
     function hasRole(
         bytes32 role,
         address account

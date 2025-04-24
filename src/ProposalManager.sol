@@ -95,13 +95,6 @@ contract ProposalManager is IProposalManager, RBACWrapper {
 
     // ------------------- Modifiers -------------------
 
-    modifier onlyAutorizedCaller() {
-        if (msg.sender != authorizedCaller && msg.sender != address(this)) {
-            revert NotAuthorized(msg.sender);
-        }
-        _;
-    }
-
     modifier onActiveProposals(uint256 proposalId) {
         _checkProposalStatus(proposalId);
         ProposalStatus status = proposals[proposalId].status;
@@ -129,20 +122,13 @@ contract ProposalManager is IProposalManager, RBACWrapper {
 
     // ------------------- External Methods -------------------
 
-    function setAuthorizedCaller(address newAuthorizedCaller)
-        external
-        onlyAdmin(msg.sender)
-    {
-        authorizedCaller = newAuthorizedCaller;
-    }
-
     function addProposal(
         address voter,
         string calldata title,
         string[] calldata options,
         uint256 startDate,
         uint256 endDate
-    ) external onlyAutorizedCaller onlyVerifiedAddr(voter) returns (uint256) {
+    ) external onlyAuthorizedCaller(msg.sender) onlyVerifiedAddr(voter) returns (uint256) {
         if (startDate < block.timestamp + 10 minutes) {
             revert ProposalStartDateTooEarly(startDate);
         }
@@ -173,7 +159,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         string calldata option
     )
         external
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         onlyVerifiedAddr(voter)
         onActiveProposals(proposalId)
         onlyValidOptions(proposalId, option)
@@ -190,7 +176,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         uint256 proposalId
     )
         external
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         onlyVerifiedAddr(voter)
         onActiveProposals(proposalId)
         onlyParticipants(voter, proposalId)
@@ -213,7 +199,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         string calldata newOption
     )
         external
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         onlyVerifiedAddr(voter)
         onActiveProposals(proposalId)
         onlyParticipants(voter, proposalId)
@@ -246,21 +232,21 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     function checkVoterParticipation(
         address voter,
         uint256 proposalId
-    ) public view onlyAutorizedCaller returns (bool) {
+    ) public view onlyAuthorizedCaller(msg.sender) returns (bool) {
         return proposals[proposalId].isParticipant[voter];
     }
 
     function getVoteCount(
         uint256 proposalId,
         string calldata option
-    ) external view onlyAutorizedCaller returns (uint256) {
+    ) external view onlyAuthorizedCaller(msg.sender) returns (uint256) {
         bytes32 bytesOption = _stringToBytes32(option);
         return _getVoteCount(proposalId, bytesOption);
     }
 
     function getProposalWinner(uint256 proposalId)
         external
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         returns (string[] memory, bool)
     {
         Proposal storage proposal = proposals[proposalId];
@@ -279,7 +265,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     function getProposalCount()
         external
         view
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         returns (uint256)
     {
         return proposalCount;
@@ -287,7 +273,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
 
     function getProposalStatus(uint256 proposalId)
         public
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         returns (ProposalStatus)
     {
         _checkProposalStatus(proposalId);
@@ -297,7 +283,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     function getProposalVoteMutability(uint256 proposalId)
         public
         view
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         returns (VoteMutability)
     {
         return proposals[proposalId].voteMutability;
@@ -306,7 +292,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     function getProposalOwner(uint256 proposalId)
         public
         view
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
         returns (address)
     {
         return proposals[proposalId].owner;
@@ -396,7 +382,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
 
     function _tallyVotes(Proposal storage proposal)
         private
-        onlyAutorizedCaller
+        onlyAuthorizedCaller(msg.sender)
     {
         uint256 highestVoteCount;
 

@@ -44,7 +44,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
         string memory voterName,
         uint256[] calldata featureVector
     ) external onlyAdmin(msg.sender) {
-        if (_isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
+        if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
         bytes32 bytesVoterName = bytes32(bytes(voterName));
 
@@ -64,7 +64,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
         address voter,
         uint256 proposalId,
         bytes32 selectedOption
-    ) external onlyAuthorizedCaller {
+    ) external onlyAuthorizedCaller(msg.sender) {
         if (voters[voter].participatedProposalIndex[proposalId] != 0) {
             revert RecordAlreadyExists(voter, proposalId);
         }
@@ -78,7 +78,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
     function recordUserCreatedProposal(
         address voter,
         uint256 proposalId
-    ) external onlyAuthorizedCaller {
+    ) external onlyAuthorizedCaller(msg.sender) {
         if (voters[voter].createdProposalIndex[proposalId] != 0) {
             revert RecordAlreadyExists(voter, proposalId);
         }
@@ -91,7 +91,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
     function removeUserParticipation(
         address voter,
         uint256 proposalId
-    ) external onlyAuthorizedCaller {
+    ) external onlyAuthorizedCaller(msg.sender) {
         Voter storage voterData = voters[voter];
 
         uint256 index = voterData.participatedProposalIndex[proposalId];
@@ -112,7 +112,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
     function removeUserProposal(
         address voter,
         uint256 proposalId
-    ) external onlyAuthorizedCaller {
+    ) external onlyAuthorizedCaller(msg.sender) {
         Voter storage voterData = voters[voter];
 
         uint256 index = voterData.createdProposalIndex[proposalId];
@@ -130,7 +130,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
     }
 
     function getVoterVerification(address voter) external view returns (bool) {
-        return _isVoterVerified(voter);
+        return isVoterVerified(voter);
     }
 
     function getVoterParticipatedProposals(address voter)
@@ -170,12 +170,6 @@ contract VoterManager is IVoterManager, RBACWrapper {
         returns (uint256)
     {
         return voters[voter].createdProposalsId.length;
-    }
-
-    // ------------------- Private Methods -------------------
-
-    function _isVoterVerified(address voter) private view returns (bool) {
-        return rbac.isVerifiedVoter(voter);
     }
 
 }
