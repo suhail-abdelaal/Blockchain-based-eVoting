@@ -19,7 +19,7 @@ interface IVoterManager {
     function getVoterSelectedOption(
         address voter,
         uint256 proposalId
-    ) external view returns (bytes32);
+    ) external view returns (string memory);
 
     function getVoterCreatedProposals(address voter)
         external
@@ -29,7 +29,7 @@ interface IVoterManager {
     function recordUserParticipation(
         address voter,
         uint256 proposalId,
-        bytes32 selectedOption
+        string calldata selectedOption
     ) external;
 
     function recordUserCreatedProposal(

@@ -21,17 +21,17 @@ contract VoterManager is IVoterManager, RBACWrapper {
     // ------------------- State Variables -------------------
 
     struct Voter {
-        bytes32 name;
+        string name;
         uint256[] featureVector;
         uint256[] participatedProposalsId;
         mapping(uint256 => uint256) participatedProposalIndex;
-        mapping(uint256 => bytes32) selectedOption;
+        mapping(uint256 => string) selectedOption;
         mapping(uint256 => uint256) createdProposalIndex;
         uint256[] createdProposalsId;
     }
 
     mapping(address => Voter) public voters;
-    mapping(address => mapping(uint256 => bytes32)) public systemLog;
+    mapping(address => mapping(uint256 => string)) public systemLog;
 
     // ------------------- Constructor -------------------
 
@@ -46,10 +46,8 @@ contract VoterManager is IVoterManager, RBACWrapper {
     ) external onlyAdmin {
         if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
 
-        bytes32 bytesVoterName = bytes32(bytes(voterName));
-
         // Register voter
-        voters[voter].name = bytesVoterName;
+        voters[voter].name = voterName;
         for (uint256 i = 0; i < featureVector.length; ++i) {
             voters[voter].featureVector.push(featureVector[i]);
         }
@@ -63,7 +61,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
     function recordUserParticipation(
         address voter,
         uint256 proposalId,
-        bytes32 selectedOption
+        string calldata selectedOption
     ) external onlyAuthorizedCaller(msg.sender) {
         if (voters[voter].participatedProposalIndex[proposalId] != 0) {
             revert RecordAlreadyExists(voter, proposalId);
@@ -144,7 +142,7 @@ contract VoterManager is IVoterManager, RBACWrapper {
     function getVoterSelectedOption(
         address voter,
         uint256 proposalId
-    ) external view returns (bytes32) {
+    ) external view returns (string memory) {
         return voters[voter].selectedOption[proposalId];
     }
 
