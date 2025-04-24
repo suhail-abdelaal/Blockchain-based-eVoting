@@ -22,6 +22,10 @@ interface IVotingSystem {
 
     function verifyVoter(address voter) external;
 
+    function removeUserProposal(
+        uint256 proposalId
+    ) external;
+
     function getVoteCount(
         uint256 proposalId,
         string memory option

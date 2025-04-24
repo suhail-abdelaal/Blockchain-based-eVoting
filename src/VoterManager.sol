@@ -108,23 +108,23 @@ contract VoterManager is IVoterManager, RBACWrapper {
     }
 
     function removeUserProposal(
-        address voter,
+        address user,
         uint256 proposalId
     ) external onlyAuthorizedCaller(msg.sender) {
-        Voter storage voterData = voters[voter];
+        Voter storage userData = voters[user];
 
-        uint256 index = voterData.createdProposalIndex[proposalId];
+        uint256 index = userData.createdProposalIndex[proposalId];
         if (index == 0) revert ProposalNotFound(proposalId);
 
-        uint256 lastIndex = voterData.createdProposalsId.length - 1;
-        uint256 lastProposalId = voterData.createdProposalsId[lastIndex];
+        uint256 lastIndex = userData.createdProposalsId.length - 1;
+        uint256 lastProposalId = userData.createdProposalsId[lastIndex];
 
         // Swap and pop
-        voterData.createdProposalsId[index - 1] = lastProposalId;
-        voterData.createdProposalIndex[lastProposalId] = index;
+        userData.createdProposalsId[index - 1] = lastProposalId;
+        userData.createdProposalIndex[lastProposalId] = index;
 
-        voterData.createdProposalsId.pop();
-        delete voterData.createdProposalIndex[proposalId];
+        userData.createdProposalsId.pop();
+        delete userData.createdProposalIndex[proposalId];
     }
 
     function getVoterVerification(address voter) external view returns (bool) {

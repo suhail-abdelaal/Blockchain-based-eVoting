@@ -42,7 +42,7 @@ interface IVoterManager {
         uint256 proposalId
     ) external;
 
-    function removeUserProposal(address voter, uint256 proposalId) external;
+    function removeUserProposal(address user, uint256 proposalId) external;
 
     function getParticipatedProposalsCount(address voter)
         external

@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 interface IProposalManager {
 
-    function addProposal(
+    function createProposal(
         address creator,
         string calldata title,
         string[] calldata options,
@@ -23,6 +23,11 @@ interface IProposalManager {
         address voter,
         uint256 proposalId,
         string calldata newOption
+    ) external;
+
+    function removeUserProposal(
+        address user,
+        uint256 proposalId
     ) external;
 
     function getVoteCount(

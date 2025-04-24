@@ -27,7 +27,7 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
         uint256 endDate
     ) external returns (uint256) {
         // Create proposal
-        uint256 proposalId = proposalManager.addProposal(
+        uint256 proposalId = proposalManager.createProposal(
             msg.sender, title, options, startDate, endDate
         );
         return proposalId;
@@ -66,11 +66,10 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
     }
 
     function removeUserProposal(
-        address voter,
         uint256 proposalId
     ) external onlyAdmin {
         // Remove user proposal
-        voterManager.removeUserProposal(voter, proposalId);
+        proposalManager.removeUserProposal(msg.sender, proposalId);
     }
 
     function grantRole(bytes32 role, address account) public {

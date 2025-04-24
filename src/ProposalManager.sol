@@ -16,6 +16,9 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     error ProposalPeriodTooShort(uint256 startDate, uint256 endDate);
     error ProposalClosed(uint256 proposalId);
     error ProposalNotFinalized(uint256 proposalId);
+    error ProposalHasActiveParticipants(
+        uint256 proposalId, uint256 numOfParticipants
+    );
     error NotAuthorized(address addr);
     error VoteAlreadyCast(uint256 proposalId, address voter);
     error ImmutableVote(uint256 proposalId, address voter);
@@ -32,6 +35,8 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         uint256 startDate,
         uint256 endDate
     );
+
+    event ProposalDeleted(uint256 indexed proposalId);
 
     event ProposalStatusUpdated(
         uint256 indexed proposalId, ProposalStatus status
@@ -82,6 +87,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         ProposalStatus status;
         VoteMutability voteMutability;
         mapping(address => bool) isParticipant;
+        uint256 numOfParticipants;
         uint256 startDate;
         uint256 endDate;
         string[] winners;
@@ -121,7 +127,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
 
     // ------------------- External Methods -------------------
 
-    function addProposal(
+    function createProposal(
         address voter,
         string calldata title,
         string[] calldata options,
@@ -171,6 +177,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
             revert InvalidOption(proposalId, option);
         }
         _castVote(proposalId, voter, option);
+        emit VoteCast(proposalId, voter, option);
     }
 
     function retractVote(
@@ -194,6 +201,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         }
 
         _retractVote(proposalId, voter, option);
+        emit VoteRetracted(proposalId, voter, option);
     }
 
     function changeVote(
@@ -225,6 +233,21 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         _castVote(proposalId, voter, newOption);
 
         emit VoteChanged(proposalId, voter, previousOption, newOption);
+    }
+
+    function removeUserProposal(
+        address user,
+        uint256 proposalId
+    ) external onlyAuthorizedCaller(msg.sender) {
+        if (proposals[proposalId].numOfParticipants > 0) {
+            revert ProposalHasActiveParticipants(
+                proposalId, proposals[proposalId].numOfParticipants);
+        }
+
+        delete proposals[proposalId];
+        voterManager.removeUserProposal(user, proposalId);
+
+        emit ProposalDeleted(proposalId);
     }
 
     function getProposalDetails(uint256 proposalId)
@@ -333,8 +356,6 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         proposals[proposalId].optionVoteCounts[option] += 1;
         proposals[proposalId].isParticipant[voter] = true;
         voterManager.recordUserParticipation(voter, proposalId, option);
-
-        emit VoteCast(proposalId, voter, option);
     }
 
     function _retractVote(
@@ -345,8 +366,6 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         proposals[proposalId].optionVoteCounts[option] -= 1;
         proposals[proposalId].isParticipant[voter] = false;
         voterManager.removeUserParticipation(voter, proposalId);
-
-        emit VoteRetracted(proposalId, voter, option);
     }
 
     function _initializeProposal(
