@@ -33,25 +33,17 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
         return proposalId;
     }
 
-    function castVote(
-        uint256 proposalId,
-        string calldata option
-    ) external {
+    function castVote(uint256 proposalId, string calldata option) external {
         // Cast vote
         proposalManager.castVote(msg.sender, proposalId, option);
     }
 
-    function retractVote(uint256 proposalId)
-        external
-    {
+    function retractVote(uint256 proposalId) external {
         // Cast vote
         proposalManager.retractVote(msg.sender, proposalId);
     }
 
-    function changeVote(
-        uint256 proposalId,
-        string calldata option
-    ) external {
+    function changeVote(uint256 proposalId, string calldata option) external {
         // Change vote
         proposalManager.changeVote(msg.sender, proposalId, option);
     }
@@ -65,9 +57,7 @@ contract VotingSystem is IVotingSystem, RBACWrapper {
         voterManager.verifyVoter(voter, voterName, featureVector);
     }
 
-    function removeUserProposal(
-        uint256 proposalId
-    ) external onlyAdmin {
+    function removeUserProposal(uint256 proposalId) external onlyAdmin {
         // Remove user proposal
         proposalManager.removeUserProposal(msg.sender, proposalId);
     }

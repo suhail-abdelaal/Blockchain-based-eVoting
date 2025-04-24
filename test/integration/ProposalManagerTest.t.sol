@@ -37,12 +37,11 @@ contract ProposalManagerTest is Test {
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
 
         vm.stopPrank();
-        
+
         rbac.verifyVoter(address(this));
         rbac.verifyVoter(user1);
         rbac.verifyVoter(user2);
         rbac.verifyVoter(user3);
-
 
         vm.deal(user1, 10 ether);
         vm.deal(user2, 10 ether);
@@ -119,7 +118,6 @@ contract ProposalManagerTest is Test {
         vm.warp(block.timestamp + 11 days);
         (string[] memory winners, bool isDraw) =
             votingSystem.getProposalWinner(id);
-
 
         assertEq(winners.length, 2);
         assert(isDraw);

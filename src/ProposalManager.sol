@@ -43,9 +43,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     );
 
     event ProposalVotesTally(
-        uint256 indexed proposalId,
-        string[] winners,
-        bool isDraw
+        uint256 indexed proposalId, string[] winners, bool isDraw
     );
 
     event VoteCast(
@@ -123,7 +121,6 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         }
         _;
     }
-
 
     // ------------------- External Methods -------------------
 
@@ -241,7 +238,8 @@ contract ProposalManager is IProposalManager, RBACWrapper {
     ) external onlyAuthorizedCaller(msg.sender) {
         if (proposals[proposalId].numOfParticipants > 0) {
             revert ProposalHasActiveParticipants(
-                proposalId, proposals[proposalId].numOfParticipants);
+                proposalId, proposals[proposalId].numOfParticipants
+            );
         }
 
         delete proposals[proposalId];
@@ -423,7 +421,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         proposal.status = status;
         emit ProposalStatusUpdated(proposal.id, status);
     }
-    
+
     function _tallyVotes(Proposal storage proposal)
         private
         onlyAuthorizedCaller(msg.sender)
@@ -442,11 +440,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
             }
         }
         proposal.isDraw = (proposal.winners.length > 1);
-        emit ProposalVotesTally(
-            proposal.id,
-            proposal.winners,
-            proposal.isDraw
-        );
+        emit ProposalVotesTally(proposal.id, proposal.winners, proposal.isDraw);
         _updateProposalStatus(proposal, ProposalStatus.FINALIZED);
     }
 

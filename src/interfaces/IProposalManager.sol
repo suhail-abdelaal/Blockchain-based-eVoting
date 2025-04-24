@@ -25,10 +25,7 @@ interface IProposalManager {
         string calldata newOption
     ) external;
 
-    function removeUserProposal(
-        address user,
-        uint256 proposalId
-    ) external;
+    function removeUserProposal(address user, uint256 proposalId) external;
 
     function getVoteCount(
         uint256 proposalId,

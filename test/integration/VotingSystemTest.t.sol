@@ -39,12 +39,11 @@ contract VotingSystemTest is Test {
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(votingSystem));
 
         vm.stopPrank();
-        
+
         rbac.verifyVoter(address(this));
         rbac.verifyVoter(user1);
         rbac.verifyVoter(user2);
         rbac.verifyVoter(user3);
-
 
         vm.deal(user1, 10 ether);
         vm.deal(user2, 10 ether);

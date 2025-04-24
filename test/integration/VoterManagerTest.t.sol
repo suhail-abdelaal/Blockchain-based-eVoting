@@ -32,10 +32,9 @@ contract VoterManagerTest is Test {
         rbac.grantRole(rbac.AUTHORIZED_CALLER(), address(this));
 
         vm.stopPrank();
-        
+
         rbac.verifyVoter(address(this));
         rbac.verifyVoter(user1);
-
 
         vm.deal(user1, 10 ether);
     }
