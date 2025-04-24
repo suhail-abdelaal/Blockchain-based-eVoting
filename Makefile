@@ -5,7 +5,7 @@ deploy:
 		--rpc-url $(ZKSEPOLIA_RPC_URL) \
 		--account myKey \
 		--zksync \
-		--constructor-args $(args)
+		--constructor-args $(or $(args), "")
 
 verify:
 	forge verify-contract $(addr) src/$(contract).sol:$(contract) \
