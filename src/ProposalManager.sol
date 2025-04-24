@@ -133,7 +133,7 @@ contract ProposalManager is IProposalManager, RBACWrapper {
         onlyVerifiedAddr(voter)
         returns (uint256)
     {
-        if (startDate < block.timestamp + 10 minutes) {
+        if (startDate < block.timestamp + 2 minutes) {
             revert ProposalStartDateTooEarly(startDate);
         }
         if (endDate <= startDate) {
