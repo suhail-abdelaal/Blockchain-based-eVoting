@@ -3,7 +3,7 @@ pragma solidity ^0.8.23;
 
 import {IRBAC} from "./interfaces/IRBAC.sol";
 
-abstract contract RBACWrapper {
+contract RBACWrapper {
 
     IRBAC internal rbac;
 
