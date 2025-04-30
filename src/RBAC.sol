@@ -32,7 +32,7 @@ contract RBAC is AccessControl {
         _checkRole(AUTHORIZED_CALLER, caller);
     }
 
-    function onlyAdmin(address account) private view {
+    function onlyAdmin(address account) public view {
         _checkRole(ADMIN, account);
     }
 
