@@ -10,7 +10,6 @@ interface IVoterManager {
         uint8[] memory featureVector
     ) external;
 
-
     function getVoterParticipatedProposals(address voter)
         external
         view

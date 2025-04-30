@@ -128,7 +128,6 @@ contract VoterManager is IVoterManager, RBACWrapper {
         delete userData.createdProposalIndex[proposalId];
     }
 
-
     function getVoterParticipatedProposals(address voter)
         external
         view
