@@ -23,7 +23,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
     }
 
     mapping(address => Voter) public voters;
-    mapping(uint64 => bool) public nidRegistered;
+    mapping(uint64 => bool) private nidRegistered;
 
     constructor(address _accessControl) AccessControlWrapper(_accessControl) {}
 
@@ -40,6 +40,11 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
 
         emit VoterVerified(voter);
     }
+
+    function isNidRegistered(uint64 nid) external view returns (bool) {
+        return nidRegistered[nid];
+    }
+
 
     function recordUserParticipation(
         address voter,

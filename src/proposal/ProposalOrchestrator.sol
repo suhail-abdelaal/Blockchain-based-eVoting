@@ -280,4 +280,14 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         return (winners, isDraw);
     }
 
+    function authorizeContracts() external onlyAdmin {
+        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(accessControl));
+        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterManager));
+        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState));
+        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(voteTallying));
+        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(validator));
+        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(this));
+    }
+
+
 }

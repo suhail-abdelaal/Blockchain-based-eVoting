@@ -54,16 +54,16 @@ contract TestHelper is Test {
         // Grant necessary roles
         vm.prank(admin);
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(this)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(proposalOrchestrator)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalOrchestrator)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(voterRegistry)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterRegistry)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(votingSystem)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingSystem)
         );
 
         // Register test voters

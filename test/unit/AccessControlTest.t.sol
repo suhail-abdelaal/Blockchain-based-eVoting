@@ -21,39 +21,39 @@ contract AccessControlTest is Test {
 
     function test_InitialRoles() public {
         assertTrue(
-            accessControl.hasRole(accessControl.ADMIN_ROLE(), admin),
+            accessControl.hasRole(accessControl.getADMIN_ROLE(), admin),
             "Admin should have ADMIN role"
         );
         assertTrue(
-            accessControl.hasRole(accessControl.VERIFIED_VOTER(), admin),
+            accessControl.hasRole(accessControl.getVERIFIED_VOTER_ROLE(), admin),
             "Admin should have VERIFIED_VOTER role"
         );
         assertFalse(
-            accessControl.hasRole(accessControl.VERIFIED_VOTER(), user1),
+            accessControl.hasRole(accessControl.getVERIFIED_VOTER_ROLE(), user1),
             "User1 should not have VERIFIED_VOTER role initially"
         );
     }
 
     function test_GrantRole() public {
         vm.startPrank(admin);
-        accessControl.grantRole(accessControl.VERIFIED_VOTER(), user1);
+        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user1);
         vm.stopPrank();
 
         assertTrue(
-            accessControl.hasRole(accessControl.VERIFIED_VOTER(), user1),
+            accessControl.hasRole(accessControl.getVERIFIED_VOTER_ROLE(), user1),
             "User1 should have VERIFIED_VOTER role after granting"
         );
     }
 
     function test_RevokeRole() public {
         vm.startPrank(admin);
-        accessControl.grantRole(accessControl.VERIFIED_VOTER(), user1);
+        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user1);
 
-        accessControl.revokeRole(accessControl.VERIFIED_VOTER(), user1);
+        accessControl.revokeRole(accessControl.getVERIFIED_VOTER_ROLE(), user1);
         vm.stopPrank();
 
         assertFalse(
-            accessControl.hasRole(accessControl.VERIFIED_VOTER(), user1),
+            accessControl.hasRole(accessControl.getVERIFIED_VOTER_ROLE(), user1),
             "User1 should not have VERIFIED_VOTER role after revoking"
         );
     }
@@ -61,14 +61,14 @@ contract AccessControlTest is Test {
     function test_VerifyVoter() public {
         vm.startPrank(admin);
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(this)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
         );
         vm.stopPrank();
 
         accessControl.verifyVoter(user1);
 
         assertTrue(
-            accessControl.hasRole(accessControl.VERIFIED_VOTER(), user1),
+            accessControl.hasRole(accessControl.getVERIFIED_VOTER_ROLE(), user1),
             "User1 should be verified after calling verifyVoter"
         );
     }
@@ -84,7 +84,7 @@ contract AccessControlTest is Test {
 
         vm.startPrank(admin);
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(this)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
         );
         vm.stopPrank();
 
@@ -96,23 +96,24 @@ contract AccessControlTest is Test {
         );
     }
 
-    function test_OnlyAdminCanGrantRole() public {
-        bytes32 verifiedVoterRole = accessControl.VERIFIED_VOTER();
+    function test_OnlyAuthorizedCallerCanGrantRole() public {
         vm.startPrank(user1);
+        console.log("user1", user1);
+        bytes32 role = accessControl.getVERIFIED_VOTER_ROLE();
         vm.expectRevert();
-        accessControl.grantRole(verifiedVoterRole, user2);
+        accessControl.grantRole(role, user2);
         vm.stopPrank();
     }
 
-    function test_OnlyAdminCanRevokeRole() public {
+    function test_OnlyAuthorizedCallerCanRevokeRole() public {
         vm.startPrank(admin);
-        accessControl.grantRole(accessControl.VERIFIED_VOTER(), user1);
+        bytes32 role = accessControl.getVERIFIED_VOTER_ROLE();
+        accessControl.grantRole(role, user1);
         vm.stopPrank();
 
-        bytes32 verifiedVoterRole = accessControl.VERIFIED_VOTER();
         vm.startPrank(user1);
         vm.expectRevert();
-        accessControl.revokeRole(verifiedVoterRole, user2);
+        accessControl.revokeRole(role, user2);
         vm.stopPrank();
     }
 

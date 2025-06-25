@@ -13,9 +13,9 @@ import "../interfaces/IAccessControlManager.sol";
 contract AccessControlManager is AccessControl, IAccessControlManager {
 
     // Role definitions
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant VERIFIED_VOTER = keccak256("VERIFIED_VOTER");
-    bytes32 public constant AUTHORIZED_CALLER = keccak256("AUTHORIZED_CALLER");
+    bytes32 private constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
+    bytes32 private constant VERIFIED_VOTER_ROLE = keccak256("VERIFIED_VOTER_ROLE");
+    bytes32 private constant AUTHORIZED_CALLER_ROLE = keccak256("AUTHORIZED_CALLER_ROLE");
     address public admin;
     // Events
 
@@ -31,8 +31,8 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
         admin = msg.sender;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ADMIN_ROLE, admin);
-        _grantRole(AUTHORIZED_CALLER, admin);
-        _grantRole(VERIFIED_VOTER, admin);
+        _grantRole(AUTHORIZED_CALLER_ROLE, admin);
+        _grantRole(VERIFIED_VOTER_ROLE, admin);
     }
 
     /**
@@ -46,7 +46,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
     )
         public
         override(AccessControl, IAccessControlManager)
-        onlyRole(AUTHORIZED_CALLER, msg.sender)
+        onlyRole(AUTHORIZED_CALLER_ROLE, msg.sender)
     {
         _grantRole(role, account);
         emit RoleGrantedToUser(role, account, msg.sender);
@@ -63,7 +63,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
     )
         public
         override(AccessControl, IAccessControlManager)
-        onlyRole(AUTHORIZED_CALLER, msg.sender)
+        onlyRole(AUTHORIZED_CALLER_ROLE, msg.sender)
     {
         _revokeRole(role, account);
         emit RoleRevokedFromUser(role, account, msg.sender);
@@ -100,7 +100,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      * @dev Check if caller is a verified voter (modifier-like function)
      */
     function onlyVerifiedVoter() external view override {
-        if (!hasRole(VERIFIED_VOTER, msg.sender)) {
+        if (!hasRole(VERIFIED_VOTER_ROLE, msg.sender)) {
             revert("AccessControl: caller is not a verified voter");
         }
     }
@@ -110,7 +110,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      * function)
      */
     function onlyVerifiedAddr(address voter) external view override {
-        if (!hasRole(VERIFIED_VOTER, voter)) {
+        if (!hasRole(VERIFIED_VOTER_ROLE, voter)) {
             revert("AccessControl: address is not a verified voter");
         }
     }
@@ -119,7 +119,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      * @dev Check if caller is authorized (modifier-like function)
      */
     function onlyAuthorizedCaller(address caller) external view override {
-        if (!hasRole(AUTHORIZED_CALLER, caller)) {
+        if (!hasRole(AUTHORIZED_CALLER_ROLE, caller)) {
             revert("AccessControl: caller is not authorized");
         }
     }
@@ -131,9 +131,9 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
     function verifyVoter(address voter)
         external
         override
-        onlyRole(AUTHORIZED_CALLER, msg.sender)
+        onlyRole(AUTHORIZED_CALLER_ROLE, msg.sender)
     {
-        grantRole(VERIFIED_VOTER, voter);
+        grantRole(VERIFIED_VOTER_ROLE, voter);
     }
 
     /**
@@ -147,7 +147,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
         override
         returns (bool)
     {
-        return hasRole(VERIFIED_VOTER, voter);
+        return hasRole(VERIFIED_VOTER_ROLE, voter);
     }
 
     /**
@@ -163,7 +163,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      * @return bool True if caller has voter role
      */
     function isRegisteredVoter(address account) external view returns (bool) {
-        return hasRole(VERIFIED_VOTER, account);
+        return hasRole(VERIFIED_VOTER_ROLE, account);
     }
 
     /**
@@ -172,9 +172,9 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      */
     function registerVoter(address voter)
         external
-        onlyRole(AUTHORIZED_CALLER, msg.sender)
+        onlyRole(AUTHORIZED_CALLER_ROLE, msg.sender)
     {
-        grantRole(VERIFIED_VOTER, voter);
+        grantRole(VERIFIED_VOTER_ROLE, voter);
     }
 
     /**
@@ -183,9 +183,21 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      */
     function unregisterVoter(address voter)
         external
-        onlyRole(AUTHORIZED_CALLER, msg.sender)
+        onlyRole(AUTHORIZED_CALLER_ROLE, msg.sender)
     {
-        revokeRole(VERIFIED_VOTER, voter);
+        revokeRole(VERIFIED_VOTER_ROLE, voter);
     }
 
+
+    function getADMIN_ROLE() external view override returns (bytes32) {
+        return ADMIN_ROLE;
+    }
+
+    function getVERIFIED_VOTER_ROLE() external view override returns (bytes32) {
+        return VERIFIED_VOTER_ROLE;
+    }
+
+    function getAUTHORIZED_CALLER_ROLE() external view override returns (bytes32) {
+        return AUTHORIZED_CALLER_ROLE;
+    }
 }

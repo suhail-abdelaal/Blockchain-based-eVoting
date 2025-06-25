@@ -64,27 +64,27 @@ contract ProposalManagerTest is Test {
         // Grant necessary roles using proper access control
         vm.startPrank(admin);
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(this)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(proposalOrchestrator)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalOrchestrator)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(voterRegistry)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterRegistry)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(votingSystem)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingSystem)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(proposalState)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState)
         );
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(voteTallying)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voteTallying)
         );
         // Grant admin role to VotingFacade so it can call admin functions on
         // behalf of users
         accessControl.grantRole(
-            accessControl.ADMIN_ROLE(), address(votingSystem)
+            accessControl.getADMIN_ROLE(), address(votingSystem)
         );
         vm.stopPrank();
 
@@ -96,10 +96,10 @@ contract ProposalManagerTest is Test {
         votingSystem.registerVoter(user3, 4, new int256[](0));
         // Also grant verified voter roles directly to ensure they can create
         // proposals
-        accessControl.grantRole(accessControl.VERIFIED_VOTER(), address(this));
-        accessControl.grantRole(accessControl.VERIFIED_VOTER(), user1);
-        accessControl.grantRole(accessControl.VERIFIED_VOTER(), user2);
-        accessControl.grantRole(accessControl.VERIFIED_VOTER(), user3);
+        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), address(this));
+        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user1);
+        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user2);
+        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user3);
         vm.stopPrank();
     }
 

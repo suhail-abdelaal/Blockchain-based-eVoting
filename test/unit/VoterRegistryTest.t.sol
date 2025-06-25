@@ -24,7 +24,7 @@ contract VoterRegistryTest is Test {
 
         vm.startPrank(admin);
         accessControl.grantRole(
-            accessControl.AUTHORIZED_CALLER(), address(this)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
         );
         vm.stopPrank();
     }

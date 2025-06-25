@@ -98,7 +98,7 @@ contract VotingFacade is AccessControlWrapper {
     }
 
     function isNidRegistered(uint64 nid) external view returns (bool) {
-        return voterManager.nidRegistered(nid);
+        return voterManager.isNidRegistered(nid);
     }
 
     function getVoterParticipatedProposals()
@@ -147,8 +147,15 @@ contract VotingFacade is AccessControlWrapper {
         return voterManager.getVoterEmbeddings(msg.sender);
     }
 
+    function authorizeContract() external onlyAdmin {
+        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(this));
+    }
 
     fallback() external payable {
         revert("Fallback function called");
+    }
+
+    receive() external payable {
+        revert("Receive function called");
     }
 }
