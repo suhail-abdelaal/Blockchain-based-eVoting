@@ -3,11 +3,10 @@ pragma solidity ^0.8.23;
 
 interface IVoterManager {
 
-    function verifyVoter(
+    function registerVoter(
         address voter,
-        string calldata voterName,
-        uint8 nid,
-        uint8[] memory featureVector
+        uint64 nid,
+        int256[] memory embeddings
     ) external;
 
     function getVoterParticipatedProposals(address voter)
@@ -52,5 +51,7 @@ interface IVoterManager {
         external
         view
         returns (uint256);
+
+    function getVoterEmbeddings(address voter) external view returns (int256[] memory);
 
 }

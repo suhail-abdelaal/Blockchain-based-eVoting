@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import "./IProposalState.sol";
+
 interface IVotingSystem {
 
     function createProposal(
         string calldata title,
         string[] calldata options,
+        IProposalState.VoteMutability voteMutability,
         uint256 startTime,
         uint256 endTime
     ) external returns (uint256);
@@ -33,7 +36,17 @@ interface IVotingSystem {
 
     function getProposalWinner(uint256 proposalId)
         external
-        returns (string[] memory winners, bool isDraw);
+        returns (
+            address owner,
+            string memory title,
+            string[] memory options,
+            uint256 startDate,
+            uint256 endDate,
+            IProposalState.ProposalStatus status,
+            IProposalState.VoteMutability voteMutability,
+            string[] memory winners,
+            bool isDraw
+        );
 
     function getProposalManager() external view returns (address);
 

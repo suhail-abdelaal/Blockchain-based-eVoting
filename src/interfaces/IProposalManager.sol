@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
+import "./IProposalState.sol";
+
 interface IProposalManager {
 
     function createProposal(
         address creator,
         string calldata title,
-        string[] calldata options,
+        string[] memory options,
+        IProposalState.VoteMutability voteMutability,
         uint256 startDate,
         uint256 endDate
     ) external returns (uint256);
@@ -35,13 +38,15 @@ interface IProposalManager {
     function getProposalDetails(uint256 proposalId)
         external
         returns (
-            string calldata title,
-            string[] calldata options,
+            address owner,
+            string memory title,
+            string[] memory options,
             uint256 startDate,
             uint256 endDate,
-            address owner,
-            bool isDraw,
-            string[] memory winners
+            IProposalState.ProposalStatus status,
+            IProposalState.VoteMutability voteMutability,
+            string[] memory winners,
+            bool isDraw
         );
 
     function getProposalCount() external view returns (uint256);
