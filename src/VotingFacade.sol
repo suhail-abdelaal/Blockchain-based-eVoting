@@ -146,4 +146,9 @@ contract VotingFacade is AccessControlWrapper {
     function getVoterEmbeddings() external view returns (int256[] memory) {
         return voterManager.getVoterEmbeddings(msg.sender);
     }
+
+
+    fallback() external payable {
+        revert("Fallback function called");
+    }
 }
