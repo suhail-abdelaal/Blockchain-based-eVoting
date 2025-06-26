@@ -61,6 +61,16 @@ interface IProposalState {
 
     function decrementProposalCount() external;
 
+    function incrementVoteCount(
+        uint256 proposalId,
+        string memory option
+    ) external;
+
+    function decrementVoteCount(
+        uint256 proposalId,
+        string memory option
+    ) external;
+
     function getProposal(uint256 proposalId)
         external
         view
@@ -90,5 +100,15 @@ interface IProposalState {
         external
         view
         returns (bool);
+
+    function tallyVotes(uint256 proposalId) external;
+    function getVoteCount(
+        uint256 proposalId,
+        string memory option
+    ) external view returns (uint256);
+    function getWinners(uint256 proposalId)
+        external
+        view
+        returns (string[] memory, bool);
 
 }

@@ -31,7 +31,10 @@ contract AccessControlWrapper {
         _;
     }
 
-    function updateAccessControl(address _accessControl) public onlyAuthorizedCaller(msg.sender) {
+    function updateAccessControl(address _accessControl)
+        public
+        onlyAuthorizedCaller(msg.sender)
+    {
         accessControl = IAccessControlManager(_accessControl);
     }
 

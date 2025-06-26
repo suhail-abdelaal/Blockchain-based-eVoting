@@ -7,18 +7,18 @@ import {AccessControlManager} from "../../src/access/AccessControlManager.sol";
 import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
 import {ProposalOrchestrator} from "../../src/proposal/ProposalOrchestrator.sol";
 import {ProposalState} from "../../src/proposal/ProposalState.sol";
-import {VoteTallying} from "../../src/voting/VoteTallying.sol";
+
 import {ProposalValidator} from "../../src/validation/ProposalValidator.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
 contract ProposalManagerTest is Test {
 
-    VotingFacade public votingSystem;
+    VotingFacade public votingFacade;
     AccessControlManager public accessControl;
     VoterRegistry public voterRegistry;
     ProposalOrchestrator public proposalOrchestrator;
     ProposalState public proposalState;
-    VoteTallying public voteTallying;
+
     ProposalValidator public proposalValidator;
 
     address public user1 = makeAddr("user1");
@@ -35,8 +35,7 @@ contract ProposalManagerTest is Test {
 
         accessControl = new AccessControlManager();
         proposalState = new ProposalState(address(accessControl));
-        voteTallying =
-            new VoteTallying(address(accessControl), address(proposalState));
+
         voterRegistry = new VoterRegistry(address(accessControl));
         proposalValidator = new ProposalValidator(
             address(accessControl), address(proposalState)
@@ -46,11 +45,10 @@ contract ProposalManagerTest is Test {
             address(accessControl),
             address(proposalValidator),
             address(proposalState),
-            address(voteTallying),
             address(voterRegistry)
         );
 
-        votingSystem = new VotingFacade(
+        votingFacade = new VotingFacade(
             address(accessControl),
             address(voterRegistry),
             address(proposalOrchestrator)
@@ -67,36 +65,37 @@ contract ProposalManagerTest is Test {
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalOrchestrator)
+            accessControl.getAUTHORIZED_CALLER_ROLE(),
+            address(proposalOrchestrator)
         );
         accessControl.grantRole(
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterRegistry)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingSystem)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingFacade)
         );
         accessControl.grantRole(
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState)
         );
-        accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voteTallying)
-        );
+
         // Grant admin role to VotingFacade so it can call admin functions on
         // behalf of users
         accessControl.grantRole(
-            accessControl.getADMIN_ROLE(), address(votingSystem)
+            accessControl.getADMIN_ROLE(), address(votingFacade)
         );
         vm.stopPrank();
 
         // Register voters using the admin
         vm.startPrank(admin);
-        votingSystem.registerVoter(address(this), 1, new int256[](0));
-        votingSystem.registerVoter(user1, 2, new int256[](0));
-        votingSystem.registerVoter(user2, 3, new int256[](0));
-        votingSystem.registerVoter(user3, 4, new int256[](0));
+        votingFacade.registerVoter(address(this), 1, new int256[](0));
+        votingFacade.registerVoter(user1, 2, new int256[](0));
+        votingFacade.registerVoter(user2, 3, new int256[](0));
+        votingFacade.registerVoter(user3, 4, new int256[](0));
         // Also grant verified voter roles directly to ensure they can create
         // proposals
-        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), address(this));
+        accessControl.grantRole(
+            accessControl.getVERIFIED_VOTER_ROLE(), address(this)
+        );
         accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user1);
         accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user2);
         accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user3);
@@ -110,7 +109,7 @@ contract ProposalManagerTest is Test {
         options[2] = "Option C";
 
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Proposal 1",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -133,7 +132,7 @@ contract ProposalManagerTest is Test {
         options[2] = "Option C";
 
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Proposal 1",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -145,19 +144,20 @@ contract ProposalManagerTest is Test {
         proposalState.updateProposalStatus(proposalId);
 
         vm.prank(user2);
-        votingSystem.castVote(proposalId, "Option A");
+        votingFacade.castVote(proposalId, "Option A");
 
         vm.prank(user3);
-        votingSystem.castVote(proposalId, "Option A");
+        votingFacade.castVote(proposalId, "Option A");
 
         // Check vote counts
-        uint256 voteCount = voteTallying.getVoteCount(proposalId, "Option A");
+        uint256 voteCount =
+            proposalOrchestrator.getVoteCount(proposalId, "Option A");
         assertEq(voteCount, 2, "Option A should have 2 votes");
 
         vm.warp(block.timestamp + 11 days);
         proposalState.updateProposalStatus(proposalId);
         (string[] memory winners, bool isDraw) =
-            votingSystem.getProposalWinner(proposalId);
+            votingFacade.getProposalWinners(proposalId);
 
         assertEq(winners.length, 1, "Should have 1 winner");
         assertEq(winners[0], "Option A", "Winner should be Option A");
@@ -171,7 +171,7 @@ contract ProposalManagerTest is Test {
         options[2] = "Option C";
 
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Proposal 1",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -183,19 +183,19 @@ contract ProposalManagerTest is Test {
         proposalState.updateProposalStatus(proposalId);
 
         vm.prank(user2);
-        votingSystem.castVote(proposalId, "Option A");
+        votingFacade.castVote(proposalId, "Option A");
 
         vm.prank(user3);
-        votingSystem.castVote(proposalId, "Option B");
+        votingFacade.castVote(proposalId, "Option B");
 
         // Check vote counts
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Option A"),
+            proposalOrchestrator.getVoteCount(proposalId, "Option A"),
             1,
             "Option A should have 1 vote"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Option B"),
+            proposalOrchestrator.getVoteCount(proposalId, "Option B"),
             1,
             "Option B should have 1 vote"
         );
@@ -203,7 +203,7 @@ contract ProposalManagerTest is Test {
         vm.warp(block.timestamp + 11 days);
         proposalState.updateProposalStatus(proposalId);
         (string[] memory winners, bool isDraw) =
-            votingSystem.getProposalWinner(proposalId);
+            votingFacade.getProposalWinners(proposalId);
 
         assertEq(winners.length, 2, "Should have 2 winners in a draw");
         assertTrue(isDraw, "Should be a draw");
@@ -215,7 +215,7 @@ contract ProposalManagerTest is Test {
         options[1] = "No";
 
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Test Proposal",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -228,20 +228,20 @@ contract ProposalManagerTest is Test {
 
         // Cast vote
         vm.prank(user2);
-        votingSystem.castVote(proposalId, "Yes");
+        votingFacade.castVote(proposalId, "Yes");
 
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Yes"),
+            proposalOrchestrator.getVoteCount(proposalId, "Yes"),
             1,
             "Should have 1 vote for Yes"
         );
 
         // Retract vote
         vm.prank(user2);
-        votingSystem.retractVote(proposalId);
+        votingFacade.retractVote(proposalId);
 
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Yes"),
+            proposalOrchestrator.getVoteCount(proposalId, "Yes"),
             0,
             "Should have 0 votes for Yes after retraction"
         );
@@ -253,7 +253,7 @@ contract ProposalManagerTest is Test {
         options[1] = "No";
 
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Test Proposal",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -266,30 +266,30 @@ contract ProposalManagerTest is Test {
 
         // Cast initial vote
         vm.prank(user2);
-        votingSystem.castVote(proposalId, "Yes");
+        votingFacade.castVote(proposalId, "Yes");
 
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Yes"),
+            proposalOrchestrator.getVoteCount(proposalId, "Yes"),
             1,
             "Should have 1 vote for Yes"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "No"),
+            proposalOrchestrator.getVoteCount(proposalId, "No"),
             0,
             "Should have 0 votes for No"
         );
 
         // Change vote
         vm.prank(user2);
-        votingSystem.changeVote(proposalId, "No");
+        votingFacade.changeVote(proposalId, "No");
 
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Yes"),
+            proposalOrchestrator.getVoteCount(proposalId, "Yes"),
             0,
             "Should have 0 votes for Yes after change"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "No"),
+            proposalOrchestrator.getVoteCount(proposalId, "No"),
             1,
             "Should have 1 vote for No after change"
         );

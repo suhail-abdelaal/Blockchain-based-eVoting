@@ -1,110 +1,98 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test, console} from "forge-std/Test.sol";
-import {VotingFacade} from "../../src/VotingFacade.sol";
+import "forge-std/Test.sol";
 import {AccessControlManager} from "../../src/access/AccessControlManager.sol";
-import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
-import {ProposalOrchestrator} from "../../src/proposal/ProposalOrchestrator.sol";
 import {ProposalState} from "../../src/proposal/ProposalState.sol";
-import {VoteTallying} from "../../src/voting/VoteTallying.sol";
+import {ProposalOrchestrator} from "../../src/proposal/ProposalOrchestrator.sol";
 import {ProposalValidator} from "../../src/validation/ProposalValidator.sol";
-import {TestHelper} from "../helpers/TestHelper.sol";
+import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
+import {VotingFacade} from "../../src/VotingFacade.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
 contract VoterManagerTest is Test {
 
-    VotingFacade public votingSystem;
     AccessControlManager public accessControl;
+    ProposalValidator public proposalValidator;
+    ProposalState public proposalState;
     VoterRegistry public voterRegistry;
     ProposalOrchestrator public proposalOrchestrator;
-    ProposalState public proposalState;
-    VoteTallying public voteTallying;
-    ProposalValidator public proposalValidator;
+    VotingFacade public votingFacade;
 
-    address public user1 = makeAddr("user1");
-    address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
+    address public user1 = address(0x1);
+    address public user2 = address(0x2);
+    address public user3 = address(0x3);
+    address public admin = address(0x4);
 
     function setUp() public {
-        // Deploy the refactored system
         vm.prank(admin);
         accessControl = new AccessControlManager();
         proposalState = new ProposalState(address(accessControl));
-        voteTallying =
-            new VoteTallying(address(accessControl), address(proposalState));
-        voterRegistry = new VoterRegistry(address(accessControl));
         proposalValidator = new ProposalValidator(
             address(accessControl), address(proposalState)
         );
+        voterRegistry = new VoterRegistry(address(accessControl));
 
         proposalOrchestrator = new ProposalOrchestrator(
             address(accessControl),
             address(proposalValidator),
             address(proposalState),
-            address(voteTallying),
             address(voterRegistry)
         );
 
-        votingSystem = new VotingFacade(
+        votingFacade = new VotingFacade(
             address(accessControl),
             address(voterRegistry),
             address(proposalOrchestrator)
         );
 
-        vm.deal(admin, 10 ether);
-        vm.deal(user1, 10 ether);
-
-        // Grant necessary roles using proper access control
+        // Grant necessary roles
         vm.startPrank(admin);
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
+            accessControl.getAUTHORIZED_CALLER_ROLE(),
+            address(proposalOrchestrator)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalOrchestrator)
-        );
-        accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterRegistry)
-        );
-        accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingSystem)
+            accessControl.getAUTHORIZED_CALLER_ROLE(),
+            address(proposalValidator)
         );
         accessControl.grantRole(
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voteTallying)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterRegistry)
         );
-        // Grant admin role to VotingFacade so it can call admin functions on
-        // behalf of users
         accessControl.grantRole(
-            accessControl.getADMIN_ROLE(), address(votingSystem)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingFacade)
         );
-        // Grant admin role to test contract so it can call admin functions
+        accessControl.grantRole(
+            accessControl.getADMIN_ROLE(), address(votingFacade)
+        );
         accessControl.grantRole(accessControl.getADMIN_ROLE(), address(this));
-        vm.stopPrank();
+        accessControl.grantRole(
+            accessControl.getAUTHORIZED_CALLER_ROLE(), admin
+        );
 
-        // Register initial voters using the admin
-        vm.startPrank(admin);
-        votingSystem.registerVoter(address(this), 1, new int256[](0));
-        votingSystem.registerVoter(user1, 2, new int256[](0));
-        // Also grant verified voter roles directly to ensure they can create
-        // proposals
-        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), address(this));
-        accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user1);
+        // Register test voters
+        votingFacade.registerVoter(address(this), 1, new int256[](0));
+        votingFacade.registerVoter(user1, 2, new int256[](0));
+        votingFacade.registerVoter(user2, 3, new int256[](0));
+        votingFacade.registerVoter(user3, 4, new int256[](0));
         vm.stopPrank();
     }
 
     function test_VerifiedUser() public view {
         assertTrue(
-            votingSystem.isVoterVerified(address(this)),
+            votingFacade.isVoterVerified(address(this)),
             "Test contract should be verified"
         );
         assertTrue(
-            votingSystem.isVoterVerified(user1), "User1 should be verified"
+            votingFacade.isVoterVerified(user1), "User1 should be verified"
         );
     }
 
     function test_RecordAndRemoveProposals() public {
+        vm.startPrank(admin);
         // Record proposals for user1
         for (uint256 i = 1; i <= 5; ++i) {
             voterRegistry.recordUserCreatedProposal(user1, i);
@@ -122,6 +110,7 @@ contract VoterManagerTest is Test {
         assertEq(
             proposalCount, 0, "Proposal count should be zero after removal"
         );
+        vm.stopPrank();
     }
 
     function test_VoterRegistration() public {
@@ -132,11 +121,11 @@ contract VoterManagerTest is Test {
         embeddings[2] = 11_111;
 
         vm.startPrank(admin);
-        votingSystem.registerVoter(newUser, 5, embeddings);
+        votingFacade.registerVoter(newUser, 5, embeddings);
         vm.stopPrank();
 
         assertTrue(
-            votingSystem.isVoterVerified(newUser),
+            votingFacade.isVoterVerified(newUser),
             "User should be verified after registration"
         );
     }
@@ -147,7 +136,7 @@ contract VoterManagerTest is Test {
         options[1] = "No";
 
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Test Proposal",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -158,10 +147,10 @@ contract VoterManagerTest is Test {
         vm.warp(block.timestamp + 1 days);
 
         vm.prank(address(this));
-        votingSystem.castVote(proposalId, "Yes");
+        votingFacade.castVote(proposalId, "Yes");
 
         uint256[] memory participatedProposals =
-            votingSystem.getVoterParticipatedProposals();
+            votingFacade.getVoterParticipatedProposals();
         assertEq(
             participatedProposals.length,
             1,
@@ -181,7 +170,7 @@ contract VoterManagerTest is Test {
 
         // Create multiple proposals
         vm.startPrank(user1);
-        uint256 proposal1 = votingSystem.createProposal(
+        uint256 proposal1 = votingFacade.createProposal(
             "Proposal 1",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -189,7 +178,7 @@ contract VoterManagerTest is Test {
             block.timestamp + 10 days
         );
 
-        uint256 proposal2 = votingSystem.createProposal(
+        uint256 proposal2 = votingFacade.createProposal(
             "Proposal 2",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -202,20 +191,20 @@ contract VoterManagerTest is Test {
 
         // Vote on both proposals as the test contract
         vm.startPrank(address(this));
-        votingSystem.castVote(proposal1, "Yes");
-        votingSystem.castVote(proposal2, "No");
+        votingFacade.castVote(proposal1, "Yes");
+        votingFacade.castVote(proposal2, "No");
         vm.stopPrank();
 
         uint256[] memory participatedProposals =
-            votingSystem.getVoterParticipatedProposals();
+            votingFacade.getVoterParticipatedProposals();
         assertEq(
             participatedProposals.length,
             2,
             "Should have participated in 2 proposals"
         );
 
-        string memory option1 = votingSystem.getVoterSelectedOption(proposal1);
-        string memory option2 = votingSystem.getVoterSelectedOption(proposal2);
+        string memory option1 = votingFacade.getVoterSelectedOption(proposal1);
+        string memory option2 = votingFacade.getVoterSelectedOption(proposal2);
 
         assertEq(option1, "Yes", "Should have selected Yes for proposal 1");
         assertEq(option2, "No", "Should have selected No for proposal 2");
@@ -226,7 +215,7 @@ contract VoterManagerTest is Test {
 
         vm.startPrank(user1);
         vm.expectRevert();
-        votingSystem.registerVoter(newUser, 5, new int256[](0));
+        votingFacade.registerVoter(newUser, 5, new int256[](0));
         vm.stopPrank();
     }
 

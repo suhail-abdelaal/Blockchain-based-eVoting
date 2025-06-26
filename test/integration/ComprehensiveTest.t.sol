@@ -7,19 +7,19 @@ import {AccessControlManager} from "../../src/access/AccessControlManager.sol";
 import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
 import {ProposalOrchestrator} from "../../src/proposal/ProposalOrchestrator.sol";
 import {ProposalState} from "../../src/proposal/ProposalState.sol";
-import {VoteTallying} from "../../src/voting/VoteTallying.sol";
+
 import {ProposalValidator} from "../../src/validation/ProposalValidator.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 import {TestHelper} from "../helpers/TestHelper.sol";
 
 contract ComprehensiveTest is Test {
 
-    VotingFacade public votingSystem;
+    VotingFacade public votingFacade;
     AccessControlManager public accessControl;
     VoterRegistry public voterRegistry;
     ProposalOrchestrator public proposalOrchestrator;
     ProposalState public proposalState;
-    VoteTallying public voteTallying;
+
     ProposalValidator public proposalValidator;
 
     address public user1 = makeAddr("user1");
@@ -34,8 +34,7 @@ contract ComprehensiveTest is Test {
         vm.prank(admin);
         accessControl = new AccessControlManager();
         proposalState = new ProposalState(address(accessControl));
-        voteTallying =
-            new VoteTallying(address(accessControl), address(proposalState));
+
         voterRegistry = new VoterRegistry(address(accessControl));
         proposalValidator = new ProposalValidator(
             address(accessControl), address(proposalState)
@@ -45,11 +44,10 @@ contract ComprehensiveTest is Test {
             address(accessControl),
             address(proposalValidator),
             address(proposalState),
-            address(voteTallying),
             address(voterRegistry)
         );
 
-        votingSystem = new VotingFacade(
+        votingFacade = new VotingFacade(
             address(accessControl),
             address(voterRegistry),
             address(proposalOrchestrator)
@@ -69,24 +67,23 @@ contract ComprehensiveTest is Test {
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalOrchestrator)
+            accessControl.getAUTHORIZED_CALLER_ROLE(),
+            address(proposalOrchestrator)
         );
         accessControl.grantRole(
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterRegistry)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingSystem)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingFacade)
         );
         accessControl.grantRole(
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState)
         );
-        accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voteTallying)
-        );
+
         // Grant admin role to VotingFacade so it can call admin functions on
         // behalf of users
         accessControl.grantRole(
-            accessControl.getADMIN_ROLE(), address(votingSystem)
+            accessControl.getADMIN_ROLE(), address(votingFacade)
         );
         // Grant admin role to test contract so it can call admin functions
         accessControl.grantRole(accessControl.getADMIN_ROLE(), address(this));
@@ -94,12 +91,12 @@ contract ComprehensiveTest is Test {
 
         // Register all voters using the admin
         vm.startPrank(admin);
-        votingSystem.registerVoter(address(this), 0, new int256[](0));
-        votingSystem.registerVoter(user1, 1, new int256[](0));
-        votingSystem.registerVoter(user2, 2, new int256[](0));
-        votingSystem.registerVoter(user3, 3, new int256[](0));
-        votingSystem.registerVoter(user4, 4, new int256[](0));
-        votingSystem.registerVoter(user5, 5, new int256[](0));
+        votingFacade.registerVoter(address(this), 0, new int256[](0));
+        votingFacade.registerVoter(user1, 1, new int256[](0));
+        votingFacade.registerVoter(user2, 2, new int256[](0));
+        votingFacade.registerVoter(user3, 3, new int256[](0));
+        votingFacade.registerVoter(user4, 4, new int256[](0));
+        votingFacade.registerVoter(user5, 5, new int256[](0));
         // Also grant verified voter roles directly to ensure they can create
         // proposals
         // accessControl.grantRole(accessControl.VERIFIED_VOTER(),
@@ -121,7 +118,7 @@ contract ComprehensiveTest is Test {
         options[3] = "Save the Money";
 
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Community Infrastructure Decision",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -143,7 +140,7 @@ contract ComprehensiveTest is Test {
         // Try voting before proposal starts (should fail)
         vm.prank(user2);
         vm.expectRevert();
-        votingSystem.castVote(proposalId, "Build a Park");
+        votingFacade.castVote(proposalId, "Build a Park");
 
         // Move to voting period
         vm.warp(block.timestamp + 1 days);
@@ -155,79 +152,79 @@ contract ComprehensiveTest is Test {
 
         // First round of voting
         vm.prank(user1);
-        votingSystem.castVote(proposalId, "Build a Park");
+        votingFacade.castVote(proposalId, "Build a Park");
 
         vm.prank(user2);
-        votingSystem.castVote(proposalId, "Build a Library");
+        votingFacade.castVote(proposalId, "Build a Library");
 
         vm.prank(user3);
-        votingSystem.castVote(proposalId, "Build a Park");
+        votingFacade.castVote(proposalId, "Build a Park");
 
         // Check intermediate vote counts
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Build a Park"),
+            proposalOrchestrator.getVoteCount(proposalId, "Build a Park"),
             2,
             "Park should have 2 votes"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Build a Library"),
+            proposalOrchestrator.getVoteCount(proposalId, "Build a Library"),
             1,
             "Library should have 1 vote"
         );
 
         // User4 votes then changes their mind
         vm.prank(user4);
-        votingSystem.castVote(proposalId, "Build a Gym");
+        votingFacade.castVote(proposalId, "Build a Gym");
 
         vm.prank(user4);
-        votingSystem.changeVote(proposalId, "Build a Park");
+        votingFacade.changeVote(proposalId, "Build a Park");
 
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Build a Park"),
+            proposalOrchestrator.getVoteCount(proposalId, "Build a Park"),
             3,
             "Park should have 3 votes after change"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Build a Gym"),
+            proposalOrchestrator.getVoteCount(proposalId, "Build a Gym"),
             0,
             "Gym should have 0 votes after change"
         );
 
         // User5 votes then retracts
         vm.prank(user5);
-        votingSystem.castVote(proposalId, "Save the Money");
+        votingFacade.castVote(proposalId, "Save the Money");
 
         vm.prank(user5);
-        votingSystem.retractVote(proposalId);
+        votingFacade.retractVote(proposalId);
 
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Save the Money"),
+            proposalOrchestrator.getVoteCount(proposalId, "Save the Money"),
             0,
             "Save Money should have 0 votes after retraction"
         );
 
         // Final vote from test contract
         vm.prank(address(this));
-        votingSystem.castVote(proposalId, "Build a Library");
+        votingFacade.castVote(proposalId, "Build a Library");
 
         // Final vote counts before closing
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Build a Park"),
+            proposalOrchestrator.getVoteCount(proposalId, "Build a Park"),
             3,
             "Final: Park should have 3 votes"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Build a Library"),
+            proposalOrchestrator.getVoteCount(proposalId, "Build a Library"),
             2,
             "Final: Library should have 2 votes"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Build a Gym"),
+            proposalOrchestrator.getVoteCount(proposalId, "Build a Gym"),
             0,
             "Final: Gym should have 0 votes"
         );
         assertEq(
-            voteTallying.getVoteCount(proposalId, "Save the Money"),
+            proposalOrchestrator.getVoteCount(proposalId, "Save the Money"),
             0,
             "Final: Save Money should have 0 votes"
         );
@@ -243,11 +240,11 @@ contract ComprehensiveTest is Test {
         // Try voting after closure (should fail)
         vm.prank(user5);
         vm.expectRevert();
-        votingSystem.castVote(proposalId, "Build a Park");
+        votingFacade.castVote(proposalId, "Build a Park");
 
         // Check final results
         (string[] memory winners, bool isDraw) =
-            votingSystem.getProposalWinner(proposalId);
+            votingFacade.getProposalWinners(proposalId);
         assertEq(winners.length, 1, "Should have 1 winner");
         assertEq(winners[0], "Build a Park", "Park should win");
         assertFalse(isDraw, "Should not be a draw");
@@ -265,7 +262,7 @@ contract ComprehensiveTest is Test {
         options1[1] = "No";
 
         vm.prank(user1);
-        uint256 proposal1 = votingSystem.createProposal(
+        uint256 proposal1 = votingFacade.createProposal(
             "Should we upgrade the website?",
             options1,
             IProposalState.VoteMutability.MUTABLE,
@@ -280,7 +277,7 @@ contract ComprehensiveTest is Test {
         options2[2] = "Option C";
 
         vm.prank(user2);
-        uint256 proposal2 = votingSystem.createProposal(
+        uint256 proposal2 = votingFacade.createProposal(
             "Choose the next feature to implement",
             options2,
             IProposalState.VoteMutability.MUTABLE,
@@ -306,10 +303,10 @@ contract ComprehensiveTest is Test {
 
         // Vote on first proposal
         vm.prank(user1);
-        votingSystem.castVote(proposal1, "Yes");
+        votingFacade.castVote(proposal1, "Yes");
 
         vm.prank(user3);
-        votingSystem.castVote(proposal1, "No");
+        votingFacade.castVote(proposal1, "No");
 
         // Move to second proposal's voting period (first proposal ends)
         vm.warp(block.timestamp + 2 hours);
@@ -327,13 +324,13 @@ contract ComprehensiveTest is Test {
 
         // Vote on second proposal
         vm.prank(user2);
-        votingSystem.castVote(proposal2, "Option A");
+        votingFacade.castVote(proposal2, "Option A");
 
         vm.prank(user4);
-        votingSystem.castVote(proposal2, "Option A");
+        votingFacade.castVote(proposal2, "Option A");
 
         vm.prank(user5);
-        votingSystem.castVote(proposal2, "Option B");
+        votingFacade.castVote(proposal2, "Option B");
 
         // End second proposal
         vm.warp(block.timestamp + 4 hours);
@@ -344,8 +341,8 @@ contract ComprehensiveTest is Test {
         );
 
         // Check results for both proposals
-        (string[] memory winners1,) = votingSystem.getProposalWinner(proposal1);
-        (string[] memory winners2,) = votingSystem.getProposalWinner(proposal2);
+        (string[] memory winners1,) = votingFacade.getProposalWinners(proposal1);
+        (string[] memory winners2,) = votingFacade.getProposalWinners(proposal2);
 
         // First proposal should be a draw (1 Yes, 1 No)
         assertEq(winners1.length, 2, "Proposal 1 should have 2 winners (draw)");
@@ -362,7 +359,7 @@ contract ComprehensiveTest is Test {
 
         // Create proposal
         vm.prank(user1);
-        uint256 proposalId = votingSystem.createProposal(
+        uint256 proposalId = votingFacade.createProposal(
             "Final Test Proposal",
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -387,7 +384,7 @@ contract ComprehensiveTest is Test {
 
         // User2 votes
         vm.prank(user2);
-        votingSystem.castVote(proposalId, "Approve");
+        votingFacade.castVote(proposalId, "Approve");
 
         assertEq(
             voterRegistry.getParticipatedProposalsCount(user2),
@@ -398,7 +395,7 @@ contract ComprehensiveTest is Test {
         vm.prank(user2);
 
         uint256[] memory participatedProposals =
-            votingSystem.getVoterParticipatedProposals();
+            votingFacade.getVoterParticipatedProposals();
         assertEq(
             participatedProposals[0],
             proposalId,
@@ -407,17 +404,17 @@ contract ComprehensiveTest is Test {
 
         vm.prank(user2);
         string memory selectedOption =
-            votingSystem.getVoterSelectedOption(proposalId);
+            votingFacade.getVoterSelectedOption(proposalId);
         assertEq(
             selectedOption, "Approve", "User2 should have selected Approve"
         );
 
         // User2 changes vote
         vm.prank(user2);
-        votingSystem.changeVote(proposalId, "Reject");
+        votingFacade.changeVote(proposalId, "Reject");
 
         vm.prank(user2);
-        selectedOption = votingSystem.getVoterSelectedOption(proposalId);
+        selectedOption = votingFacade.getVoterSelectedOption(proposalId);
         assertEq(
             selectedOption,
             "Reject",
@@ -426,7 +423,7 @@ contract ComprehensiveTest is Test {
 
         // User2 retracts vote
         vm.prank(user2);
-        votingSystem.retractVote(proposalId);
+        votingFacade.retractVote(proposalId);
 
         assertEq(
             voterRegistry.getParticipatedProposalsCount(user2),

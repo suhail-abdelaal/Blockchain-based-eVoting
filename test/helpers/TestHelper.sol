@@ -1,86 +1,92 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import {Test} from "forge-std/Test.sol";
-import {VotingFacade} from "../../src/VotingFacade.sol";
+import "forge-std/Test.sol";
 import {AccessControlManager} from "../../src/access/AccessControlManager.sol";
-import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
-import {ProposalOrchestrator} from "../../src/proposal/ProposalOrchestrator.sol";
 import {ProposalState} from "../../src/proposal/ProposalState.sol";
-import {VoteTallying} from "../../src/voting/VoteTallying.sol";
+import {ProposalOrchestrator} from "../../src/proposal/ProposalOrchestrator.sol";
 import {ProposalValidator} from "../../src/validation/ProposalValidator.sol";
+import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
+import {VotingFacade} from "../../src/VotingFacade.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
 contract TestHelper is Test {
 
-    VotingFacade public votingSystem;
     AccessControlManager public accessControl;
+    ProposalValidator public proposalValidator;
+    ProposalState public proposalState;
     VoterRegistry public voterRegistry;
     ProposalOrchestrator public proposalOrchestrator;
-    ProposalState public proposalState;
-    VoteTallying public voteTallying;
-    ProposalValidator public proposalValidator;
+    VotingFacade public votingFacade;
 
-    address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
-    address public user1 = makeAddr("user1");
-    address public user2 = makeAddr("user2");
-    address public user3 = makeAddr("user3");
+    address public user1 = address(0x1);
+    address public user2 = address(0x2);
+    address public user3 = address(0x3);
+    address public admin = address(0x4);
 
     function setUp() public virtual {
-        // Deploy the refactored system
+        vm.prank(admin);
         accessControl = new AccessControlManager();
         proposalState = new ProposalState(address(accessControl));
-        voteTallying =
-            new VoteTallying(address(accessControl), address(proposalState));
-        voterRegistry = new VoterRegistry(address(accessControl));
         proposalValidator = new ProposalValidator(
             address(accessControl), address(proposalState)
         );
+        voterRegistry = new VoterRegistry(address(accessControl));
 
         proposalOrchestrator = new ProposalOrchestrator(
             address(accessControl),
             address(proposalValidator),
             address(proposalState),
-            address(voteTallying),
             address(voterRegistry)
         );
 
-        votingSystem = new VotingFacade(
+        votingFacade = new VotingFacade(
             address(accessControl),
             address(voterRegistry),
             address(proposalOrchestrator)
         );
 
         // Grant necessary roles
-        vm.prank(admin);
+        vm.startPrank(admin);
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
+            accessControl.getAUTHORIZED_CALLER_ROLE(),
+            address(proposalOrchestrator)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalOrchestrator)
+            accessControl.getAUTHORIZED_CALLER_ROLE(),
+            address(proposalValidator)
+        );
+        accessControl.grantRole(
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState)
         );
         accessControl.grantRole(
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterRegistry)
         );
         accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingSystem)
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(votingFacade)
+        );
+        accessControl.grantRole(
+            accessControl.getADMIN_ROLE(), address(votingFacade)
         );
 
-        // Register test voters
-        vm.prank(admin);
-        votingSystem.registerVoter(address(this), 1, new int256[](0));
-        vm.prank(admin);
-        votingSystem.registerVoter(user1, 2, new int256[](0));
-        vm.prank(admin);
-        votingSystem.registerVoter(user2, 3, new int256[](0));
-        vm.prank(admin);
-        votingSystem.registerVoter(user3, 4, new int256[](0));
+        // Register voters
+        voterRegistry.registerVoter(address(this), 1, new int256[](0));
+        voterRegistry.registerVoter(user1, 2, new int256[](0));
+        voterRegistry.registerVoter(user2, 3, new int256[](0));
+        voterRegistry.registerVoter(user3, 4, new int256[](0));
 
-        // Fund accounts
-        vm.deal(admin, 10 ether);
+        // Verify voters in access control
+        accessControl.verifyVoter(address(this));
+        accessControl.verifyVoter(user1);
+        accessControl.verifyVoter(user2);
+        accessControl.verifyVoter(user3);
+        vm.stopPrank();
+
+        // Deal ether to test accounts
         vm.deal(user1, 10 ether);
         vm.deal(user2, 10 ether);
         vm.deal(user3, 10 ether);
+        vm.deal(admin, 10 ether);
     }
 
     function createTestProposal(
@@ -91,7 +97,7 @@ contract TestHelper is Test {
         uint256 duration
     ) internal returns (uint256) {
         vm.prank(creator);
-        return votingSystem.createProposal(
+        return votingFacade.createProposal(
             title,
             options,
             IProposalState.VoteMutability.MUTABLE,
@@ -120,12 +126,12 @@ contract TestHelper is Test {
         string memory option
     ) internal {
         vm.prank(voter);
-        votingSystem.castVote(proposalId, option);
+        votingFacade.castVote(proposalId, option);
     }
 
     function retractVote(address voter, uint256 proposalId) internal {
         vm.prank(voter);
-        votingSystem.retractVote(proposalId);
+        votingFacade.retractVote(proposalId);
     }
 
     function changeVote(
@@ -134,19 +140,15 @@ contract TestHelper is Test {
         string memory newOption
     ) internal {
         vm.prank(voter);
-        votingSystem.changeVote(proposalId, newOption);
+        votingFacade.changeVote(proposalId, newOption);
     }
 
-    function warpToProposalStart(uint256 proposalId) internal {
-        // This would need to be implemented based on actual proposal start time
-        // For now, we'll just warp forward by 1 day
-        vm.warp(block.timestamp + 1 days);
+    function warpToProposalStart(uint256 startTimestamp) internal {
+        vm.warp(startTimestamp);
     }
 
-    function warpToProposalEnd(uint256 proposalId) internal {
-        // This would need to be implemented based on actual proposal end time
-        // For now, we'll just warp forward by 11 days
-        vm.warp(block.timestamp + 11 days);
+    function warpToProposalEnd(uint256 endTimestamp) internal {
+        vm.warp(endTimestamp);
     }
 
     function assertVoteCount(
@@ -154,7 +156,7 @@ contract TestHelper is Test {
         string memory option,
         uint256 expectedCount
     ) internal {
-        uint256 actualCount = votingSystem.getVoteCount(proposalId, option);
+        uint256 actualCount = votingFacade.getVoteCount(proposalId, option);
         assertEq(
             actualCount,
             expectedCount,
@@ -168,7 +170,7 @@ contract TestHelper is Test {
         bool expectedIsDraw
     ) internal {
         (string[] memory winners, bool isDraw) =
-            votingSystem.getProposalWinner(proposalId);
+            votingFacade.getProposalWinners(proposalId);
         assertEq(
             winners.length, expectedWinners.length, "Winner count mismatch"
         );
