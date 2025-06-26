@@ -159,13 +159,7 @@ contract VotingFacade is AccessControlWrapper {
     function getVoterEmbeddings() external view returns (int256[] memory) {
         return voterManager.getVoterEmbeddings(msg.sender);
     }
-    // @REMOVE THIS FUNCTION
 
-    function authorizeContract() external onlyAdmin {
-        accessControl.grantRole(
-            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
-        );
-    }
 
     fallback() external payable {
         revert("Fallback function called");
