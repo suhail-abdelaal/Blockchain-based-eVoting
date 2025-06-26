@@ -59,7 +59,7 @@ contract VotingFacade is AccessControlWrapper {
         accessControl.revokeRole(role, account);
     }
 
-    function verifyVoter(address voter) external onlyAdmin {
+    function verifyVoter(address voter) external onlyAuthorizedCaller(msg.sender) {
         accessControl.verifyVoter(voter);
     }
 
@@ -159,7 +159,6 @@ contract VotingFacade is AccessControlWrapper {
     function getVoterEmbeddings() external view returns (int256[] memory) {
         return voterManager.getVoterEmbeddings(msg.sender);
     }
-
 
     fallback() external payable {
         revert("Fallback function called");
