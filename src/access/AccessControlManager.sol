@@ -14,8 +14,10 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
 
     // Role definitions
     bytes32 private constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 private constant VERIFIED_VOTER_ROLE = keccak256("VERIFIED_VOTER_ROLE");
-    bytes32 private constant AUTHORIZED_CALLER_ROLE = keccak256("AUTHORIZED_CALLER_ROLE");
+    bytes32 private constant VERIFIED_VOTER_ROLE =
+        keccak256("VERIFIED_VOTER_ROLE");
+    bytes32 private constant AUTHORIZED_CALLER_ROLE =
+        keccak256("AUTHORIZED_CALLER_ROLE");
     address public admin;
     // Events
 
@@ -92,7 +94,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      */
     function onlyAdmin(address account) external view override {
         if (!hasRole(ADMIN_ROLE, account)) {
-            revert("AccessControl: account does not have admin role");
+            revert("Account does not have admin role");
         }
     }
 
@@ -101,7 +103,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      */
     function onlyVerifiedVoter() external view override {
         if (!hasRole(VERIFIED_VOTER_ROLE, msg.sender)) {
-            revert("AccessControl: caller is not a verified voter");
+            revert("Caller is not a verified voter");
         }
     }
 
@@ -111,7 +113,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      */
     function onlyVerifiedAddr(address voter) external view override {
         if (!hasRole(VERIFIED_VOTER_ROLE, voter)) {
-            revert("AccessControl: address is not a verified voter");
+            revert("Address is not a verified voter");
         }
     }
 
@@ -120,7 +122,7 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
      */
     function onlyAuthorizedCaller(address caller) external view override {
         if (!hasRole(AUTHORIZED_CALLER_ROLE, caller)) {
-            revert("AccessControl: caller is not authorized");
+            revert("Caller is not authorized");
         }
     }
 
@@ -188,16 +190,26 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
         revokeRole(VERIFIED_VOTER_ROLE, voter);
     }
 
-
-    function getADMIN_ROLE() external view override returns (bytes32) {
+    function getADMIN_ROLE() external pure override returns (bytes32) {
         return ADMIN_ROLE;
     }
 
-    function getVERIFIED_VOTER_ROLE() external view override returns (bytes32) {
+    function getVERIFIED_VOTER_ROLE()
+        external
+        pure
+        override
+        returns (bytes32)
+    {
         return VERIFIED_VOTER_ROLE;
     }
 
-    function getAUTHORIZED_CALLER_ROLE() external view override returns (bytes32) {
+    function getAUTHORIZED_CALLER_ROLE()
+        external
+        pure
+        override
+        returns (bytes32)
+    {
         return AUTHORIZED_CALLER_ROLE;
     }
+
 }

@@ -33,7 +33,10 @@ contract VotingFacade is AccessControlWrapper {
         );
     }
 
-    function castVote(uint256 proposalId, string memory option) external onlyVerifiedVoter {
+    function castVote(
+        uint256 proposalId,
+        string memory option
+    ) external onlyVerifiedVoter {
         proposalManager.castVote(msg.sender, proposalId, option);
     }
 
@@ -41,7 +44,10 @@ contract VotingFacade is AccessControlWrapper {
         proposalManager.retractVote(msg.sender, proposalId);
     }
 
-    function changeVote(uint256 proposalId, string memory newOption) external onlyVerifiedVoter {
+    function changeVote(
+        uint256 proposalId,
+        string memory newOption
+    ) external onlyVerifiedVoter {
         proposalManager.changeVote(msg.sender, proposalId, newOption);
     }
 
@@ -72,11 +78,18 @@ contract VotingFacade is AccessControlWrapper {
         return proposalManager.getProposalCount();
     }
 
-    function getProposalWinner(uint256 proposalId)
+    function getProposalWinners(uint256 proposalId)
         external
         returns (string[] memory winners, bool isDraw)
     {
-        return proposalManager.getProposalWinner(proposalId);
+        return proposalManager.getProposalWinners(proposalId);
+    }
+
+    function getProposalWinnersWithUpdate(uint256 proposalId)
+        external
+        returns (string[] memory winners, bool isDraw)
+    {
+        return proposalManager.getProposalWinnersWithUpdate(proposalId);
     }
 
     function getProposalManager() external view returns (address) {
@@ -146,9 +159,12 @@ contract VotingFacade is AccessControlWrapper {
     function getVoterEmbeddings() external view returns (int256[] memory) {
         return voterManager.getVoterEmbeddings(msg.sender);
     }
+    // @REMOVE THIS FUNCTION
 
     function authorizeContract() external onlyAdmin {
-        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(this));
+        accessControl.grantRole(
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(this)
+        );
     }
 
     fallback() external payable {
@@ -158,4 +174,5 @@ contract VotingFacade is AccessControlWrapper {
     receive() external payable {
         revert("Receive function called");
     }
+
 }

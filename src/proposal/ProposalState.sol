@@ -11,13 +11,16 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         address owner;
         string title;
         string[] options;
-        mapping(string => bool) optionExistence;
         ProposalStatus status;
         VoteMutability voteMutability;
+        mapping(string => uint256) voteCount;
+        mapping(string => bool) optionExistence;
         mapping(address => bool) isParticipant;
         uint256 numOfParticipants;
         uint256 startDate;
         uint256 endDate;
+        bool isDraw;
+        string[] winners;
     }
 
     mapping(uint256 => Proposal) private proposals;
@@ -26,6 +29,10 @@ contract ProposalState is IProposalState, AccessControlWrapper {
 
     event ProposalStatusUpdated(
         uint256 indexed proposalId, ProposalStatus status
+    );
+
+    event ProposalFinalized(
+        uint256 indexed proposalId, string[] winners, bool isDraw
     );
 
     constructor(address _accessControl) AccessControlWrapper(_accessControl) {
@@ -75,6 +82,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         ) {
             proposal.status = ProposalStatus.CLOSED;
             emit ProposalStatusUpdated(proposalId, ProposalStatus.CLOSED);
+            tallyVotes(proposalId);
+            emit ProposalFinalized(
+                proposalId,
+                proposals[proposalId].winners,
+                proposals[proposalId].isDraw
+            );
         }
     }
 
@@ -136,6 +149,20 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposal.id;
     }
 
+    function incrementVoteCount(
+        uint256 proposalId,
+        string memory option
+    ) external onlyAuthorizedCaller(msg.sender) {
+        proposals[proposalId].voteCount[option]++;
+    }
+
+    function decrementVoteCount(
+        uint256 proposalId,
+        string memory option
+    ) external onlyAuthorizedCaller(msg.sender) {
+        proposals[proposalId].voteCount[option]--;
+    }
+
     function addParticipant(
         uint256 proposalId,
         address voter
@@ -152,6 +179,80 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         proposals[proposalId].numOfParticipants--;
     }
 
+    function tallyVotes(uint256 proposalId)
+        public
+        override
+        onlyAuthorizedCaller(msg.sender)
+    {
+        // Check if votes have already been tallied
+        if (
+            proposals[proposalId].winners.length > 0
+                || proposals[proposalId].isDraw
+        ) {
+            revert(string(abi.encodePacked("Votes already tallied for proposal ", _uintToString(proposalId))));
+        }
+
+        // Get all options for this proposal
+        string[] memory options = proposals[proposalId].options;
+
+        if (options.length == 0) {
+            revert(string(abi.encodePacked("No options available for proposal ", _uintToString(proposalId))));
+        }
+
+        // Find the maximum vote count
+        uint256 maxVotes = 0;
+        for (uint256 i = 0; i < options.length; i++) {
+            uint256 optionVoteCount = getVoteCount(proposalId, options[i]);
+            if (optionVoteCount > maxVotes) maxVotes = optionVoteCount;
+        }
+
+        // If no votes were cast, set empty winners
+        if (maxVotes == 0) {
+            proposals[proposalId].winners = new string[](0);
+            proposals[proposalId].isDraw = false;
+            return;
+        }
+
+        // Count how many options have the maximum votes
+        uint256 winnerCount = 0;
+        for (uint256 i = 0; i < options.length; i++) {
+            if (getVoteCount(proposalId, options[i]) == maxVotes) winnerCount++;
+        }
+
+        // Create winners array
+        string[] memory winningOptions = new string[](winnerCount);
+        uint256 winnerIndex = 0;
+        for (uint256 i = 0; i < options.length; i++) {
+            if (getVoteCount(proposalId, options[i]) == maxVotes) {
+                winningOptions[winnerIndex] = options[i];
+                winnerIndex++;
+            }
+        }
+
+        // Determine if it's a draw (multiple winners with same vote count)
+        bool draw = winnerCount > 1;
+
+        // Store the results
+        proposals[proposalId].winners = winningOptions;
+        proposals[proposalId].isDraw = draw;
+    }
+
+    function getVoteCount(
+        uint256 proposalId,
+        string memory option
+    ) public view override returns (uint256) {
+        return proposals[proposalId].voteCount[option];
+    }
+
+    function getWinners(uint256 proposalId)
+        public
+        view
+        override
+        returns (string[] memory, bool)
+    {
+        return (proposals[proposalId].winners, proposals[proposalId].isDraw);
+    }
+
     function isParticipant(
         uint256 proposalId,
         address voter
@@ -159,7 +260,10 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].isParticipant[voter];
     }
 
-    function decrementProposalCount() external onlyAuthorizedCaller(msg.sender) {
+    function decrementProposalCount()
+        external
+        onlyAuthorizedCaller(msg.sender)
+    {
         proposalCount--;
     }
 
@@ -176,7 +280,9 @@ contract ProposalState is IProposalState, AccessControlWrapper {
             VoteMutability voteMutability
         )
     {
-        if (!isProposalExists(proposalId)) revert("ProposalDoesNotExist");
+        if (!isProposalExists(proposalId)) {
+            revert(string(abi.encodePacked("Proposal does not exist: ", _uintToString(proposalId))));
+        }
 
         owner = proposals[proposalId].owner;
         title = proposals[proposalId].title;
@@ -216,6 +322,26 @@ contract ProposalState is IProposalState, AccessControlWrapper {
 
     function isProposalExists(uint256 proposalId) public view returns (bool) {
         return proposals[proposalId].id != 0;
+    }
+
+    function _uintToString(uint256 value) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        uint256 tempValue = value;
+        while (tempValue != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(tempValue % 10)));
+            tempValue /= 10;
+        }
+        return string(buffer);
     }
 
 }

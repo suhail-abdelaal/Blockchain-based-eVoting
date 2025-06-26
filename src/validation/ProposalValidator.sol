@@ -22,15 +22,6 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
     uint256 private constant MAX_OPTIONS = 10;
     uint256 private constant MIN_VOTING_DURATION = 10 minutes;
 
-    // Custom errors for validation failures
-    error InvalidTitle(string reason);
-    error InvalidOptions(string reason);
-    error InvalidDates(string reason);
-    error ProposalNotActive();
-    error VoterNotRegistered();
-    error InvalidOption();
-    error VotingNotAllowed();
-
     constructor(
         address _accessControl,
         address _proposalState
@@ -68,16 +59,18 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
         string memory option
     ) external view override {
         // Check if voter is registered
-        if (!accessControl.isVoterVerified(voter)) revert VoterNotRegistered();
+        if (!accessControl.isVoterVerified(voter)) {
+            revert(string(abi.encodePacked("Voter not registered: ", _addressToString(voter))));
+        }
 
         // Check if proposal is active
         if (!proposalState.isProposalActive(proposalId)) {
-            revert ProposalNotActive();
+            revert(string(abi.encodePacked("Proposal not active: ", _uintToString(proposalId))));
         }
 
         // Check if option exists
         if (!proposalState.optionExists(proposalId, option)) {
-            revert InvalidOption();
+            revert(string(abi.encodePacked("Invalid option '", option, "' for proposal ", _uintToString(proposalId))));
         }
 
         // Additional voting rules can be added here
@@ -96,22 +89,26 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
         string calldata newOption
     ) external view override {
         // Check if voter is registered
-        if (!accessControl.isVoterVerified(voter)) revert VoterNotRegistered();
+        if (!accessControl.isVoterVerified(voter)) {
+            revert(string(abi.encodePacked("Voter not registered: ", _addressToString(voter))));
+        }
 
         // Check if proposal allows vote changes
         if (
             proposalState.getProposalVoteMutability(proposalId)
                 == IProposalState.VoteMutability.IMMUTABLE
-        ) revert VotingNotAllowed();
+        ) {
+            revert(string(abi.encodePacked("Vote changes not allowed for proposal ", _uintToString(proposalId), " - immutable voting")));
+        }
 
         // Check if proposal is active
         if (!proposalState.isProposalActive(proposalId)) {
-            revert ProposalNotActive();
+            revert(string(abi.encodePacked("Proposal not active: ", _uintToString(proposalId))));
         }
 
         // Check if new option exists
         if (!proposalState.optionExists(proposalId, newOption)) {
-            revert InvalidOption();
+            revert(string(abi.encodePacked("Invalid option '", newOption, "' for proposal ", _uintToString(proposalId))));
         }
     }
 
@@ -123,11 +120,11 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
         bytes memory titleBytes = bytes(title);
 
         if (titleBytes.length < MIN_TITLE_LENGTH) {
-            revert InvalidTitle("Title too short");
+            revert(string(abi.encodePacked("Title too short: ", _uintToString(titleBytes.length), " characters (minimum ", _uintToString(MIN_TITLE_LENGTH), ")")));
         }
 
         if (titleBytes.length > MAX_TITLE_LENGTH) {
-            revert InvalidTitle("Title too long");
+            revert(string(abi.encodePacked("Title too long: ", _uintToString(titleBytes.length), " characters (maximum ", _uintToString(MAX_TITLE_LENGTH), ")")));
         }
 
         // Check for empty or whitespace-only title
@@ -141,7 +138,7 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
         }
 
         if (!hasNonWhitespace) {
-            revert InvalidTitle("Title cannot be empty or whitespace only");
+            revert("Title cannot be empty or contain only whitespace characters");
         }
     }
 
@@ -151,11 +148,11 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
      */
     function _validateOptions(string[] memory options) private pure {
         if (options.length < MIN_OPTIONS) {
-            revert InvalidOptions("Not enough options");
+            revert(string(abi.encodePacked("Not enough options: ", _uintToString(options.length), " provided (minimum ", _uintToString(MIN_OPTIONS), ")")));
         }
 
         if (options.length > MAX_OPTIONS) {
-            revert InvalidOptions("Too many options");
+            revert(string(abi.encodePacked("Too many options: ", _uintToString(options.length), " provided (maximum ", _uintToString(MAX_OPTIONS), ")")));
         }
 
         // Check for duplicate options and empty options
@@ -164,13 +161,13 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
 
             // Check for empty options
             if (option.length == 0) {
-                revert InvalidOptions("Empty option not allowed");
+                revert(string(abi.encodePacked("Empty option not allowed at index ", _uintToString(i))));
             }
 
             // Check for duplicates
             for (uint256 j = i + 1; j < options.length; j++) {
                 if (keccak256(option) == keccak256(bytes(options[j]))) {
-                    revert InvalidOptions("Duplicate options not allowed");
+                    revert(string(abi.encodePacked("Duplicate option '", options[i], "' found at indices ", _uintToString(i), " and ", _uintToString(j))));
                 }
             }
         }
@@ -184,17 +181,17 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
     function _validateDates(uint256 startDate, uint256 endDate) private view {
         // Start date cannot be in the past
         if (startDate < block.timestamp) {
-            revert InvalidDates("Start date cannot be in the past");
+            revert(string(abi.encodePacked("Start date cannot be in the past: ", _uintToString(startDate), " < ", _uintToString(block.timestamp))));
         }
 
         // End date must be after start date
         if (endDate <= startDate) {
-            revert InvalidDates("End date must be after start date");
+            revert(string(abi.encodePacked("End date must be after start date: ", _uintToString(endDate), " <= ", _uintToString(startDate))));
         }
 
         // Check minimum voting duration
         if (endDate - startDate < MIN_VOTING_DURATION) {
-            revert InvalidDates("Voting duration too short");
+            revert(string(abi.encodePacked("Voting duration too short: ", _uintToString(endDate - startDate), " seconds (minimum ", _uintToString(MIN_VOTING_DURATION), ")")));
         }
     }
 
@@ -218,5 +215,53 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
         // Additional rules can be added here following the Open/Closed
         // Principle
     }
+
+    /**
+     * @dev Convert address to string
+     */
+    function _addressToString(address addr) private pure returns (string memory) {
+        return _toHexString(uint256(uint160(addr)), 20);
+    }
+
+    /**
+     * @dev Convert uint to string
+     */
+    function _uintToString(uint256 value) private pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        uint256 tempValue = value;
+        while (tempValue != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(tempValue % 10)));
+            tempValue /= 10;
+        }
+        return string(buffer);
+    }
+
+    /**
+     * @dev Convert to hex string
+     */
+    function _toHexString(uint256 value, uint256 length) private pure returns (string memory) {
+        bytes memory buffer = new bytes(2 * length + 2);
+        buffer[0] = "0";
+        buffer[1] = "x";
+        uint256 tempValue = value;
+        for (uint256 i = 2 * length + 1; i > 1; --i) {
+            buffer[i] = _HEX_SYMBOLS[tempValue & 0xf];
+            tempValue >>= 4;
+        }
+        require(tempValue == 0, "Strings: hex length insufficient");
+        return string(buffer);
+    }
+
+    bytes16 private constant _HEX_SYMBOLS = "0123456789abcdef";
 
 }

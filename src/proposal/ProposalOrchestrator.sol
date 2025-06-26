@@ -4,15 +4,16 @@ pragma solidity ^0.8.23;
 import "../interfaces/IProposalManager.sol";
 import "../interfaces/IProposalValidator.sol";
 import "../interfaces/IProposalState.sol";
-import "../interfaces/IVoteTallying.sol";
 import "../interfaces/IVoterManager.sol";
 import "../access/AccessControlWrapper.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
+    using Strings for uint256;
+    using Strings for address;
 
     IProposalValidator private validator;
     IProposalState private proposalState;
-    IVoteTallying private voteTallying;
     IVoterManager private voterManager;
 
     event ProposalCreated(
@@ -40,12 +41,10 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         address _accessControl,
         address _validator,
         address _proposalState,
-        address _voteTallying,
         address _voterManager
     ) AccessControlWrapper(_accessControl) {
         validator = IProposalValidator(_validator);
         proposalState = IProposalState(_proposalState);
-        voteTallying = IVoteTallying(_voteTallying);
         voterManager = IVoterManager(_voterManager);
     }
 
@@ -90,15 +89,15 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         validator.validateVote(proposalId, voter, option);
 
         if (proposalState.isParticipant(proposalId, voter)) {
-            revert("VoteAlreadyCast");
+            revert(string(abi.encodePacked("Vote already cast by voter ", voter.toHexString(), " for proposal ", proposalId.toString())));
         }
 
         if (!proposalState.optionExists(proposalId, option)) {
-            revert("InvalidOption");
+            revert(string(abi.encodePacked("Invalid option '", option, "' for proposal ", proposalId.toString())));
         }
 
         proposalState.addParticipant(proposalId, voter);
-        voteTallying.incrementVoteCount(proposalId, option);
+        proposalState.incrementVoteCount(proposalId, option);
         voterManager.recordUserParticipation(voter, proposalId, option);
 
         emit VoteCast(proposalId, voter, option);
@@ -117,19 +116,21 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         proposalState.updateProposalStatus(proposalId);
 
         if (!proposalState.isParticipant(proposalId, voter)) {
-            revert("VoterNotParticipated");
+            revert(string(abi.encodePacked("Voter ", voter.toHexString(), " has not participated in proposal ", proposalId.toString())));
         }
 
         if (
             proposalState.getProposalVoteMutability(proposalId)
                 == IProposalState.VoteMutability.IMMUTABLE
-        ) revert("ImmutableVote");
+        ) {
+            revert(string(abi.encodePacked("Cannot retract vote for proposal ", proposalId.toString(), " - immutable voting enabled")));
+        }
 
         string memory option =
             voterManager.getVoterSelectedOption(voter, proposalId);
 
         proposalState.removeParticipant(proposalId, voter);
-        voteTallying.decrementVoteCount(proposalId, option);
+        proposalState.decrementVoteCount(proposalId, option);
         voterManager.removeUserParticipation(voter, proposalId);
 
         emit VoteRetracted(proposalId, voter, option);
@@ -160,23 +161,24 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         if (
             keccak256(abi.encodePacked(previousOption))
                 == keccak256(abi.encodePacked(newOption))
-        ) revert("Vote option identical");
+        ) {
+            revert(string(abi.encodePacked("New option '", newOption, "' is identical to current option '", previousOption, "' for voter ", voter.toHexString(), " in proposal ", proposalId.toString())));
+        }
 
-        voteTallying.decrementVoteCount(proposalId, previousOption);
-        voteTallying.incrementVoteCount(proposalId, newOption);
+        proposalState.decrementVoteCount(proposalId, previousOption);
+        proposalState.incrementVoteCount(proposalId, newOption);
         voterManager.removeUserParticipation(voter, proposalId);
         voterManager.recordUserParticipation(voter, proposalId, newOption);
 
         emit VoteChanged(proposalId, voter, previousOption, newOption);
     }
-    
 
     function removeUserProposal(
         address user,
         uint256 proposalId
     ) external override onlyAuthorizedCaller(msg.sender) {
         if (proposalState.getParticipantCount(proposalId) > 0) {
-            revert("ProposalHasActiveParticipants");
+            revert(string(abi.encodePacked("Cannot remove proposal ", proposalId.toString(), " - has active participants (", proposalState.getParticipantCount(proposalId).toString(), " participants)")));
         }
 
         voterManager.removeUserProposal(user, proposalId);
@@ -188,7 +190,7 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         uint256 proposalId,
         string calldata option
     ) external view override returns (uint256) {
-        return voteTallying.getVoteCount(proposalId, option);
+        return proposalState.getVoteCount(proposalId, option);
     }
 
     function getProposalDetails(uint256 proposalId)
@@ -208,7 +210,7 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
     {
         // Check if proposal exists
         if (!proposalState.isProposalExists(proposalId)) {
-            revert("Proposal does not exist");
+            revert(string(abi.encodePacked("Proposal does not exist: ", proposalId.toString())));
         }
 
         // Update proposal status first to ensure it's current
@@ -220,74 +222,51 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         // Get winners and draw status if proposal is closed
         if (
             proposalState.getProposalStatus(proposalId)
-                == IProposalState.ProposalStatus.FINALIZED
-        ) (winners, isDraw) = voteTallying.getWinningOptions(proposalId);
-        else (new string[](0), false);
+                == IProposalState.ProposalStatus.CLOSED
+        ) {
+            (winners, isDraw) = proposalState.getWinners(proposalId);
+        } else {
+            winners = new string[](0);
+            isDraw = false;
+        }
     }
 
     function getProposalCount() external view override returns (uint256) {
         return proposalState.getProposalCount();
     }
 
-    function getProposalWinner(uint256 proposalId)
+    function getProposalWinnersWithUpdate(uint256 proposalId)
         external
         override
         returns (string[] memory winners, bool isDraw)
     {
-        // Update proposal status first to ensure it's current
         proposalState.updateProposalStatus(proposalId);
+        return proposalState.getWinners(proposalId);
+    }
 
-        // Check if proposal is closed
-        if (!proposalState.isProposalClosed(proposalId)) {
-            revert("ProposalNotClosed");
-        }
-
-        // Get all options for this proposal
-        string[] memory options = proposalState.getProposalOptions(proposalId);
-
-        // Find the maximum vote count
-        uint256 maxVotes = 0;
-        for (uint256 i = 0; i < options.length; i++) {
-            uint256 voteCount =
-                voteTallying.getVoteCount(proposalId, options[i]);
-            if (voteCount > maxVotes) maxVotes = voteCount;
-        }
-
-        // Count how many options have the maximum votes
-        uint256 winnerCount = 0;
-        for (uint256 i = 0; i < options.length; i++) {
-            if (voteTallying.getVoteCount(proposalId, options[i]) == maxVotes) {
-                winnerCount++;
-            }
-        }
-
-        // Create the winners array
-        winners = new string[](winnerCount);
-        uint256 currentIndex = 0;
-        for (uint256 i = 0; i < options.length; i++) {
-            if (voteTallying.getVoteCount(proposalId, options[i]) == maxVotes) {
-                winners[currentIndex] = options[i];
-                currentIndex++;
-            }
-        }
-
-        // Determine if it's a draw
-        isDraw = winnerCount > 1;
-
-        // Store the results for future queries
-        voteTallying.setWinners(proposalId, winners, isDraw);
-
-        return (winners, isDraw);
+    function getProposalWinners(uint256 proposalId)
+        external
+        view
+        returns (string[] memory winners, bool isDraw)
+    {
+        return proposalState.getWinners(proposalId);
     }
 
     function authorizeContracts() external onlyAdmin {
-        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(accessControl));
-        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterManager));
-        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState));
-        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(voteTallying));
-        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(validator));
-        accessControl.grantRole(accessControl.getAUTHORIZED_CALLER_ROLE(), address(this));
+        accessControl.grantRole(
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(accessControl)
+        );
+        accessControl.grantRole(
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(validator)
+        );
+        accessControl.grantRole(
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState)
+        );
+        accessControl.grantRole(
+            accessControl.getAUTHORIZED_CALLER_ROLE(), address(voterManager)
+        );
     }
+
 
 
 }

@@ -51,8 +51,13 @@ interface IProposalManager {
 
     function getProposalCount() external view returns (uint256);
 
-    function getProposalWinner(uint256 proposalId)
+    function getProposalWinnersWithUpdate(uint256 proposalId)
         external
+        returns (string[] memory winners, bool isDraw);
+
+    function getProposalWinners(uint256 proposalId)
+        external
+        view
         returns (string[] memory winners, bool isDraw);
 
 }

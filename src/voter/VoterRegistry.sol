@@ -6,10 +6,6 @@ import "../access/AccessControlWrapper.sol";
 
 contract VoterRegistry is IVoterManager, AccessControlWrapper {
 
-    error VoterAlreadyVerified(address voter);
-    error ProposalNotFound(uint256 proposalId);
-    error RecordAlreadyExists(address voter, uint256 proposalId);
-
     event VoterVerified(address indexed voter);
 
     struct Voter {
@@ -32,7 +28,9 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         uint64 nid,
         int256[] memory embeddings
     ) external override onlyAuthorizedCaller(msg.sender) {
-        if (isVoterVerified(voter)) revert VoterAlreadyVerified(voter);
+        if (isVoterVerified(voter)) {
+            revert(string(abi.encodePacked("Voter already registered: ", _addressToString(voter))));
+        }
 
         voters[voter].embeddings = embeddings;
         voters[voter].NID = nid;
@@ -45,14 +43,13 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         return nidRegistered[nid];
     }
 
-
     function recordUserParticipation(
         address voter,
         uint256 proposalId,
         string calldata selectedOption
     ) external override onlyAuthorizedCaller(msg.sender) {
         if (voters[voter].participatedProposalIndex[proposalId] != 0) {
-            revert RecordAlreadyExists(voter, proposalId);
+            revert(string(abi.encodePacked("Participation record already exists for voter ", _addressToString(voter), " in proposal ", _uintToString(proposalId))));
         }
 
         voters[voter].participatedProposalsId.push(proposalId);
@@ -66,13 +63,12 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         uint256 proposalId
     ) external override onlyAuthorizedCaller(msg.sender) {
         if (voters[voter].createdProposalIndex[proposalId] != 0) {
-            revert RecordAlreadyExists(voter, proposalId);
+            revert(string(abi.encodePacked("Created proposal record already exists for voter ", _addressToString(voter), " and proposal ", _uintToString(proposalId))));
         }
 
         voters[voter].createdProposalsId.push(proposalId);
         voters[voter].createdProposalIndex[proposalId] =
             voters[voter].createdProposalsId.length;
-        
     }
 
     function removeUserParticipation(
@@ -82,7 +78,9 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         Voter storage voterData = voters[voter];
 
         uint256 index = voterData.participatedProposalIndex[proposalId];
-        if (index == 0) revert ProposalNotFound(proposalId);
+        if (index == 0) {
+            revert(string(abi.encodePacked("Participation not found for voter ", _addressToString(voter), " in proposal ", _uintToString(proposalId))));
+        }
 
         uint256 lastIndex = voterData.participatedProposalsId.length - 1;
         uint256 lastProposalId = voterData.participatedProposalsId[lastIndex];
@@ -102,7 +100,9 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         Voter storage userData = voters[user];
 
         uint256 index = userData.createdProposalIndex[proposalId];
-        if (index == 0) revert ProposalNotFound(proposalId);
+        if (index == 0) {
+            revert(string(abi.encodePacked("Created proposal not found for user ", _addressToString(user), " and proposal ", _uintToString(proposalId))));
+        }
 
         uint256 lastIndex = userData.createdProposalsId.length - 1;
         uint256 lastProposalId = userData.createdProposalsId[lastIndex];
@@ -157,8 +157,61 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         return voters[voter].createdProposalsId.length;
     }
 
-    function getVoterEmbeddings(address voter) external view override returns (int256[] memory) {
+    function getVoterEmbeddings(address voter)
+        external
+        view
+        override
+        returns (int256[] memory)
+    {
         return voters[voter].embeddings;
     }
+
+    /**
+     * @dev Convert address to string
+     */
+    function _addressToString(address addr) private pure returns (string memory) {
+        return _toHexString(uint256(uint160(addr)), 20);
+    }
+
+    /**
+     * @dev Convert uint to string
+     */
+    function _uintToString(uint256 value) private pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        uint256 tempValue = value;
+        while (tempValue != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(tempValue % 10)));
+            tempValue /= 10;
+        }
+        return string(buffer);
+    }
+
+    /**
+     * @dev Convert to hex string
+     */
+    function _toHexString(uint256 value, uint256 length) private pure returns (string memory) {
+        bytes memory buffer = new bytes(2 * length + 2);
+        buffer[0] = "0";
+        buffer[1] = "x";
+        uint256 tempValue = value;
+        for (uint256 i = 2 * length + 1; i > 1; --i) {
+            buffer[i] = _HEX_SYMBOLS[tempValue & 0xf];
+            tempValue >>= 4;
+        }
+        require(tempValue == 0, "Strings: hex length insufficient");
+        return string(buffer);
+    }
+
+    bytes16 private constant _HEX_SYMBOLS = "0123456789abcdef";
 
 }

@@ -18,4 +18,5 @@ interface IAccessControlManager {
     function getADMIN_ROLE() external view returns (bytes32);
     function getVERIFIED_VOTER_ROLE() external view returns (bytes32);
     function getAUTHORIZED_CALLER_ROLE() external view returns (bytes32);
+
 }

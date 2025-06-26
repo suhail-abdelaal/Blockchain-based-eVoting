@@ -54,6 +54,9 @@ interface IVoterManager {
         view
         returns (uint256);
 
-    function getVoterEmbeddings(address voter) external view returns (int256[] memory);
+    function getVoterEmbeddings(address voter)
+        external
+        view
+        returns (int256[] memory);
 
 }
