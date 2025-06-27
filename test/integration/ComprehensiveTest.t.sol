@@ -91,12 +91,12 @@ contract ComprehensiveTest is Test {
 
         // Register all voters using the admin
         vm.startPrank(admin);
-        votingFacade.registerVoter(address(this), 0, new int256[](0));
-        votingFacade.registerVoter(user1, 1, new int256[](0));
-        votingFacade.registerVoter(user2, 2, new int256[](0));
-        votingFacade.registerVoter(user3, 3, new int256[](0));
-        votingFacade.registerVoter(user4, 4, new int256[](0));
-        votingFacade.registerVoter(user5, 5, new int256[](0));
+        votingFacade.registerVoter(address(this), bytes32(uint256(0)), new int256[](0));
+        votingFacade.registerVoter(user1, bytes32(uint256(1)), new int256[](0));
+        votingFacade.registerVoter(user2, bytes32(uint256(2)), new int256[](0));
+        votingFacade.registerVoter(user3, bytes32(uint256(3)), new int256[](0));
+        votingFacade.registerVoter(user4, bytes32(uint256(4)), new int256[](0));
+        votingFacade.registerVoter(user5, bytes32(uint256(5)), new int256[](0));
         // Also grant verified voter roles directly to ensure they can create
         // proposals
         // accessControl.grantRole(accessControl.VERIFIED_VOTER(),

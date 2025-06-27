@@ -5,11 +5,11 @@ interface IVoterManager {
 
     function registerVoter(
         address voter,
-        uint64 nid,
+        bytes32 nid,
         int256[] memory embeddings
     ) external;
 
-    function isNidRegistered(uint64 nid) external view returns (bool);
+    function isNidRegistered(bytes32 nid) external view returns (bool);
 
     function getVoterParticipatedProposals(address voter)
         external

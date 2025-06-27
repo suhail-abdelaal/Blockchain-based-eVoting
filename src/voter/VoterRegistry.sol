@@ -3,13 +3,17 @@ pragma solidity ^0.8.23;
 
 import "../interfaces/IVoterManager.sol";
 import "../access/AccessControlWrapper.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract VoterRegistry is IVoterManager, AccessControlWrapper {
+
+    using Strings for address;
+    using Strings for uint256;
 
     event VoterVerified(address indexed voter);
 
     struct Voter {
-        uint64 NID;
+        bytes32 NID;
         int256[] embeddings;
         uint256[] participatedProposalsId;
         mapping(uint256 => uint256) participatedProposalIndex;
@@ -19,17 +23,17 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
     }
 
     mapping(address => Voter) public voters;
-    mapping(uint64 => bool) private nidRegistered;
+    mapping(bytes32 => bool) private nidRegistered;
 
     constructor(address _accessControl) AccessControlWrapper(_accessControl) {}
 
     function registerVoter(
         address voter,
-        uint64 nid,
+        bytes32 nid,
         int256[] memory embeddings
     ) external override onlyAuthorizedCaller(msg.sender) {
         if (isVoterVerified(voter)) {
-            revert(string(abi.encodePacked("Voter already registered: ", _addressToString(voter))));
+            revert(string(abi.encodePacked("Voter already registered: ", voter.toHexString())));
         }
 
         voters[voter].embeddings = embeddings;
@@ -39,7 +43,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         emit VoterVerified(voter);
     }
 
-    function isNidRegistered(uint64 nid) external view returns (bool) {
+    function isNidRegistered(bytes32 nid) external view returns (bool) {
         return nidRegistered[nid];
     }
 
@@ -49,7 +53,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         string calldata selectedOption
     ) external override onlyAuthorizedCaller(msg.sender) {
         if (voters[voter].participatedProposalIndex[proposalId] != 0) {
-            revert(string(abi.encodePacked("Participation record already exists for voter ", _addressToString(voter), " in proposal ", _uintToString(proposalId))));
+            revert(string(abi.encodePacked("Participation record already exists for voter ", voter.toHexString(), " in proposal ", proposalId.toString())));
         }
 
         voters[voter].participatedProposalsId.push(proposalId);
@@ -63,7 +67,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         uint256 proposalId
     ) external override onlyAuthorizedCaller(msg.sender) {
         if (voters[voter].createdProposalIndex[proposalId] != 0) {
-            revert(string(abi.encodePacked("Created proposal record already exists for voter ", _addressToString(voter), " and proposal ", _uintToString(proposalId))));
+            revert(string(abi.encodePacked("Created proposal record already exists for voter ", voter.toHexString(), " and proposal ", proposalId.toString())));
         }
 
         voters[voter].createdProposalsId.push(proposalId);
@@ -79,7 +83,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
 
         uint256 index = voterData.participatedProposalIndex[proposalId];
         if (index == 0) {
-            revert(string(abi.encodePacked("Participation not found for voter ", _addressToString(voter), " in proposal ", _uintToString(proposalId))));
+            revert(string(abi.encodePacked("Participation not found for voter ", voter.toHexString(), " in proposal ", proposalId.toString())));
         }
 
         uint256 lastIndex = voterData.participatedProposalsId.length - 1;
@@ -101,7 +105,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
 
         uint256 index = userData.createdProposalIndex[proposalId];
         if (index == 0) {
-            revert(string(abi.encodePacked("Created proposal not found for user ", _addressToString(user), " and proposal ", _uintToString(proposalId))));
+            revert(string(abi.encodePacked("Created proposal not found for user ", user.toHexString(), " and proposal ", proposalId.toString())));
         }
 
         uint256 lastIndex = userData.createdProposalsId.length - 1;
@@ -166,52 +170,5 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         return voters[voter].embeddings;
     }
 
-    /**
-     * @dev Convert address to string
-     */
-    function _addressToString(address addr) private pure returns (string memory) {
-        return _toHexString(uint256(uint160(addr)), 20);
-    }
-
-    /**
-     * @dev Convert uint to string
-     */
-    function _uintToString(uint256 value) private pure returns (string memory) {
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        uint256 tempValue = value;
-        while (tempValue != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(tempValue % 10)));
-            tempValue /= 10;
-        }
-        return string(buffer);
-    }
-
-    /**
-     * @dev Convert to hex string
-     */
-    function _toHexString(uint256 value, uint256 length) private pure returns (string memory) {
-        bytes memory buffer = new bytes(2 * length + 2);
-        buffer[0] = "0";
-        buffer[1] = "x";
-        uint256 tempValue = value;
-        for (uint256 i = 2 * length + 1; i > 1; --i) {
-            buffer[i] = _HEX_SYMBOLS[tempValue & 0xf];
-            tempValue >>= 4;
-        }
-        require(tempValue == 0, "Strings: hex length insufficient");
-        return string(buffer);
-    }
-
-    bytes16 private constant _HEX_SYMBOLS = "0123456789abcdef";
 
 }

@@ -87,10 +87,10 @@ contract ProposalManagerTest is Test {
 
         // Register voters using the admin
         vm.startPrank(admin);
-        votingFacade.registerVoter(address(this), 1, new int256[](0));
-        votingFacade.registerVoter(user1, 2, new int256[](0));
-        votingFacade.registerVoter(user2, 3, new int256[](0));
-        votingFacade.registerVoter(user3, 4, new int256[](0));
+        votingFacade.registerVoter(address(this), bytes32(uint256(1)), new int256[](0));
+        votingFacade.registerVoter(user1, bytes32(uint256(2)), new int256[](0));
+        votingFacade.registerVoter(user2, bytes32(uint256(3)), new int256[](0));
+        votingFacade.registerVoter(user3, bytes32(uint256(4)), new int256[](0));
         // Also grant verified voter roles directly to ensure they can create
         // proposals
         accessControl.grantRole(

@@ -37,6 +37,7 @@ interface IProposalManager {
 
     function getProposalDetails(uint256 proposalId)
         external
+        view
         returns (
             address owner,
             string memory title,
@@ -48,6 +49,8 @@ interface IProposalManager {
             string[] memory winners,
             bool isDraw
         );
+
+    function updateProposalStatus(uint256 proposalId) external;
 
     function getProposalCount() external view returns (uint256);
 

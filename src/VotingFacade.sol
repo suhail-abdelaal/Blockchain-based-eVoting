@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "./interfaces/IVotingSystem.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IProposalManager.sol";
 import "./interfaces/IVoterManager.sol";
@@ -63,8 +62,12 @@ contract VotingFacade is AccessControlWrapper {
         accessControl.verifyVoter(voter);
     }
 
-    function removeUserProposal(uint256 proposalId) external {
+    function removeProposal(uint256 proposalId) external onlyVerifiedVoter {
         proposalManager.removeUserProposal(msg.sender, proposalId);
+    }
+
+    function removeUserProposal(address user, uint256 proposalId) external onlyAdmin {
+        proposalManager.removeUserProposal(user, proposalId);
     }
 
     function getVoteCount(
@@ -102,7 +105,7 @@ contract VotingFacade is AccessControlWrapper {
 
     function registerVoter(
         address voter,
-        uint64 nid,
+        bytes32 nid,
         int256[] memory embeddings
     ) external onlyAuthorizedCaller(msg.sender) {
         voterManager.registerVoter(voter, nid, embeddings);
@@ -110,7 +113,7 @@ contract VotingFacade is AccessControlWrapper {
         accessControl.verifyVoter(voter);
     }
 
-    function isNidRegistered(uint64 nid) external view returns (bool) {
+    function isNidRegistered(bytes32 nid) external view returns (bool) {
         return voterManager.isNidRegistered(nid);
     }
 
@@ -138,8 +141,13 @@ contract VotingFacade is AccessControlWrapper {
         return voterManager.getVoterSelectedOption(msg.sender, proposalId);
     }
 
+    function updateProposalStatus(uint256 proposalId) external {
+        proposalManager.updateProposalStatus(proposalId);
+    }
+
     function getProposalDetails(uint256 proposalId)
         external
+        view
         onlyVerifiedAddr(msg.sender)
         returns (
             address owner,

@@ -193,8 +193,14 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         return proposalState.getVoteCount(proposalId, option);
     }
 
+
+    function updateProposalStatus(uint256 proposalId) external override {
+        proposalState.updateProposalStatus(proposalId);
+    }
+
     function getProposalDetails(uint256 proposalId)
         external
+        view
         override
         returns (
             address owner,
@@ -212,9 +218,6 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         if (!proposalState.isProposalExists(proposalId)) {
             revert(string(abi.encodePacked("Proposal does not exist: ", proposalId.toString())));
         }
-
-        // Update proposal status first to ensure it's current
-        proposalState.updateProposalStatus(proposalId);
 
         (owner, title, options, startDate, endDate, status, voteMutability) =
             proposalState.getProposal(proposalId);

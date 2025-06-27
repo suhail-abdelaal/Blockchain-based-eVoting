@@ -111,4 +111,6 @@ interface IProposalState {
         view
         returns (string[] memory, bool);
 
+    
+
 }

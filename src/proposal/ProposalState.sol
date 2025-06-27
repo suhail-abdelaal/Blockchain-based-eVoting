@@ -3,8 +3,11 @@ pragma solidity ^0.8.23;
 
 import "../interfaces/IProposalState.sol";
 import "../access/AccessControlWrapper.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ProposalState is IProposalState, AccessControlWrapper {
+
+    using Strings for uint256;
 
     struct Proposal {
         uint256 id;
@@ -189,14 +192,14 @@ contract ProposalState is IProposalState, AccessControlWrapper {
             proposals[proposalId].winners.length > 0
                 || proposals[proposalId].isDraw
         ) {
-            revert(string(abi.encodePacked("Votes already tallied for proposal ", _uintToString(proposalId))));
+            revert(string(abi.encodePacked("Votes already tallied for proposal ", proposalId.toString())));
         }
 
         // Get all options for this proposal
         string[] memory options = proposals[proposalId].options;
 
         if (options.length == 0) {
-            revert(string(abi.encodePacked("No options available for proposal ", _uintToString(proposalId))));
+            revert(string(abi.encodePacked("No options available for proposal ", proposalId.toString())));
         }
 
         // Find the maximum vote count
@@ -281,7 +284,7 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         )
     {
         if (!isProposalExists(proposalId)) {
-            revert(string(abi.encodePacked("Proposal does not exist: ", _uintToString(proposalId))));
+            revert(string(abi.encodePacked("Proposal does not exist: ", proposalId.toString())));
         }
 
         owner = proposals[proposalId].owner;
@@ -324,24 +327,6 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].id != 0;
     }
 
-    function _uintToString(uint256 value) internal pure returns (string memory) {
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        uint256 tempValue = value;
-        while (tempValue != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(tempValue % 10)));
-            tempValue /= 10;
-        }
-        return string(buffer);
-    }
+
 
 }

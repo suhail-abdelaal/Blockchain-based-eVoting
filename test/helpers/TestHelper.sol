@@ -19,10 +19,10 @@ contract TestHelper is Test {
     ProposalOrchestrator public proposalOrchestrator;
     VotingFacade public votingFacade;
 
-    address public user1 = address(0x1);
-    address public user2 = address(0x2);
-    address public user3 = address(0x3);
-    address public admin = address(0x4);
+    address public user1 = makeAddr("user1");
+    address public user2 = makeAddr("user2");
+    address public user3 = makeAddr("user3");
+    address public admin = makeAddr("admin");
 
     function setUp() public virtual {
         vm.prank(admin);
@@ -70,10 +70,10 @@ contract TestHelper is Test {
         );
 
         // Register voters
-        voterRegistry.registerVoter(address(this), 1, new int256[](0));
-        voterRegistry.registerVoter(user1, 2, new int256[](0));
-        voterRegistry.registerVoter(user2, 3, new int256[](0));
-        voterRegistry.registerVoter(user3, 4, new int256[](0));
+        voterRegistry.registerVoter(address(this), bytes32(uint256(1)), new int256[](0));
+        voterRegistry.registerVoter(user1, bytes32(uint256(2)), new int256[](0));
+        voterRegistry.registerVoter(user2, bytes32(uint256(3)), new int256[](0));
+        voterRegistry.registerVoter(user3, bytes32(uint256(4)), new int256[](0));
 
         // Verify voters in access control
         accessControl.verifyVoter(address(this));
