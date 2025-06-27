@@ -152,6 +152,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposal.id;
     }
 
+    function removeProposal(uint256 proposalId) external onlyAuthorizedCaller(msg.sender) {
+        delete proposals[proposalId];
+        proposalCount--;
+    }
+
     function incrementVoteCount(
         uint256 proposalId,
         string memory option
@@ -306,6 +311,14 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         returns (uint256)
     {
         return proposals[proposalId].numOfParticipants;
+    }
+
+    function isProposalFinalized(uint256 proposalId)
+        external
+        view
+        returns (bool)
+    {
+        return proposals[proposalId].status == ProposalStatus.FINALIZED;
     }
 
     function optionExists(

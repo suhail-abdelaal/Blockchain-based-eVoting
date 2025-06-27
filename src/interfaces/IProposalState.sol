@@ -25,22 +25,28 @@ interface IProposalState {
         uint256 endDate
     ) external returns (uint256);
 
+    function removeProposal(uint256 proposalId) external;
+
     function getProposalStatus(uint256 proposalId)
         external
         view
         returns (ProposalStatus);
+
     function getCurrentProposalStatus(uint256 proposalId)
         external
         returns (ProposalStatus);
     function updateProposalStatus(uint256 proposalId) external;
+
     function getProposalVoteMutability(uint256 proposalId)
         external
         view
         returns (VoteMutability);
+
     function isProposalActive(uint256 proposalId)
         external
         view
         returns (bool);
+
     function isProposalClosed(uint256 proposalId)
         external
         view
@@ -50,6 +56,7 @@ interface IProposalState {
         uint256 proposalId,
         address voter
     ) external view returns (bool);
+
     function optionExists(
         uint256 proposalId,
         string calldata option
@@ -102,15 +109,17 @@ interface IProposalState {
         returns (bool);
 
     function tallyVotes(uint256 proposalId) external;
+
     function getVoteCount(
         uint256 proposalId,
         string memory option
     ) external view returns (uint256);
+
     function getWinners(uint256 proposalId)
         external
         view
         returns (string[] memory, bool);
 
-    
+    function isProposalFinalized(uint256 proposalId) external view returns (bool);
 
 }

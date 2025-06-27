@@ -66,8 +66,8 @@ contract VotingFacade is AccessControlWrapper {
         proposalManager.removeUserProposal(msg.sender, proposalId);
     }
 
-    function removeUserProposal(address user, uint256 proposalId) external onlyAdmin {
-        proposalManager.removeUserProposal(user, proposalId);
+    function removeProposalWithAdmin(address user, uint256 proposalId) external onlyAdmin {
+        proposalManager.removeProposalWithAdmin(user, proposalId);
     }
 
     function getVoteCount(
@@ -83,24 +83,10 @@ contract VotingFacade is AccessControlWrapper {
 
     function getProposalWinners(uint256 proposalId)
         external
+        view
         returns (string[] memory winners, bool isDraw)
     {
         return proposalManager.getProposalWinners(proposalId);
-    }
-
-    function getProposalWinnersWithUpdate(uint256 proposalId)
-        external
-        returns (string[] memory winners, bool isDraw)
-    {
-        return proposalManager.getProposalWinnersWithUpdate(proposalId);
-    }
-
-    function getProposalManager() external view returns (address) {
-        return address(proposalManager);
-    }
-
-    function getVoterManager() external view returns (address) {
-        return address(voterManager);
     }
 
     function registerVoter(
@@ -143,6 +129,10 @@ contract VotingFacade is AccessControlWrapper {
 
     function updateProposalStatus(uint256 proposalId) external {
         proposalManager.updateProposalStatus(proposalId);
+    }
+
+    function isProposalFinalized(uint256 proposalId) external view returns (bool) {
+        return proposalManager.isProposalFinalized(proposalId);
     }
 
     function getProposalDetails(uint256 proposalId)

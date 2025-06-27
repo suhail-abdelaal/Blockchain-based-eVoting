@@ -182,7 +182,16 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         }
 
         voterManager.removeUserProposal(user, proposalId);
-        proposalState.decrementProposalCount();
+        proposalState.removeProposal(proposalId);
+        emit ProposalDeleted(proposalId);
+    }
+
+    function removeProposalWithAdmin(
+        address user,
+        uint256 proposalId
+    ) external override onlyAuthorizedCaller(msg.sender) {
+        voterManager.removeUserProposal(user, proposalId);
+        proposalState.removeProposal(proposalId);
         emit ProposalDeleted(proposalId);
     }
 
@@ -196,6 +205,11 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
 
     function updateProposalStatus(uint256 proposalId) external override {
         proposalState.updateProposalStatus(proposalId);
+    }
+
+
+    function isProposalFinalized(uint256 proposalId) external view override returns (bool) {
+        return proposalState.isProposalFinalized(proposalId);
     }
 
     function getProposalDetails(uint256 proposalId)
@@ -238,18 +252,12 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         return proposalState.getProposalCount();
     }
 
-    function getProposalWinnersWithUpdate(uint256 proposalId)
-        external
-        override
-        returns (string[] memory winners, bool isDraw)
-    {
-        proposalState.updateProposalStatus(proposalId);
-        return proposalState.getWinners(proposalId);
-    }
+
 
     function getProposalWinners(uint256 proposalId)
         external
         view
+        override
         returns (string[] memory winners, bool isDraw)
     {
         return proposalState.getWinners(proposalId);
