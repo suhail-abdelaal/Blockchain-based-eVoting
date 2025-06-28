@@ -252,7 +252,9 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         return proposalState.getProposalCount();
     }
 
-
+    function isProposalExists(uint256 proposalId) external view override returns (bool) {
+        return proposalState.isProposalExists(proposalId);
+    }
 
     function getProposalWinners(uint256 proposalId)
         external

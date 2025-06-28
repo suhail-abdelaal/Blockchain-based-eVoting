@@ -135,6 +135,10 @@ contract VotingFacade is AccessControlWrapper {
         return proposalManager.isProposalFinalized(proposalId);
     }
 
+    function isProposalExists(uint256 proposalId) external view returns (bool) {
+        return proposalManager.isProposalExists(proposalId);
+    }
+
     function getProposalDetails(uint256 proposalId)
         external
         view

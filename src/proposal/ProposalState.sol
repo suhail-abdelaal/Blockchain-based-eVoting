@@ -86,6 +86,7 @@ contract ProposalState is IProposalState, AccessControlWrapper {
             proposal.status = ProposalStatus.CLOSED;
             emit ProposalStatusUpdated(proposalId, ProposalStatus.CLOSED);
             tallyVotes(proposalId);
+            proposal.status = ProposalStatus.FINALIZED;
             emit ProposalFinalized(
                 proposalId,
                 proposals[proposalId].winners,

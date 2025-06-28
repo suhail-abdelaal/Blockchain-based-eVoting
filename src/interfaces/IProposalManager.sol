@@ -63,4 +63,6 @@ interface IProposalManager {
 
     function isProposalFinalized(uint256 proposalId) external view returns (bool);
 
+    function isProposalExists(uint256 proposalId) external view returns (bool);
+
 }
