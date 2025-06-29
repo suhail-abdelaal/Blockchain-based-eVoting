@@ -182,7 +182,16 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         }
 
         voterManager.removeUserProposal(user, proposalId);
-        proposalState.decrementProposalCount();
+        proposalState.removeProposal(proposalId);
+        emit ProposalDeleted(proposalId);
+    }
+
+    function removeProposalWithAdmin(
+        address user,
+        uint256 proposalId
+    ) external override onlyAuthorizedCaller(msg.sender) {
+        voterManager.removeUserProposal(user, proposalId);
+        proposalState.removeProposal(proposalId);
         emit ProposalDeleted(proposalId);
     }
 
@@ -193,8 +202,19 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         return proposalState.getVoteCount(proposalId, option);
     }
 
+
+    function updateProposalStatus(uint256 proposalId) external override {
+        proposalState.updateProposalStatus(proposalId);
+    }
+
+
+    function isProposalFinalized(uint256 proposalId) external view override returns (bool) {
+        return proposalState.isProposalFinalized(proposalId);
+    }
+
     function getProposalDetails(uint256 proposalId)
         external
+        view
         override
         returns (
             address owner,
@@ -212,9 +232,6 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         if (!proposalState.isProposalExists(proposalId)) {
             revert(string(abi.encodePacked("Proposal does not exist: ", proposalId.toString())));
         }
-
-        // Update proposal status first to ensure it's current
-        proposalState.updateProposalStatus(proposalId);
 
         (owner, title, options, startDate, endDate, status, voteMutability) =
             proposalState.getProposal(proposalId);
@@ -235,18 +252,14 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
         return proposalState.getProposalCount();
     }
 
-    function getProposalWinnersWithUpdate(uint256 proposalId)
-        external
-        override
-        returns (string[] memory winners, bool isDraw)
-    {
-        proposalState.updateProposalStatus(proposalId);
-        return proposalState.getWinners(proposalId);
+    function isProposalExists(uint256 proposalId) external view override returns (bool) {
+        return proposalState.isProposalExists(proposalId);
     }
 
     function getProposalWinners(uint256 proposalId)
         external
         view
+        override
         returns (string[] memory winners, bool isDraw)
     {
         return proposalState.getWinners(proposalId);

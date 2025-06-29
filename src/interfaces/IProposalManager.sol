@@ -30,6 +30,8 @@ interface IProposalManager {
 
     function removeUserProposal(address user, uint256 proposalId) external;
 
+    function removeProposalWithAdmin(address user, uint256 proposalId) external;
+
     function getVoteCount(
         uint256 proposalId,
         string calldata option
@@ -37,6 +39,7 @@ interface IProposalManager {
 
     function getProposalDetails(uint256 proposalId)
         external
+        view
         returns (
             address owner,
             string memory title,
@@ -49,15 +52,17 @@ interface IProposalManager {
             bool isDraw
         );
 
-    function getProposalCount() external view returns (uint256);
+    function updateProposalStatus(uint256 proposalId) external;
 
-    function getProposalWinnersWithUpdate(uint256 proposalId)
-        external
-        returns (string[] memory winners, bool isDraw);
+    function getProposalCount() external view returns (uint256);
 
     function getProposalWinners(uint256 proposalId)
         external
         view
         returns (string[] memory winners, bool isDraw);
+
+    function isProposalFinalized(uint256 proposalId) external view returns (bool);
+
+    function isProposalExists(uint256 proposalId) external view returns (bool);
 
 }

@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
-import "./interfaces/IVotingSystem.sol";
 import "./interfaces/IAccessControlManager.sol";
 import "./interfaces/IProposalManager.sol";
 import "./interfaces/IVoterManager.sol";
@@ -59,12 +58,16 @@ contract VotingFacade is AccessControlWrapper {
         accessControl.revokeRole(role, account);
     }
 
-    function verifyVoter(address voter) external onlyAdmin {
+    function verifyVoter(address voter) external onlyAuthorizedCaller(msg.sender) {
         accessControl.verifyVoter(voter);
     }
 
-    function removeUserProposal(uint256 proposalId) external {
+    function removeProposal(uint256 proposalId) external onlyVerifiedVoter {
         proposalManager.removeUserProposal(msg.sender, proposalId);
+    }
+
+    function removeProposalWithAdmin(address user, uint256 proposalId) external onlyAdmin {
+        proposalManager.removeProposalWithAdmin(user, proposalId);
     }
 
     function getVoteCount(
@@ -80,37 +83,27 @@ contract VotingFacade is AccessControlWrapper {
 
     function getProposalWinners(uint256 proposalId)
         external
+        view
         returns (string[] memory winners, bool isDraw)
     {
         return proposalManager.getProposalWinners(proposalId);
     }
 
-    function getProposalWinnersWithUpdate(uint256 proposalId)
-        external
-        returns (string[] memory winners, bool isDraw)
-    {
-        return proposalManager.getProposalWinnersWithUpdate(proposalId);
-    }
-
-    function getProposalManager() external view returns (address) {
-        return address(proposalManager);
-    }
-
-    function getVoterManager() external view returns (address) {
-        return address(voterManager);
-    }
-
     function registerVoter(
         address voter,
-        uint64 nid,
+        bytes32 nid,
         int256[] memory embeddings
-    ) external onlyAuthorizedCaller(msg.sender) {
+    ) external onlyAdmin {
         voterManager.registerVoter(voter, nid, embeddings);
-        // Also verify the voter in the access control system
         accessControl.verifyVoter(voter);
     }
 
-    function isNidRegistered(uint64 nid) external view returns (bool) {
+    function unRegisterVoter(address voter) external onlyAdmin {
+        voterManager.unRegisterVoter(voter);
+        accessControl.revokeVoterVerification(voter);
+    }
+
+    function isNidRegistered(bytes32 nid) external view returns (bool) {
         return voterManager.isNidRegistered(nid);
     }
 
@@ -138,8 +131,21 @@ contract VotingFacade is AccessControlWrapper {
         return voterManager.getVoterSelectedOption(msg.sender, proposalId);
     }
 
+    function updateProposalStatus(uint256 proposalId) external {
+        proposalManager.updateProposalStatus(proposalId);
+    }
+
+    function isProposalFinalized(uint256 proposalId) external view returns (bool) {
+        return proposalManager.isProposalFinalized(proposalId);
+    }
+
+    function isProposalExists(uint256 proposalId) external view returns (bool) {
+        return proposalManager.isProposalExists(proposalId);
+    }
+
     function getProposalDetails(uint256 proposalId)
         external
+        view
         onlyVerifiedAddr(msg.sender)
         returns (
             address owner,
@@ -159,7 +165,6 @@ contract VotingFacade is AccessControlWrapper {
     function getVoterEmbeddings() external view returns (int256[] memory) {
         return voterManager.getVoterEmbeddings(msg.sender);
     }
-
 
     fallback() external payable {
         revert("Fallback function called");

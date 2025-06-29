@@ -24,6 +24,7 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
         uint256 proposalId =
             createTestProposal(user1, "Test Proposal", options, 1 days, 9 days);
 
+        vm.prank(user1);
         // Get proposal details
         (
             address owner,
@@ -69,6 +70,8 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
             proposalState.getProposal(proposalId);
         warpToProposalStart(proposalStartTime);
 
+        votingFacade.updateProposalStatus(proposalId);
+
         (
             address owner,
             string memory title,
@@ -108,6 +111,8 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
 
         // Warp to proposal end time
         warpToProposalEnd(proposalEndTime);
+
+        votingFacade.updateProposalStatus(proposalId);
 
         (
             address owner,
@@ -149,6 +154,8 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
         // Warp to proposal end time
         warpToProposalEnd(proposalEndTime);
 
+        votingFacade.updateProposalStatus(proposalId);
+
         (
             address owner,
             string memory title,
@@ -187,6 +194,8 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
             expectedStartTime,
             expectedEndTime
         );
+
+        votingFacade.updateProposalStatus(proposalId);
 
         (
             address owner,

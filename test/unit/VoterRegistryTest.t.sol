@@ -36,7 +36,7 @@ contract VoterRegistryTest is Test {
         embeddings[2] = 11_111;
 
         vm.prank(admin);
-        voterRegistry.registerVoter(user1, 123, embeddings);
+        voterRegistry.registerVoter(user1, bytes32(uint256(123)), embeddings);
 
         // Check that voter is verified (we can't directly access the struct
         // with mappings)
@@ -218,7 +218,7 @@ contract VoterRegistryTest is Test {
     function test_OnlyAdminCanVerifyVoter() public {
         vm.prank(user1);
         vm.expectRevert();
-        voterRegistry.registerVoter(user2, 123, new int256[](0));
+        voterRegistry.registerVoter(user2, bytes32(uint256(123)), new int256[](0));
     }
 
     function test_OnlyAuthorizedCallerCanRecordParticipation() public {
