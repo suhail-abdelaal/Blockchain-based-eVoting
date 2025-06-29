@@ -11,6 +11,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
     using Strings for uint256;
 
     event VoterVerified(address indexed voter);
+    event VoterUnregistered(address indexed voter);
 
     struct Voter {
         bytes32 NID;
@@ -41,6 +42,18 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
         nidRegistered[nid] = true;
 
         emit VoterVerified(voter);
+    }
+
+    function unRegisterVoter(
+        address voter
+    ) external override onlyAdmin {
+        if (!isVoterVerified(voter)) {
+            revert(string(abi.encodePacked("Voter not registered: ", voter.toHexString())));
+        }
+
+        nidRegistered[voters[voter].NID] = false;
+        delete voters[voter];
+        emit VoterUnregistered(voter);
     }
 
     function isNidRegistered(bytes32 nid) external view returns (bool) {

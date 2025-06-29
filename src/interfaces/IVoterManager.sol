@@ -11,6 +11,8 @@ interface IVoterManager {
 
     function isNidRegistered(bytes32 nid) external view returns (bool);
 
+    function unRegisterVoter(address voter) external;
+
     function getVoterParticipatedProposals(address voter)
         external
         view

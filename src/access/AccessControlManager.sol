@@ -139,6 +139,18 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
     }
 
     /**
+     * @dev Revoke a voter's verification (admin only)
+     * @param voter The address to revoke verification from
+     */
+    function revokeVoterVerification(address voter)
+        external
+        override
+        onlyRole(AUTHORIZED_CALLER_ROLE, msg.sender)
+    {
+        revokeRole(VERIFIED_VOTER_ROLE, voter);
+    }
+
+    /**
      * @dev Check if a voter is verified
      * @param voter The address to check
      * @return bool True if the voter is verified

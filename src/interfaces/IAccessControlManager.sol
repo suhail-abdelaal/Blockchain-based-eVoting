@@ -15,6 +15,7 @@ interface IAccessControlManager {
     function revokeRole(bytes32 role, address account) external;
     function verifyVoter(address voter) external;
     function isVoterVerified(address voter) external view returns (bool);
+    function revokeVoterVerification(address voter) external;
     function getADMIN_ROLE() external view returns (bytes32);
     function getVERIFIED_VOTER_ROLE() external view returns (bytes32);
     function getAUTHORIZED_CALLER_ROLE() external view returns (bytes32);

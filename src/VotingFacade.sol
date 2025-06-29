@@ -93,10 +93,14 @@ contract VotingFacade is AccessControlWrapper {
         address voter,
         bytes32 nid,
         int256[] memory embeddings
-    ) external onlyAuthorizedCaller(msg.sender) {
+    ) external onlyAdmin {
         voterManager.registerVoter(voter, nid, embeddings);
-        // Also verify the voter in the access control system
         accessControl.verifyVoter(voter);
+    }
+
+    function unRegisterVoter(address voter) external onlyAdmin {
+        voterManager.unRegisterVoter(voter);
+        accessControl.revokeVoterVerification(voter);
     }
 
     function isNidRegistered(bytes32 nid) external view returns (bool) {
