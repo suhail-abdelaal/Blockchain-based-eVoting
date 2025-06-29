@@ -39,9 +39,9 @@ contract ProposalOrchestrator is IProposalManager, AccessControlWrapper {
 
     constructor(
         address _accessControl,
-        address _validator,
+        address _voterManager,
         address _proposalState,
-        address _voterManager
+        address _validator
     ) AccessControlWrapper(_accessControl) {
         validator = IProposalValidator(_validator);
         proposalState = IProposalState(_proposalState);
