@@ -46,7 +46,7 @@ contract VoterRegistry is IVoterManager, AccessControlWrapper {
 
     function unRegisterVoter(
         address voter
-    ) external override onlyAdmin {
+    ) external override onlyAuthorizedCaller(msg.sender) {
         if (!isVoterVerified(voter)) {
             revert(string(abi.encodePacked("Voter not registered: ", voter.toHexString())));
         }

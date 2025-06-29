@@ -191,16 +191,6 @@ contract AccessControlManager is AccessControl, IAccessControlManager {
         grantRole(VERIFIED_VOTER_ROLE, voter);
     }
 
-    /**
-     * @dev Unregister a voter (admin only)
-     * @param voter The address to unregister
-     */
-    function unregisterVoter(address voter)
-        external
-        onlyRole(AUTHORIZED_CALLER_ROLE, msg.sender)
-    {
-        revokeRole(VERIFIED_VOTER_ROLE, voter);
-    }
 
     function getADMIN_ROLE() external pure override returns (bytes32) {
         return ADMIN_ROLE;
