@@ -5,12 +5,25 @@ import {Test, console} from "forge-std/Test.sol";
 import {TestHelper} from "../helpers/TestHelper.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
+/**
+ * @title VotingFacadeGetProposalDetailsTest
+ * @notice Unit tests for the proposal details retrieval functionality
+ * @dev Tests various scenarios for getting proposal details through the VotingFacade
+ */
 contract VotingFacadeGetProposalDetailsTest is TestHelper {
 
+    /**
+     * @notice Sets up the test environment
+     * @dev Inherits setup from TestHelper
+     */
     function setUp() public override {
         super.setUp();
     }
 
+    /**
+     * @notice Tests getting details of a valid proposal
+     * @dev Verifies all proposal details are correctly returned for a newly created proposal
+     */
     function test_GetProposalDetails_ValidProposal() public {
         // Create a test proposal
         string[] memory options = new string[](3);
@@ -61,6 +74,10 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
         assertFalse(isDraw, "Should not be a draw initially");
     }
 
+    /**
+     * @notice Tests getting details of an active proposal
+     * @dev Verifies proposal details during the active voting period
+     */
     function test_GetProposalDetails_ActiveProposal() public {
         // Create and activate a proposal
         uint256 proposalId = createStandardProposal(user1);
@@ -93,6 +110,10 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
         );
     }
 
+    /**
+     * @notice Tests getting details of a closed proposal with a clear winner
+     * @dev Verifies proposal details after voting period ends with a single winner
+     */
     function test_GetProposalDetails_ClosedProposalWithWinner() public {
         // Create a proposal
         uint256 proposalId = createStandardProposal(user1);
@@ -136,6 +157,10 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
         assertFalse(isDraw, "Should not be a draw");
     }
 
+    /**
+     * @notice Tests getting details of a closed proposal with a draw
+     * @dev Verifies proposal details after voting period ends in a tie
+     */
     function test_GetProposalDetails_ClosedProposalWithDraw() public {
         // Create a proposal
         uint256 proposalId = createStandardProposal(user1);
@@ -177,6 +202,10 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
         assertEq(winners.length, 2, "Should have 2 winners in a draw");
     }
 
+    /**
+     * @notice Tests getting details of an immutable proposal
+     * @dev Verifies proposal details for proposals with immutable voting options
+     */
     function test_GetProposalDetails_ImmutableProposal() public {
         // Create an immutable proposal
         string[] memory options = new string[](2);
@@ -209,13 +238,13 @@ contract VotingFacadeGetProposalDetailsTest is TestHelper {
             bool isDraw
         ) = votingFacade.getProposalDetails(proposalId);
 
+        assertEq(owner, user1, "Owner should be user1");
+        assertEq(title, "Immutable Proposal", "Title should match");
         assertEq(
             uint256(voteMutability),
             uint256(IProposalState.VoteMutability.IMMUTABLE),
             "Vote mutability should be IMMUTABLE"
         );
-        assertEq(title, "Immutable Proposal", "Title should match");
-        assertEq(owner, user1, "Owner should be user1");
         assertEq(startDate, expectedStartTime, "Start date should match");
         assertEq(endDate, expectedEndTime, "End date should match");
         assertEq(

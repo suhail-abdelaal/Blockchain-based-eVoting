@@ -11,6 +11,11 @@ import {ProposalState} from "../../src/proposal/ProposalState.sol";
 import {ProposalValidator} from "../../src/validation/ProposalValidator.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
+/**
+ * @title VotingSystemTest
+ * @notice Integration tests for the complete voting system
+ * @dev Tests end-to-end workflows and component interactions
+ */
 contract VotingSystemTest is Test {
 
     VotingFacade public votingFacade;
@@ -26,6 +31,10 @@ contract VotingSystemTest is Test {
     address public user3 = makeAddr("user3");
     address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
 
+    /**
+     * @notice Sets up the test environment with all system components
+     * @dev Deploys contracts, sets up roles, and registers test voters
+     */
     function setUp() public {
         // Deploy the refactored system
         vm.prank(admin);
@@ -104,6 +113,10 @@ contract VotingSystemTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests a complete voting workflow
+     * @dev Covers proposal creation, voting, status changes, and result tallying
+     */
     function test_CompleteVotingWorkflow() public {
         // Test creating a proposal
         string[] memory options = new string[](3);
