@@ -10,6 +10,11 @@ import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
 import {VotingFacade} from "../../src/VotingFacade.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
+/**
+ * @title VoterManagerTest
+ * @notice Integration tests for voter management functionality
+ * @dev Tests voter registration, verification, and participation tracking
+ */
 contract VoterManagerTest is Test {
 
     AccessControlManager public accessControl;
@@ -24,6 +29,10 @@ contract VoterManagerTest is Test {
     address public user3 = address(0x3);
     address public admin = address(0x4);
 
+    /**
+     * @notice Sets up the test environment with all system components
+     * @dev Deploys contracts, sets up roles, and registers test voters
+     */
     function setUp() public {
         vm.prank(admin);
         accessControl = new AccessControlManager();
@@ -81,6 +90,10 @@ contract VoterManagerTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests voter verification status
+     * @dev Verifies that registered voters are properly verified
+     */
     function test_VerifiedUser() public view {
         assertTrue(
             votingFacade.isVoterVerified(address(this)),
@@ -91,6 +104,10 @@ contract VoterManagerTest is Test {
         );
     }
 
+    /**
+     * @notice Tests proposal recording and removal
+     * @dev Verifies tracking of user-created proposals
+     */
     function test_RecordAndRemoveProposals() public {
         vm.startPrank(admin);
         // Record proposals for user1
@@ -113,6 +130,10 @@ contract VoterManagerTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests voter registration with biometric data
+     * @dev Verifies registration process and verification status
+     */
     function test_VoterRegistration() public {
         address newUser = makeAddr("newUser");
         int256[] memory embeddings = new int256[](3);
@@ -130,6 +151,10 @@ contract VoterManagerTest is Test {
         );
     }
 
+    /**
+     * @notice Tests voter participation in proposals
+     * @dev Verifies participation tracking for a single proposal
+     */
     function test_VoterParticipation() public {
         string[] memory options = new string[](2);
         options[0] = "Yes";
@@ -163,6 +188,10 @@ contract VoterManagerTest is Test {
         );
     }
 
+    /**
+     * @notice Tests voter participation history across multiple proposals
+     * @dev Verifies participation tracking for multiple proposals
+     */
     function test_VoterParticipationHistory() public {
         string[] memory options = new string[](2);
         options[0] = "Yes";
@@ -189,7 +218,7 @@ contract VoterManagerTest is Test {
 
         vm.warp(block.timestamp + 1 days);
 
-        // Vote on both proposals as the test contract
+        // Vote on both proposals
         vm.startPrank(address(this));
         votingFacade.castVote(proposal1, "Yes");
         votingFacade.castVote(proposal2, "No");
@@ -202,12 +231,21 @@ contract VoterManagerTest is Test {
             2,
             "Should have participated in 2 proposals"
         );
+        assertEq(
+            participatedProposals[0],
+            proposal1,
+            "Should have participated in proposal 1"
+        );
+        assertEq(
+            participatedProposals[1],
+            proposal2,
+            "Should have participated in proposal 2"
+        );
 
-        string memory option1 = votingFacade.getVoterSelectedOption(proposal1);
-        string memory option2 = votingFacade.getVoterSelectedOption(proposal2);
-
-        assertEq(option1, "Yes", "Should have selected Yes for proposal 1");
-        assertEq(option2, "No", "Should have selected No for proposal 2");
+        string memory vote1 = votingFacade.getVoterSelectedOption(proposal1);
+        string memory vote2 = votingFacade.getVoterSelectedOption(proposal2);
+        assertEq(vote1, "Yes", "Should have voted Yes on proposal 1");
+        assertEq(vote2, "No", "Should have voted No on proposal 2");
     }
 
     function test_OnlyAdminCanRegisterVoter() public {

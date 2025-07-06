@@ -7,9 +7,9 @@ import "../access/AccessControlWrapper.sol";
 
 /**
  * @title ProposalValidator
- * @dev Handles all validation logic for proposals and voting
- * Follows Single Responsibility Principle by focusing only on validation
- * Follows Open/Closed Principle by being extensible for new validation rules
+ * @author Suhail Abdelaal
+ * @notice Handles validation of proposal creation and voting operations
+ * @dev Follows Single Responsibility Principle by focusing only on validation
  */
 contract ProposalValidator is IProposalValidator, AccessControlWrapper {
 
@@ -22,6 +22,11 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
     uint256 private constant MAX_OPTIONS = 10;
     uint256 private constant MIN_VOTING_DURATION = 10 minutes;
 
+    /**
+     * @notice Initializes the ProposalValidator contract
+     * @param _accessControl Address of the access control contract
+     * @param _proposalState Address of the proposal state contract
+     */
     constructor(
         address _accessControl,
         address _proposalState
@@ -30,11 +35,12 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
     }
 
     /**
-     * @dev Validate proposal creation parameters
+     * @notice Validates proposal creation parameters
+     * @dev Checks title length, number of options, and voting duration
      * @param title The proposal title
-     * @param options The voting options
-     * @param startDate The proposal start date
-     * @param endDate The proposal end date
+     * @param options Array of voting options
+     * @param startDate Timestamp when voting begins
+     * @param endDate Timestamp when voting ends
      */
     function validateProposalCreation(
         string calldata title,
@@ -48,172 +54,119 @@ contract ProposalValidator is IProposalValidator, AccessControlWrapper {
     }
 
     /**
-     * @dev Validate a vote
-     * @param proposalId The proposal ID
-     * @param voter The voter address
-     * @param option The selected option
+     * @notice Validates a vote
+     * @dev Checks if proposal exists, is active, and option is valid
+     * @param proposalId ID of the target proposal
+     * @param voter Address of the voter
+     * @param option Selected voting option
      */
     function validateVote(
         uint256 proposalId,
         address voter,
         string memory option
     ) external view override {
-        // Check if voter is registered
-        if (!accessControl.isVoterVerified(voter)) {
-            revert(string(abi.encodePacked("Voter not registered: ", _addressToString(voter))));
+        if (!proposalState.isProposalExists(proposalId)) {
+            revert("Proposal does not exist");
         }
 
-        // Check if proposal is active
         if (!proposalState.isProposalActive(proposalId)) {
-            revert(string(abi.encodePacked("Proposal not active: ", _uintToString(proposalId))));
+            revert("Proposal is not active");
         }
 
-        // Check if option exists
         if (!proposalState.optionExists(proposalId, option)) {
-            revert(string(abi.encodePacked("Invalid option '", option, "' for proposal ", _uintToString(proposalId))));
+            revert("Invalid option");
         }
-
-        // Additional voting rules can be added here
-        _validateVotingRules(proposalId, voter);
     }
 
     /**
-     * @dev Validate a vote change
-     * @param proposalId The proposal ID
-     * @param voter The voter address
-     * @param newOption The new selected option
+     * @notice Validates a vote change
+     * @dev Checks if proposal exists, is active, vote is mutable, and option is valid
+     * @param proposalId ID of the target proposal
+     * @param voter Address of the voter
+     * @param newOption New selected option
      */
     function validateVoteChange(
         uint256 proposalId,
         address voter,
         string calldata newOption
     ) external view override {
-        // Check if voter is registered
-        if (!accessControl.isVoterVerified(voter)) {
-            revert(string(abi.encodePacked("Voter not registered: ", _addressToString(voter))));
+        if (!proposalState.isProposalExists(proposalId)) {
+            revert("Proposal does not exist");
         }
 
-        // Check if proposal allows vote changes
+        if (!proposalState.isProposalActive(proposalId)) {
+            revert("Proposal is not active");
+        }
+
         if (
             proposalState.getProposalVoteMutability(proposalId)
                 == IProposalState.VoteMutability.IMMUTABLE
         ) {
-            revert(string(abi.encodePacked("Vote changes not allowed for proposal ", _uintToString(proposalId), " - immutable voting")));
+            revert("Vote is immutable");
         }
 
-        // Check if proposal is active
-        if (!proposalState.isProposalActive(proposalId)) {
-            revert(string(abi.encodePacked("Proposal not active: ", _uintToString(proposalId))));
+        if (!proposalState.isParticipant(proposalId, voter)) {
+            revert("Voter has not participated");
         }
 
-        // Check if new option exists
         if (!proposalState.optionExists(proposalId, newOption)) {
-            revert(string(abi.encodePacked("Invalid option '", newOption, "' for proposal ", _uintToString(proposalId))));
+            revert("Invalid option");
         }
     }
 
     /**
-     * @dev Validate proposal title
+     * @notice Validates the proposal title
+     * @dev Checks if title length is within allowed range
      * @param title The proposal title to validate
      */
-    function _validateTitle(string calldata title) private pure {
+    function _validateTitle(string calldata title) internal pure {
         bytes memory titleBytes = bytes(title);
-
         if (titleBytes.length < MIN_TITLE_LENGTH) {
-            revert(string(abi.encodePacked("Title too short: ", _uintToString(titleBytes.length), " characters (minimum ", _uintToString(MIN_TITLE_LENGTH), ")")));
+            revert("Title too short");
         }
-
         if (titleBytes.length > MAX_TITLE_LENGTH) {
-            revert(string(abi.encodePacked("Title too long: ", _uintToString(titleBytes.length), " characters (maximum ", _uintToString(MAX_TITLE_LENGTH), ")")));
-        }
-
-        // Check for empty or whitespace-only title
-        bool hasNonWhitespace = false;
-        for (uint256 i = 0; i < titleBytes.length; i++) {
-            if (titleBytes[i] != 0x20) {
-                // 0x20 is space character
-                hasNonWhitespace = true;
-                break;
-            }
-        }
-
-        if (!hasNonWhitespace) {
-            revert("Title cannot be empty or contain only whitespace characters");
+            revert("Title too long");
         }
     }
 
     /**
-     * @dev Validate voting options
-     * @param options The voting options to validate
+     * @notice Validates the voting options
+     * @dev Checks if number of options is within allowed range
+     * @param options Array of voting options to validate
      */
-    function _validateOptions(string[] memory options) private pure {
+    function _validateOptions(string[] memory options) internal pure {
         if (options.length < MIN_OPTIONS) {
-            revert(string(abi.encodePacked("Not enough options: ", _uintToString(options.length), " provided (minimum ", _uintToString(MIN_OPTIONS), ")")));
+            revert("Too few options");
         }
-
         if (options.length > MAX_OPTIONS) {
-            revert(string(abi.encodePacked("Too many options: ", _uintToString(options.length), " provided (maximum ", _uintToString(MAX_OPTIONS), ")")));
+            revert("Too many options");
         }
 
-        // Check for duplicate options and empty options
         for (uint256 i = 0; i < options.length; i++) {
-            bytes memory option = bytes(options[i]);
-
-            // Check for empty options
-            if (option.length == 0) {
-                revert(string(abi.encodePacked("Empty option not allowed at index ", _uintToString(i))));
-            }
-
-            // Check for duplicates
-            for (uint256 j = i + 1; j < options.length; j++) {
-                if (keccak256(option) == keccak256(bytes(options[j]))) {
-                    revert(string(abi.encodePacked("Duplicate option '", options[i], "' found at indices ", _uintToString(i), " and ", _uintToString(j))));
-                }
+            if (bytes(options[i]).length == 0) {
+                revert("Empty option not allowed");
             }
         }
     }
 
     /**
-     * @dev Validate proposal dates
-     * @param startDate The proposal start date
-     * @param endDate The proposal end date
+     * @notice Validates the voting dates
+     * @dev Checks if dates are valid and voting duration is sufficient
+     * @param startDate Timestamp when voting begins
+     * @param endDate Timestamp when voting ends
      */
-    function _validateDates(uint256 startDate, uint256 endDate) private view {
-        // Start date cannot be in the past
+    function _validateDates(uint256 startDate, uint256 endDate) internal view {
         if (startDate < block.timestamp) {
-            revert(string(abi.encodePacked("Start date cannot be in the past: ", _uintToString(startDate), " < ", _uintToString(block.timestamp))));
+            revert("Start date must be in the future");
         }
 
-        // End date must be after start date
         if (endDate <= startDate) {
-            revert(string(abi.encodePacked("End date must be after start date: ", _uintToString(endDate), " <= ", _uintToString(startDate))));
+            revert("End date must be after start date");
         }
 
-        // Check minimum voting duration
         if (endDate - startDate < MIN_VOTING_DURATION) {
-            revert(string(abi.encodePacked("Voting duration too short: ", _uintToString(endDate - startDate), " seconds (minimum ", _uintToString(MIN_VOTING_DURATION), ")")));
+            revert("Voting duration too short");
         }
-    }
-
-    /**
-     * @dev Additional voting rules validation (extensible)
-     * @param proposalId The proposal ID
-     * @param voter The voter address
-     */
-    function _validateVotingRules(
-        uint256 proposalId,
-        address voter
-    ) private view {
-        // This function can be extended with additional validation rules
-        // For example:
-        // - Check if voter meets certain criteria
-        // - Check proposal-specific voting restrictions
-        // - Implement cooling-off periods
-        // - Add reputation-based voting rules
-
-        // For now, we'll just ensure basic requirements are met
-        // Additional rules can be added here following the Open/Closed
-        // Principle
     }
 
     /**

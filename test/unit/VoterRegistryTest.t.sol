@@ -5,6 +5,11 @@ import {Test, console} from "forge-std/Test.sol";
 import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
 import {AccessControlManager} from "../../src/access/AccessControlManager.sol";
 
+/**
+ * @title VoterRegistryTest
+ * @notice Unit tests for the VoterRegistry contract
+ * @dev Tests voter registration, participation tracking, and proposal management
+ */
 contract VoterRegistryTest is Test {
 
     VoterRegistry public voterRegistry;
@@ -13,6 +18,10 @@ contract VoterRegistryTest is Test {
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
 
+    /**
+     * @notice Sets up the test environment
+     * @dev Deploys contracts and sets up initial state
+     */
     function setUp() public {
         vm.prank(admin);
         accessControl = new AccessControlManager();
@@ -29,6 +38,10 @@ contract VoterRegistryTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests voter verification functionality
+     * @dev Verifies that a voter can be registered with biometric embeddings
+     */
     function test_VerifyVoter() public {
         int256[] memory embeddings = new int256[](3);
         embeddings[0] = 12_345;
@@ -43,6 +56,10 @@ contract VoterRegistryTest is Test {
         // This test validates that the verifyVoter function works correctly
     }
 
+    /**
+     * @notice Tests recording user participation in proposals
+     * @dev Verifies participation tracking and option selection
+     */
     function test_RecordUserParticipation() public {
         voterRegistry.recordUserParticipation(user1, 1, "Option A");
 
@@ -66,6 +83,10 @@ contract VoterRegistryTest is Test {
         );
     }
 
+    /**
+     * @notice Tests recording user-created proposals
+     * @dev Verifies proposal creation tracking
+     */
     function test_RecordUserCreatedProposal() public {
         voterRegistry.recordUserCreatedProposal(user1, 1);
 
@@ -75,6 +96,10 @@ contract VoterRegistryTest is Test {
         assertEq(createdProposals[0], 1, "Should have created proposal 1");
     }
 
+    /**
+     * @notice Tests removing user participation records
+     * @dev Verifies participation removal and state cleanup
+     */
     function test_RemoveUserParticipation() public {
         voterRegistry.recordUserParticipation(user1, 1, "Option A");
         voterRegistry.recordUserParticipation(user1, 2, "Option B");
@@ -109,6 +134,10 @@ contract VoterRegistryTest is Test {
         );
     }
 
+    /**
+     * @notice Tests removing user-created proposals
+     * @dev Verifies proposal removal and state cleanup
+     */
     function test_RemoveUserProposal() public {
         voterRegistry.recordUserCreatedProposal(user1, 1);
         voterRegistry.recordUserCreatedProposal(user1, 2);
@@ -128,6 +157,10 @@ contract VoterRegistryTest is Test {
         assertEq(createdProposals[0], 2, "Should still have created proposal 2");
     }
 
+    /**
+     * @notice Tests getting participated proposals count
+     * @dev Verifies participation count tracking
+     */
     function test_GetParticipatedProposalsCount() public {
         assertEq(
             voterRegistry.getParticipatedProposalsCount(user1),
@@ -157,6 +190,10 @@ contract VoterRegistryTest is Test {
         );
     }
 
+    /**
+     * @notice Tests getting created proposals count
+     * @dev Verifies proposal creation count tracking
+     */
     function test_GetCreatedProposalsCount() public {
         assertEq(
             voterRegistry.getCreatedProposalsCount(user1),
@@ -186,6 +223,10 @@ contract VoterRegistryTest is Test {
         );
     }
 
+    /**
+     * @notice Tests multiple voters interacting with proposals
+     * @dev Verifies correct tracking of multiple voters' participation
+     */
     function test_MultipleVoters() public {
         voterRegistry.recordUserParticipation(user1, 1, "Option A");
         voterRegistry.recordUserParticipation(user2, 1, "Option B");

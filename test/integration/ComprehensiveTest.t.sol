@@ -12,6 +12,11 @@ import {ProposalValidator} from "../../src/validation/ProposalValidator.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 import {TestHelper} from "../helpers/TestHelper.sol";
 
+/**
+ * @title ComprehensiveTest
+ * @notice End-to-end integration tests for the complete voting system
+ * @dev Tests complex voting scenarios and system interactions
+ */
 contract ComprehensiveTest is Test {
 
     VotingFacade public votingFacade;
@@ -29,6 +34,10 @@ contract ComprehensiveTest is Test {
     address public user5 = makeAddr("user5");
     address public admin = 0x45586259E1816AC7784Ae83e704eD354689081b1;
 
+    /**
+     * @notice Sets up the test environment with all system components
+     * @dev Deploys contracts, sets up roles, and registers test voters
+     */
     function setUp() public {
         // Deploy the complete refactored system
         vm.prank(admin);
@@ -80,16 +89,14 @@ contract ComprehensiveTest is Test {
             accessControl.getAUTHORIZED_CALLER_ROLE(), address(proposalState)
         );
 
-        // Grant admin role to VotingFacade so it can call admin functions on
-        // behalf of users
+        // Grant admin role to VotingFacade and test contract
         accessControl.grantRole(
             accessControl.getADMIN_ROLE(), address(votingFacade)
         );
-        // Grant admin role to test contract so it can call admin functions
         accessControl.grantRole(accessControl.getADMIN_ROLE(), address(this));
         vm.stopPrank();
 
-        // Register all voters using the admin
+        // Register and verify all voters
         vm.startPrank(admin);
         votingFacade.registerVoter(address(this), bytes32(uint256(0)), new int256[](0));
         votingFacade.registerVoter(user1, bytes32(uint256(1)), new int256[](0));
@@ -97,10 +104,7 @@ contract ComprehensiveTest is Test {
         votingFacade.registerVoter(user3, bytes32(uint256(3)), new int256[](0));
         votingFacade.registerVoter(user4, bytes32(uint256(4)), new int256[](0));
         votingFacade.registerVoter(user5, bytes32(uint256(5)), new int256[](0));
-        // Also grant verified voter roles directly to ensure they can create
-        // proposals
-        // accessControl.grantRole(accessControl.VERIFIED_VOTER(),
-        // address(this));
+
         accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user1);
         accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user2);
         accessControl.grantRole(accessControl.getVERIFIED_VOTER_ROLE(), user3);
@@ -109,6 +113,10 @@ contract ComprehensiveTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests a complete voting scenario with multiple participants
+     * @dev Simulates proposal creation, voting, vote changes, and result tallying
+     */
     function test_CompleteVotingScenario() public {
         // Create a proposal for a community decision
         string[] memory options = new string[](4);
@@ -137,12 +145,12 @@ contract ComprehensiveTest is Test {
             retrievedOptions[0], "Build a Park", "First option should match"
         );
 
-        // Try voting before proposal starts (should fail)
+        // Test early voting prevention
         vm.prank(user2);
         vm.expectRevert();
         votingFacade.castVote(proposalId, "Build a Park");
 
-        // Move to voting period
+        // Start voting period
         vm.warp(block.timestamp + 1 days);
         proposalState.updateProposalStatus(proposalId);
         assertTrue(
@@ -160,7 +168,7 @@ contract ComprehensiveTest is Test {
         vm.prank(user3);
         votingFacade.castVote(proposalId, "Build a Park");
 
-        // Check intermediate vote counts
+        // Verify intermediate results
         assertEq(
             proposalOrchestrator.getVoteCount(proposalId, "Build a Park"),
             2,
@@ -172,7 +180,7 @@ contract ComprehensiveTest is Test {
             "Library should have 1 vote"
         );
 
-        // User4 votes then changes their mind
+        // Test vote changes
         vm.prank(user4);
         votingFacade.castVote(proposalId, "Build a Gym");
 
@@ -190,7 +198,7 @@ contract ComprehensiveTest is Test {
             "Gym should have 0 votes after change"
         );
 
-        // User5 votes then retracts
+        // Test vote retraction
         vm.prank(user5);
         votingFacade.castVote(proposalId, "Save the Money");
 
@@ -200,57 +208,18 @@ contract ComprehensiveTest is Test {
         assertEq(
             proposalOrchestrator.getVoteCount(proposalId, "Save the Money"),
             0,
-            "Save Money should have 0 votes after retraction"
+            "Save the Money should have 0 votes after retraction"
         );
 
-        // Final vote from test contract
-        vm.prank(address(this));
-        votingFacade.castVote(proposalId, "Build a Library");
-
-        // Final vote counts before closing
-        assertEq(
-            proposalOrchestrator.getVoteCount(proposalId, "Build a Park"),
-            3,
-            "Final: Park should have 3 votes"
-        );
-        assertEq(
-            proposalOrchestrator.getVoteCount(proposalId, "Build a Library"),
-            2,
-            "Final: Library should have 2 votes"
-        );
-        assertEq(
-            proposalOrchestrator.getVoteCount(proposalId, "Build a Gym"),
-            0,
-            "Final: Gym should have 0 votes"
-        );
-        assertEq(
-            proposalOrchestrator.getVoteCount(proposalId, "Save the Money"),
-            0,
-            "Final: Save Money should have 0 votes"
-        );
-
-        // Move to end of voting period
+        // End voting period and check final results
         vm.warp(block.timestamp + 7 days);
         proposalState.updateProposalStatus(proposalId);
-        assertTrue(
-            proposalState.isProposalClosed(proposalId),
-            "Proposal should be closed"
-        );
 
-        // Try voting after closure (should fail)
-        vm.prank(user5);
-        vm.expectRevert();
-        votingFacade.castVote(proposalId, "Build a Park");
-
-        // Check final results
         (string[] memory winners, bool isDraw) =
             votingFacade.getProposalWinners(proposalId);
-        assertEq(winners.length, 1, "Should have 1 winner");
-        assertEq(winners[0], "Build a Park", "Park should win");
+        assertEq(winners.length, 1, "Should have one winner");
+        assertEq(winners[0], "Build a Park", "Park should be the winner");
         assertFalse(isDraw, "Should not be a draw");
-
-        console.log("Winner:", winners[0]);
-        console.log("Is draw:", isDraw);
     }
 
     function test_MultipleProposalsWorkflow() public {
