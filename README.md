@@ -23,14 +23,14 @@ The system consists of several smart contracts working together:
 - **VotingFacade**: Main entry point for interacting with the system
 
 ## 📦 Deployed Contracts (zkSync Sepolia)
-
-AccessControlManager  : `0x3EDeB25800D4bCC02F1134605993a4E580b381D3`
-VoterRegistry         : `0xdE31ef595B91511c624ba2B6cc284Db1D6F3d09f`
-ProposalState         : `0xC8076182526163289232C65b89558Fe16Ae420b2`
-ProposalValidator     : `0x9C642213E321EB9BC8BAe9F4007e44164e483E1B`
-ProposalOrchestrator  : `0x1B81F6c5E2Fda6914b3e213B7fbb2B3d2Ace3CdA`
-VotingFacade (main)   : `0x080b2492B403758aDe9a249FDf245302C860BD63` 
-
+```solidity
+AccessControlManager  : 0x3EDeB25800D4bCC02F1134605993a4E580b381D3
+VoterRegistry         : 0xdE31ef595B91511c624ba2B6cc284Db1D6F3d09f
+ProposalState         : 0xC8076182526163289232C65b89558Fe16Ae420b2
+ProposalValidator     : 0x9C642213E321EB9BC8BAe9F4007e44164e483E1B
+ProposalOrchestrator  : 0x1B81F6c5E2Fda6914b3e213B7fbb2B3d2Ace3CdA
+VotingFacade (main)   : 0x080b2492B403758aDe9a249FDf245302C860BD63
+```
 
 ## 🛠 Development Setup
 
