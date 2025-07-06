@@ -23,8 +23,7 @@ The system consists of several smart contracts working together:
 - **VotingFacade**: Main entry point for interacting with the system
 
 ## 📦 Deployed Contracts (zkSync Sepolia)
-
-```
+```solidity
 AccessControlManager  : 0x3EDeB25800D4bCC02F1134605993a4E580b381D3
 VoterRegistry         : 0xdE31ef595B91511c624ba2B6cc284Db1D6F3d09f
 ProposalState         : 0xC8076182526163289232C65b89558Fe16Ae420b2
