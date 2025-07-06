@@ -45,7 +45,7 @@ VotingFacade (main)   : 0x080b2492B403758aDe9a249FDf245302C860BD63
 1. Clone the repository
 ```bash
 git clone <repository-url>
-cd smart-contracts
+cd Blockchain-based-eVoting
 ```
 
 2. Install dependencies
