@@ -2,6 +2,7 @@
 
 A secure, transparent, and decentralized e-voting system built on zkSync Era, leveraging blockchain technology to ensure tamper-proof elections and verifiable results.
 
+
 ## 🌟 Features
 
 - **Secure Voter Registration**: Biometric-based voter registration with robust identity verification
