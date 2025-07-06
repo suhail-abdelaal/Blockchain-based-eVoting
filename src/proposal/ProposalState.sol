@@ -1,47 +1,77 @@
-// SPDX-License-I1ntifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.23;
 
 import "../interfaces/IProposalState.sol";
 import "../access/AccessControlWrapper.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
+/**
+ * @title ProposalState
+ * @author Suhail Abdelaal
+ * @notice Manages the state and lifecycle of proposals
+ * @dev Implements IProposalState interface for proposal state management
+ */
 contract ProposalState is IProposalState, AccessControlWrapper {
 
     using Strings for uint256;
 
+    /**
+     * @notice Struct to store proposal information and voting data
+     * @dev Uses mappings for efficient vote counting and participant tracking
+     */
     struct Proposal {
-        uint256 id;
-        address owner;
-        string title;
-        string[] options;
-        ProposalStatus status;
-        VoteMutability voteMutability;
-        mapping(string => uint256) voteCount;
-        mapping(string => bool) optionExistence;
-        mapping(address => bool) isParticipant;
-        uint256 numOfParticipants;
-        uint256 startDate;
-        uint256 endDate;
-        bool isDraw;
-        string[] winners;
+        uint256 id;                                    // Unique identifier
+        address owner;                                 // Proposal creator
+        string title;                                  // Proposal title
+        string[] options;                             // Voting options
+        ProposalStatus status;                        // Current status
+        VoteMutability voteMutability;                // Vote change setting
+        mapping(string => uint256) voteCount;         // Votes per option
+        mapping(string => bool) optionExistence;      // Valid options
+        mapping(address => bool) isParticipant;       // Voter participation
+        uint256 numOfParticipants;                    // Total participants
+        uint256 startDate;                            // Start timestamp
+        uint256 endDate;                              // End timestamp
+        bool isDraw;                                  // Tie status
+        string[] winners;                             // Winning options
     }
 
     mapping(uint256 => Proposal) private proposals;
     uint256 private proposalCount;
     uint256 private id;
 
+    /**
+     * @notice Emitted when a proposal's status changes
+     * @param proposalId ID of the proposal
+     * @param status New status
+     */
     event ProposalStatusUpdated(
         uint256 indexed proposalId, ProposalStatus status
     );
 
+    /**
+     * @notice Emitted when a proposal is finalized
+     * @param proposalId ID of the proposal
+     * @param winners Array of winning options
+     * @param isDraw Whether there is a tie
+     */
     event ProposalFinalized(
         uint256 indexed proposalId, string[] winners, bool isDraw
     );
 
+    /**
+     * @notice Initializes the ProposalState contract
+     * @param _accessControl Address of the access control contract
+     */
     constructor(address _accessControl) AccessControlWrapper(_accessControl) {
         id = 1;
     }
 
+    /**
+     * @notice Gets the current status of a proposal
+     * @param proposalId ID of the target proposal
+     * @return Current status
+     */
     function getProposalStatus(uint256 proposalId)
         external
         view
@@ -51,6 +81,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].status;
     }
 
+    /**
+     * @notice Gets and updates the current status of a proposal
+     * @param proposalId ID of the target proposal
+     * @return Current status after update
+     */
     function getCurrentProposalStatus(uint256 proposalId)
         external
         override
@@ -60,6 +95,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].status;
     }
 
+    /**
+     * @notice Updates the status of a proposal
+     * @dev Only authorized callers can update status
+     * @param proposalId ID of the target proposal
+     */
     function updateProposalStatus(uint256 proposalId)
         external
         override
@@ -68,6 +108,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         _updateProposalStatus(proposalId);
     }
 
+    /**
+     * @notice Internal function to update proposal status
+     * @dev Updates based on current time and emits events
+     * @param proposalId ID of the target proposal
+     */
     function _updateProposalStatus(uint256 proposalId) internal {
         Proposal storage proposal = proposals[proposalId];
         uint256 currentTime = block.timestamp;
@@ -95,6 +140,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         }
     }
 
+    /**
+     * @notice Gets the vote mutability setting of a proposal
+     * @param proposalId ID of the target proposal
+     * @return Vote mutability setting
+     */
     function getProposalVoteMutability(uint256 proposalId)
         external
         view
@@ -104,6 +154,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].voteMutability;
     }
 
+    /**
+     * @notice Checks if a proposal is currently active
+     * @param proposalId ID of the target proposal
+     * @return True if the proposal is active
+     */
     function isProposalActive(uint256 proposalId)
         external
         view
@@ -113,6 +168,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].status == ProposalStatus.ACTIVE;
     }
 
+    /**
+     * @notice Checks if a proposal is closed
+     * @param proposalId ID of the target proposal
+     * @return True if the proposal is closed
+     */
     function isProposalClosed(uint256 proposalId)
         external
         view
@@ -122,6 +182,17 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].status == ProposalStatus.CLOSED;
     }
 
+    /**
+     * @notice Creates a new proposal
+     * @dev Only authorized callers can create proposals
+     * @param owner Address of the proposal creator
+     * @param title Title of the proposal
+     * @param options Array of voting options
+     * @param voteMutability Whether votes can be changed
+     * @param startDate Timestamp when voting begins
+     * @param endDate Timestamp when voting ends
+     * @return proposalId Unique identifier of the created proposal
+     */
     function createProposal(
         address owner,
         string calldata title,
@@ -129,7 +200,7 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         VoteMutability voteMutability,
         uint256 startDate,
         uint256 endDate
-    ) external onlyAuthorizedCaller(msg.sender) returns (uint256) {
+    ) external override onlyAuthorizedCaller(msg.sender) returns (uint256) {
         Proposal storage proposal = proposals[id];
 
         proposal.id = id;
@@ -153,11 +224,22 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposal.id;
     }
 
+    /**
+     * @notice Removes a proposal
+     * @dev Only authorized callers can remove proposals
+     * @param proposalId ID of the proposal to remove
+     */
     function removeProposal(uint256 proposalId) external onlyAuthorizedCaller(msg.sender) {
         delete proposals[proposalId];
         proposalCount--;
     }
 
+    /**
+     * @notice Increments the vote count for an option
+     * @dev Only authorized callers can increment votes
+     * @param proposalId ID of the target proposal
+     * @param option Option to increment votes for
+     */
     function incrementVoteCount(
         uint256 proposalId,
         string memory option
@@ -165,6 +247,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         proposals[proposalId].voteCount[option]++;
     }
 
+    /**
+     * @notice Decrements the vote count for an option
+     * @dev Only authorized callers can decrement votes
+     * @param proposalId ID of the target proposal
+     * @param option Option to decrement votes for
+     */
     function decrementVoteCount(
         uint256 proposalId,
         string memory option
@@ -172,6 +260,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         proposals[proposalId].voteCount[option]--;
     }
 
+    /**
+     * @notice Adds a participant to a proposal
+     * @dev Only authorized callers can add participants
+     * @param proposalId ID of the target proposal
+     * @param voter Address of the participant
+     */
     function addParticipant(
         uint256 proposalId,
         address voter
@@ -180,6 +274,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         proposals[proposalId].numOfParticipants++;
     }
 
+    /**
+     * @notice Removes a participant from a proposal
+     * @dev Only authorized callers can remove participants
+     * @param proposalId ID of the target proposal
+     * @param voter Address of the participant
+     */
     function removeParticipant(
         uint256 proposalId,
         address voter
@@ -188,64 +288,54 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         proposals[proposalId].numOfParticipants--;
     }
 
-    function tallyVotes(uint256 proposalId)
-        public
-        override
-        onlyAuthorizedCaller(msg.sender)
-    {
-        // Check if votes have already been tallied
-        if (
-            proposals[proposalId].winners.length > 0
-                || proposals[proposalId].isDraw
-        ) {
-            revert(string(abi.encodePacked("Votes already tallied for proposal ", proposalId.toString())));
-        }
-
-        // Get all options for this proposal
-        string[] memory options = proposals[proposalId].options;
-
-        if (options.length == 0) {
-            revert(string(abi.encodePacked("No options available for proposal ", proposalId.toString())));
-        }
-
-        // Find the maximum vote count
+    /**
+     * @notice Tallies the votes for a proposal
+     * @dev Only authorized callers can tally votes
+     * @param proposalId ID of the target proposal
+     */
+    function tallyVotes(uint256 proposalId) public override onlyAuthorizedCaller(msg.sender) {
+        Proposal storage proposal = proposals[proposalId];
         uint256 maxVotes = 0;
-        for (uint256 i = 0; i < options.length; i++) {
-            uint256 optionVoteCount = getVoteCount(proposalId, options[i]);
-            if (optionVoteCount > maxVotes) maxVotes = optionVoteCount;
-        }
+        bool isDraw = false;
 
-        // If no votes were cast, set empty winners
-        if (maxVotes == 0) {
-            proposals[proposalId].winners = new string[](0);
-            proposals[proposalId].isDraw = false;
-            return;
-        }
-
-        // Count how many options have the maximum votes
-        uint256 winnerCount = 0;
-        for (uint256 i = 0; i < options.length; i++) {
-            if (getVoteCount(proposalId, options[i]) == maxVotes) winnerCount++;
-        }
-
-        // Create winners array
-        string[] memory winningOptions = new string[](winnerCount);
-        uint256 winnerIndex = 0;
-        for (uint256 i = 0; i < options.length; i++) {
-            if (getVoteCount(proposalId, options[i]) == maxVotes) {
-                winningOptions[winnerIndex] = options[i];
-                winnerIndex++;
+        // Find the maximum number of votes
+        for (uint256 i = 0; i < proposal.options.length; i++) {
+            uint256 votes = proposal.voteCount[proposal.options[i]];
+            if (votes > maxVotes) {
+                maxVotes = votes;
+                isDraw = false;
+            } else if (votes == maxVotes && votes > 0) {
+                isDraw = true;
             }
         }
 
-        // Determine if it's a draw (multiple winners with same vote count)
-        bool draw = winnerCount > 1;
+        // Collect winning options
+        string[] memory winners = new string[](proposal.options.length);
+        uint256 winnerCount = 0;
 
-        // Store the results
-        proposals[proposalId].winners = winningOptions;
-        proposals[proposalId].isDraw = draw;
+        for (uint256 i = 0; i < proposal.options.length; i++) {
+            if (proposal.voteCount[proposal.options[i]] == maxVotes) {
+                winners[winnerCount] = proposal.options[i];
+                winnerCount++;
+            }
+        }
+
+        // Resize winners array to actual size
+        string[] memory finalWinners = new string[](winnerCount);
+        for (uint256 i = 0; i < winnerCount; i++) {
+            finalWinners[i] = winners[i];
+        }
+
+        proposal.winners = finalWinners;
+        proposal.isDraw = isDraw;
     }
 
+    /**
+     * @notice Gets the vote count for a specific option
+     * @param proposalId ID of the target proposal
+     * @param option Option to get votes for
+     * @return Number of votes for the option
+     */
     function getVoteCount(
         uint256 proposalId,
         string memory option
@@ -253,6 +343,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].voteCount[option];
     }
 
+    /**
+     * @notice Gets the winning options for a proposal
+     * @param proposalId ID of the target proposal
+     * @return winners Array of winning options
+     * @return isDraw Whether there is a tie
+     */
     function getWinners(uint256 proposalId)
         public
         view
@@ -262,6 +358,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return (proposals[proposalId].winners, proposals[proposalId].isDraw);
     }
 
+    /**
+     * @notice Checks if an address has participated in a proposal
+     * @param proposalId ID of the target proposal
+     * @param voter Address to check
+     * @return True if the address has participated
+     */
     function isParticipant(
         uint256 proposalId,
         address voter
@@ -269,6 +371,10 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].isParticipant[voter];
     }
 
+    /**
+     * @notice Decrements the total proposal count
+     * @dev Only authorized callers can decrement count
+     */
     function decrementProposalCount()
         external
         onlyAuthorizedCaller(msg.sender)
@@ -276,6 +382,17 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         proposalCount--;
     }
 
+    /**
+     * @notice Gets detailed information about a proposal
+     * @param proposalId ID of the target proposal
+     * @return owner Address of the proposal creator
+     * @return title Title of the proposal
+     * @return options Array of voting options
+     * @return startDate Timestamp when voting begins
+     * @return endDate Timestamp when voting ends
+     * @return status Current status of the proposal
+     * @return voteMutability Whether votes can be changed
+     */
     function getProposal(uint256 proposalId)
         external
         view
@@ -302,10 +419,19 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         voteMutability = proposals[proposalId].voteMutability;
     }
 
+    /**
+     * @notice Gets the total number of proposals
+     * @return Total number of proposals in the system
+     */
     function getProposalCount() external view returns (uint256) {
         return proposalCount;
     }
 
+    /**
+     * @notice Gets the number of participants in a proposal
+     * @param proposalId ID of the target proposal
+     * @return Number of participants
+     */
     function getParticipantCount(uint256 proposalId)
         external
         view
@@ -314,6 +440,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].numOfParticipants;
     }
 
+    /**
+     * @notice Checks if a proposal has been finalized
+     * @param proposalId ID of the target proposal
+     * @return True if the proposal is finalized
+     */
     function isProposalFinalized(uint256 proposalId)
         external
         view
@@ -322,6 +453,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].status == ProposalStatus.FINALIZED;
     }
 
+    /**
+     * @notice Checks if a voting option exists for a proposal
+     * @param proposalId ID of the target proposal
+     * @param option Option to check
+     * @return True if the option exists
+     */
     function optionExists(
         uint256 proposalId,
         string calldata option
@@ -329,6 +466,11 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].optionExistence[option];
     }
 
+    /**
+     * @notice Gets the voting options for a proposal
+     * @param proposalId ID of the target proposal
+     * @return Array of voting options
+     */
     function getProposalOptions(uint256 proposalId)
         external
         view
@@ -337,10 +479,12 @@ contract ProposalState is IProposalState, AccessControlWrapper {
         return proposals[proposalId].options;
     }
 
+    /**
+     * @notice Checks if a proposal exists
+     * @param proposalId ID of the target proposal
+     * @return True if the proposal exists
+     */
     function isProposalExists(uint256 proposalId) public view returns (bool) {
         return proposals[proposalId].id != 0;
     }
-
-
-
 }

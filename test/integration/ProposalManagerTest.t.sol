@@ -11,6 +11,11 @@ import {ProposalState} from "../../src/proposal/ProposalState.sol";
 import {ProposalValidator} from "../../src/validation/ProposalValidator.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
+/**
+ * @title ProposalManagerTest
+ * @notice Integration tests for proposal management functionality
+ * @dev Tests proposal creation, voting, and finalization scenarios
+ */
 contract ProposalManagerTest is Test {
 
     VotingFacade public votingFacade;
@@ -29,6 +34,10 @@ contract ProposalManagerTest is Test {
     // Track proposals for counting
     uint256 public proposalCount = 0;
 
+    /**
+     * @notice Sets up the test environment with all system components
+     * @dev Deploys contracts, sets up roles, and registers test voters
+     */
     function setUp() public {
         // Deploy the refactored system
         vm.prank(admin);
@@ -102,6 +111,10 @@ contract ProposalManagerTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests proposal creation functionality
+     * @dev Verifies proposal creation and initial state
+     */
     function test_CreateProposal() public {
         string[] memory options = new string[](3);
         options[0] = "Option A";
@@ -125,6 +138,10 @@ contract ProposalManagerTest is Test {
         assertEq(retrievedOptions[0], "Option A", "First option should match");
     }
 
+    /**
+     * @notice Tests proposal finalization with a clear winner
+     * @dev Verifies vote counting and winner determination without a draw
+     */
     function test_ProposalFinalizationNoDraw() public {
         string[] memory options = new string[](3);
         options[0] = "Option A";
@@ -164,6 +181,10 @@ contract ProposalManagerTest is Test {
         assertFalse(isDraw, "Should not be a draw");
     }
 
+    /**
+     * @notice Tests proposal finalization with a draw
+     * @dev Verifies vote counting and winner determination in a tie scenario
+     */
     function test_ProposalFinalizationDraw() public {
         string[] memory options = new string[](3);
         options[0] = "Option A";

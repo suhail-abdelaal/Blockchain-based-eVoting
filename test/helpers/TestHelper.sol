@@ -10,6 +10,11 @@ import {VoterRegistry} from "../../src/voter/VoterRegistry.sol";
 import {VotingFacade} from "../../src/VotingFacade.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
+/**
+ * @title TestHelper
+ * @notice Base contract providing common test functionality and setup
+ * @dev Provides helper functions and common setup for testing the voting system
+ */
 contract TestHelper is Test {
 
     AccessControlManager public accessControl;
@@ -24,6 +29,10 @@ contract TestHelper is Test {
     address public user3 = makeAddr("user3");
     address public admin = makeAddr("admin");
 
+    /**
+     * @notice Sets up the test environment with all necessary contracts and roles
+     * @dev Deploys contracts, sets up roles, and registers test voters
+     */
     function setUp() public virtual {
         vm.prank(admin);
         accessControl = new AccessControlManager();
@@ -89,6 +98,15 @@ contract TestHelper is Test {
         vm.deal(admin, 10 ether);
     }
 
+    /**
+     * @notice Creates a test proposal with specified parameters
+     * @param creator Address creating the proposal
+     * @param title Title of the proposal
+     * @param options Array of voting options
+     * @param startOffset Time offset from now when voting begins
+     * @param duration Duration of the voting period
+     * @return proposalId Unique identifier of the created proposal
+     */
     function createTestProposal(
         address creator,
         string memory title,
@@ -106,6 +124,11 @@ contract TestHelper is Test {
         );
     }
 
+    /**
+     * @notice Creates a standard test proposal with predefined options
+     * @param creator Address creating the proposal
+     * @return proposalId Unique identifier of the created proposal
+     */
     function createStandardProposal(address creator)
         internal
         returns (uint256)
@@ -120,6 +143,12 @@ contract TestHelper is Test {
         );
     }
 
+    /**
+     * @notice Casts a vote on behalf of a voter
+     * @param voter Address casting the vote
+     * @param proposalId ID of the target proposal
+     * @param option Selected voting option
+     */
     function castVote(
         address voter,
         uint256 proposalId,
@@ -129,11 +158,22 @@ contract TestHelper is Test {
         votingFacade.castVote(proposalId, option);
     }
 
+    /**
+     * @notice Retracts a vote on behalf of a voter
+     * @param voter Address retracting the vote
+     * @param proposalId ID of the target proposal
+     */
     function retractVote(address voter, uint256 proposalId) internal {
         vm.prank(voter);
         votingFacade.retractVote(proposalId);
     }
 
+    /**
+     * @notice Changes a vote to a new option
+     * @param voter Address changing the vote
+     * @param proposalId ID of the target proposal
+     * @param newOption New voting option
+     */
     function changeVote(
         address voter,
         uint256 proposalId,
@@ -143,14 +183,28 @@ contract TestHelper is Test {
         votingFacade.changeVote(proposalId, newOption);
     }
 
+    /**
+     * @notice Advances time to proposal start
+     * @param startTimestamp Target timestamp
+     */
     function warpToProposalStart(uint256 startTimestamp) internal {
         vm.warp(startTimestamp);
     }
 
+    /**
+     * @notice Advances time to proposal end
+     * @param endTimestamp Target timestamp
+     */
     function warpToProposalEnd(uint256 endTimestamp) internal {
         vm.warp(endTimestamp);
     }
 
+    /**
+     * @notice Asserts that a vote count matches expected value
+     * @param proposalId ID of the target proposal
+     * @param option Option to check
+     * @param expectedCount Expected number of votes
+     */
     function assertVoteCount(
         uint256 proposalId,
         string memory option,
@@ -164,6 +218,12 @@ contract TestHelper is Test {
         );
     }
 
+    /**
+     * @notice Asserts that proposal winners match expected values
+     * @param proposalId ID of the target proposal
+     * @param expectedWinners Array of expected winning options
+     * @param expectedIsDraw Whether a tie is expected
+     */
     function assertProposalWinner(
         uint256 proposalId,
         string[] memory expectedWinners,
@@ -184,5 +244,4 @@ contract TestHelper is Test {
             );
         }
     }
-
 }

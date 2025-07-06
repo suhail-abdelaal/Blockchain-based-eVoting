@@ -6,6 +6,11 @@ import {ProposalState} from "../../src/proposal/ProposalState.sol";
 import {AccessControlManager} from "../../src/access/AccessControlManager.sol";
 import {IProposalState} from "../../src/interfaces/IProposalState.sol";
 
+/**
+ * @title ProposalStateTest
+ * @notice Unit tests for the ProposalState contract
+ * @dev Tests proposal lifecycle management and state transitions
+ */
 contract ProposalStateTest is Test {
 
     ProposalState public proposalState;
@@ -14,6 +19,10 @@ contract ProposalStateTest is Test {
     address public user1 = makeAddr("user1");
     address public user2 = makeAddr("user2");
 
+    /**
+     * @notice Sets up the test environment
+     * @dev Deploys contracts and sets up test accounts
+     */
     function setUp() public {
         vm.prank(admin);
         accessControl = new AccessControlManager();
@@ -30,6 +39,10 @@ contract ProposalStateTest is Test {
         vm.stopPrank();
     }
 
+    /**
+     * @notice Tests proposal creation functionality
+     * @dev Verifies proposal initialization and initial state
+     */
     function test_CreateProposal() public {
         string[] memory options = new string[](3);
         options[0] = "Option A";
@@ -58,6 +71,10 @@ contract ProposalStateTest is Test {
         );
     }
 
+    /**
+     * @notice Tests proposal status updates
+     * @dev Verifies status transitions through proposal lifecycle
+     */
     function test_UpdateProposalStatus() public {
         string[] memory options = new string[](2);
         options[0] = "Yes";
@@ -99,6 +116,10 @@ contract ProposalStateTest is Test {
         );
     }
 
+    /**
+     * @notice Tests proposal active state checks
+     * @dev Verifies active state through proposal lifecycle
+     */
     function test_IsProposalActive() public {
         string[] memory options = new string[](2);
         options[0] = "Yes";
@@ -133,6 +154,10 @@ contract ProposalStateTest is Test {
         );
     }
 
+    /**
+     * @notice Tests proposal closed state checks
+     * @dev Verifies closed state through proposal lifecycle
+     */
     function test_IsProposalClosed() public {
         string[] memory options = new string[](2);
         options[0] = "Yes";
@@ -159,6 +184,10 @@ contract ProposalStateTest is Test {
         );
     }
 
+    /**
+     * @notice Tests participant management
+     * @dev Verifies adding and removing participants
+     */
     function test_AddAndRemoveParticipant() public {
         string[] memory options = new string[](2);
         options[0] = "Yes";
