@@ -2,6 +2,9 @@
 
 A secure, transparent, and decentralized e-voting system built on zkSync Era, leveraging blockchain technology to ensure tamper-proof elections and verifiable results.
 
+## 🔗 Related Repositories
+
+- [AI Verification](https://github.com/Abdo-Hamdi/Blockchain-Based-E-Voting-System)
 
 ## 🌟 Features
 
